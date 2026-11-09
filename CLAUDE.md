@@ -111,6 +111,7 @@ Maikling round: `?debug&round=30` (segundo; gumagana lang kasama ang `?debug`).
 - [x] 3D voxel + pixel-art UI (Three.js), versus mode, gift coin values at patas na balance
 
 ## Workflow
-- Pagkatapos ng bawat tapos na feature: i-commit agad, tapos paalalahanan ang user na mag-`/clear`
+- Pagkatapos ng bawat tapos na feature: i-commit agad. HUWAG nang paalalahanan ang user na mag-`/clear`
+  (kusang nagko-compact ang context; ang user na ang bahala kung kailan mag-`/clear`)
   (para makatipid ng tokens; ang context ng proyekto ay nasa CLAUDE.md na ito).
 - Panatilihing updated ang CLAUDE.md bago mag-commit kapag nagbago ang layout/patakaran.
