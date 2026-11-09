@@ -160,9 +160,25 @@ export class Hud {
     br.append(pixelEmoji('💀', 'skull'), this.killCount, pixelEmoji('👹', 'skull'), this.remainCount);
 
 
+    // Libreng Chat Command helper banner sa ibaba (Team Bayani vs Team Aswang)
+    const chatBanner = h('div', 'chat-helper-banner');
+    const badge = h('div', 'helper-badge', 'LIBRE');
+    const teamsWrap = h('div', 'helper-teams');
+
+    const heroTeam = h('div', 'helper-team hero');
+    heroTeam.append(h('span', 'team-name', '🛡️ TEAM BAYANI'), h('span', 'cmd-pill', 'chat !tanod'));
+
+    const vs = h('span', 'helper-vs', 'VS');
+
+    const villainTeam = h('div', 'helper-team villain');
+    villainTeam.append(h('span', 'team-name', '👹 TEAM ASWANG'), h('span', 'cmd-pill', 'chat !aswang'));
+
+    teamsWrap.append(heroTeam, vs, villainTeam);
+    chatBanner.append(badge, teamsWrap);
+
     const banner = h('div', 'banner-layer');
     this.overlay.append(this.overTitle, this.overSub, this.overCount);
-    r.append(leftStack, rightStack, hp, heroes, villains, bl, br, this.toasts, banner, this.overlay);
+    r.append(leftStack, rightStack, hp, heroes, villains, bl, br, chatBanner, this.toasts, banner, this.overlay);
     parent.appendChild(r);
 
     world.on((e) => this.onWorld(e));

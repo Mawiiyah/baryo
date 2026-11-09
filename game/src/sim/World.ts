@@ -210,9 +210,10 @@ export class World {
       case 'chat': {
         const msg = event.msg.trim().slice(0, CHAT.maxMsgLength);
         this.emit({ type: 'chat', user: event.user, msg });
-        const cmd = msg.toLowerCase();
-        const kind = CHAT.commands[cmd];
-        const villain = VILLAIN_CHAT[cmd];
+        const cmd = msg.toLowerCase().trim();
+        const withBang = cmd.startsWith('!') ? cmd : `!${cmd}`;
+        const kind = CHAT.commands[cmd] ?? CHAT.commands[withBang];
+        const villain = VILLAIN_CHAT[cmd] ?? VILLAIN_CHAT[withBang];
         const last = this.chatCooldowns.get(event.user) ?? -Infinity;
         if ((kind || villain) && this.now - last >= CHAT.userCooldownMs) {
           this.chatCooldowns.set(event.user, this.now);
