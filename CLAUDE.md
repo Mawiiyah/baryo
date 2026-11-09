@@ -36,8 +36,12 @@ Base: Bahay Kubo (may HP) sa kaliwa. Umaatake ang halimaw mula sa kanan.
 - Placeholder shapes muna bago ang tunay na sprites.
 
 ## Mga command
-- game: npm run dev | npm run build
-- bridge: npm run dev
+Mula sa laban-baryo/ (root package.json, para hindi tumakbo ang Next.js
+app sa parent folder na tiktoklive/):
+- npm run dev → game (http://localhost:5173)
+- npm run build → build ng game
+- npm run bridge → bridge
+O sa loob mismo ng game/ o bridge/: npm run dev
 
 ## Layout ng code
 - game/src/main.ts — Phaser setup, debug keys, bridge connection

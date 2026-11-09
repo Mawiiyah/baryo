@@ -1,0 +1,9 @@
+{
+  "name": "laban-baryo",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix game run dev",
+    "build": "npm --prefix game run build",
+    "bridge": "npm --prefix bridge run dev"
+  }
+}
