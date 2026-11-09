@@ -77,23 +77,72 @@ export function buildVoxelModel(kind: UnitKind, color: number): Model {
 
 // ---------- Mga bayani ----------
 
-function tanod(shirt: number) {
-  const m = new VoxModel('tanod', 1 / 17);
+// Batay sa assets/reference/tanod.png: salakot, puting t-shirt, asul na vest
+// ("TANOD" sa likod, name patch, badge, ID), navy na pantalon, sinturon na may
+// pouch, batuta sa kaliwang balakang, kayumangging sapatos.
+function tanod(_tint: number) {
+  const m = new VoxModel('tanod', 1 / 24);
   const v = new Vox();
-  v.boxSym(1, 0, -1, 2, 0, 1, C.black); // sapatos
-  v.boxSym(1, 1, -1, 2, 4, 0, 0x2b2b3a); // pantalon
-  v.box(-3, 5, -1, 3, 5, 1, 0x5a3a1a); // sinturon
-  v.box(-3, 6, -1, 3, 10, 1, shirt); // polo
-  v.box(-2, 8, 2, 2, 9, 2, C.white); // tsapa / "TANOD"
-  v.set(0, 10, 2, 0xffd34d); // badge
-  v.boxSym(4, 6, 0, 4, 10, 0, shirt); // braso
-  v.boxSym(4, 5, 0, 4, 5, 0, C.skin); // kamay
-  v.box(-2, 11, -2, 2, 14, 2, C.skin); // ulo
-  v.boxSym(1, 13, 2, 1, 13, 2, C.black); // mata
-  v.set(0, 12, 2, C.skinDark); // bibig
-  v.box(-3, 15, -3, 3, 16, 2, 0x1a2f5c); // gorra
-  v.box(-2, 15, 3, 2, 15, 3, 0x1a2f5c); // visor
-  v.box(5, 3, 1, 5, 9, 1, 0x3b2a1a); // batuta
+  const vest = 0x2a55c8;
+  const vestShade = 0x1f3f99;
+  const pants = 0x1f2d55;
+  const shoe = 0x4a3626;
+  const belt = 0x1a1a1a;
+  const straw = 0xd8b46a;
+  const strawDark = 0xb8924e;
+  const hair = 0x1a1410;
+  // sapatos at pantalon
+  v.boxSym(1, 0, -1, 2, 0, 2, shoe);
+  v.boxSym(1, 1, -1, 2, 4, 1, pants);
+  v.box(-2, 5, -1, 2, 7, 1, pants);
+  // sinturon, buckle, pouch at holster
+  v.box(-3, 8, -2, 3, 8, 2, belt);
+  v.set(0, 8, 2, 0x9a9a9a);
+  v.boxSym(3, 6, -1, 3, 7, -1, belt);
+  v.box(-3, 6, 1, -3, 7, 1, belt);
+  // vest (may tiyan sa harap)
+  v.box(-3, 9, -2, 3, 14, 2, vest);
+  v.box(-2, 9, 3, 2, 11, 3, vest);
+  v.boxSym(3, 9, -2, 3, 14, -2, vestShade);
+  // puting kwelyo (V-neck) at ID sa lanyard
+  v.box(-1, 14, 2, 1, 14, 2, C.white);
+  v.set(0, 13, 2, C.white);
+  v.set(0, 12, 2, belt);
+  v.box(0, 10, 3, 0, 11, 3, C.white);
+  // name patch (kanan ng dibdib) at badge (kaliwa)
+  v.box(-2, 12, 2, -1, 12, 2, C.black);
+  v.set(-2, 12, 2, C.white);
+  v.set(2, 12, 2, 0xffd34d);
+  v.set(2, 11, 2, C.red);
+  // "TANOD" sa likod
+  v.box(-3, 12, -2, 3, 13, -2, C.black);
+  for (const x of [-2, 0, 2]) v.box(x, 12, -2, x, 13, -2, C.white);
+  // maikling manggas, braso at kamay
+  v.boxSym(4, 12, -1, 4, 14, 1, C.white);
+  v.boxSym(4, 8, 0, 4, 11, 0, C.skin);
+  v.boxSym(4, 7, 0, 4, 7, 0, C.skinDark);
+  // batuta sa kaliwang balakang
+  v.box(4, 2, 1, 4, 8, 1, C.wood);
+  v.set(4, 9, 1, C.woodDark);
+  // leeg at ulo
+  v.box(-1, 15, -1, 1, 15, 0, C.skin);
+  v.box(-2, 16, -2, 2, 19, 2, C.skin);
+  v.boxSym(3, 17, 0, 3, 17, 0, C.skinDark); // tainga
+  v.boxSym(1, 18, 2, 1, 18, 2, C.black); // mata
+  v.set(0, 17, 3, C.skinDark); // ilong
+  v.set(0, 16, 2, 0x7a3e2a); // bibig
+  v.box(-2, 17, -2, 2, 19, -2, hair);
+  v.boxSym(2, 18, -1, 2, 19, 0, hair);
+  // salakot (pa-cone, may habi)
+  const weave = (x: number, z: number) => (((x + z) & 1) === 0 ? straw : strawDark);
+  for (let x = -6; x <= 6; x++)
+    for (let z = -6; z <= 6; z++) {
+      const r2 = x * x + z * z;
+      if (r2 <= 32) v.set(x, 20, z, r2 > 24 ? strawDark : weave(x, z));
+      if (r2 <= 16) v.set(x, 21, z, weave(x, z));
+      if (r2 <= 6) v.set(x, 22, z, weave(x, z));
+    }
+  v.set(0, 23, 0, strawDark);
   m.part('body', v);
   return m.done();
 }
