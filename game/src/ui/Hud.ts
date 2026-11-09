@@ -125,11 +125,25 @@ export class Hud {
         heroRows.replaceChildren(...heroList.map(toRow));
         villainRows.replaceChildren(...villainList.map(toRow));
       } else {
-        // Anti-Ban Safe Mode (Default): Walang coins, walang 'likes/gifts' text sa OCR ng TikTok
-        const heroUnits: DefenderKind[] = ['tanod', 'malupiton', 'sarimanok', 'anito', 'higante', 'haliya'];
-        const villainUnits: AttackerKind[] = ['aswang', 'manananggal', 'tikbalang', 'mangkukulam', 'kapre', 'bakunawa'];
-        heroRows.replaceChildren(...heroUnits.map((u) => this.cleanUnitRow(u, DEFENDERS[u].name)));
-        villainRows.replaceChildren(...villainUnits.map((u) => this.cleanUnitRow(u, ATTACKERS[u].name)));
+        // Anti-Ban Safe Mode (Default): Malalaking Gift Icons LANG, walang coins/gifts text sa OCR ng TikTok
+        const heroRoster: { unit: DefenderKind; gift: string; count: number }[] = [
+          { unit: 'tanod', gift: 'Rose', count: 2 },
+          { unit: 'malupiton', gift: 'Ice Cream Cone', count: 1 },
+          { unit: 'anito', gift: 'Finger Heart', count: 1 },
+          { unit: 'sarimanok', gift: 'Dolphin', count: 1 },
+          { unit: 'higante', gift: 'Bravo!', count: 1 },
+          { unit: 'haliya', gift: 'Doughnut', count: 1 },
+        ];
+        const villainRoster: { unit: AttackerKind; gift: string; count: number }[] = [
+          { unit: 'aswang', gift: 'GG', count: 2 },
+          { unit: 'manananggal', gift: 'Heart Me', count: 1 },
+          { unit: 'tikbalang', gift: 'Panda', count: 2 },
+          { unit: 'mangkukulam', gift: 'Rosa', count: 1 },
+          { unit: 'kapre', gift: 'Gold Boxing Gloves', count: 1 },
+          { unit: 'bakunawa', gift: 'Capybara', count: 1 },
+        ];
+        heroRows.replaceChildren(...heroRoster.map((r) => this.cleanUnitRow(r.unit, DEFENDERS[r.unit].name, r.gift, r.count)));
+        villainRows.replaceChildren(...villainRoster.map((r) => this.cleanUnitRow(r.unit, ATTACKERS[r.unit].name, r.gift, r.count)));
       }
     };
     fillColumns();
@@ -172,14 +186,27 @@ export class Hud {
     this.net = s;
   }
 
-  private cleanUnitRow(unit: UnitKind, name: string) {
+  private cleanUnitRow(unit: UnitKind, name: string, giftName: string, count: number) {
     const row = h('div', 'icon-row clean-card');
-    row.title = name;
+    row.title = `${name} (${giftName})`;
+
+    const cardPair = h('div', 'card-pair');
+
+    // Unit portrait
     const pic = h('div', 'pic');
     const img = h('img');
     img.src = this.portraits[unit];
     pic.append(img);
-    row.append(pic, h('div', 'clean-name', name));
+
+    // Malaking Gift Icon (walang coins o pangalan ng gift)
+    const giftBox = h('div', 'big-gift-box');
+    const gIcon = giftIconEl(giftName, 'big-gift-img', 36);
+    giftBox.append(gIcon);
+
+    cardPair.append(pic, giftBox);
+
+    const labelText = count > 1 ? `${name} x${count}` : name;
+    row.append(cardPair, h('div', 'clean-name', labelText));
     return row;
   }
 

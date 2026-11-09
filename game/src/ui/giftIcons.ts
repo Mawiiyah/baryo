@@ -1,4 +1,4 @@
-import { ICONS } from '../config';
+import { HUD, ICONS } from '../config';
 import { pixelEmoji, pixelImage } from './pixel';
 
 // Mga gift icon URL galing sa TikTok (via bridge). Hindi naka-save sa repo;
@@ -26,10 +26,10 @@ export function onGiftIconsChange(fn: () => void) {
 }
 
 /** Pixelated na TikTok icon kung meron, kung wala ay pixelated na emoji (may class na `emoji`). */
-export function giftIconEl(gift: string, cls = 'gift-icon'): HTMLElement {
+export function giftIconEl(gift: string, cls = 'gift-icon', size: number = HUD.iconPx): HTMLElement {
   const url = icons.get(gift);
-  if (url) return pixelImage(url, cls);
-  const el = pixelEmoji(ICONS.gifts[gift] ?? ICONS.gift, cls);
+  if (url) return pixelImage(url, cls, size);
+  const el = pixelEmoji(ICONS.gifts[gift] ?? ICONS.gift, cls, size);
   el.classList.add('emoji');
   return el;
 }
