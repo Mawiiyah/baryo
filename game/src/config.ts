@@ -246,6 +246,43 @@ export const SCENE3D = {
       kuboScale: 0.9,
     },
   },
+  /**
+   * Battlefield: 'templo' = isla na may sinaunang templo (batay sa assets/reference/battlefield.png;
+   * ginawa para sa 'behind' na view), 'baryo' = luma (daang lupa, bakod na kawayan, gubat).
+   */
+  battlefield: 'templo' as 'templo' | 'baryo',
+  templo: {
+    // camera para sa 'behind' (mas nakatingala nang kaunti para kita ang templo sa dulo)
+    camera: { fov: 46, cameraPos: { x: 0, y: 17.5, z: -11 }, cameraLookAt: { x: 0, y: 0, z: 12 } },
+    island: { rx: 15.5, rz: 26, cz: 13, depth: 2.4, roundness: 2.6 }, // superellipse na hugis ng isla (metro)
+    waterLevel: 1.9, // gaano kababa ang tubig sa ilalim ng damo
+    waterColor: 0x1d6aa0,
+    waterGlow: 0x0b2c4a,
+    foamColor: 0x9fe6ff,
+    sandColor: 0xd9c08a,
+    grassColors: ['#3f7d34', '#478b38', '#36702e', '#4f963d'],
+    cliffColors: [0x5a5e66, 0x6a6e76, 0x4c5058],
+    laneStones: ['#8f8577', '#9a8f80', '#857a6c', '#a1968a', '#7d7366'],
+    laneGrout: '#5a5248',
+    laneLine: '#e0a83a', // dilaw na guhit, dash sa gitna at korona
+    lanePxPerM: 12, // resolution ng texture ng daan
+    emblemPos: 15, // pos ng korona sa gitna ng daan
+    gatePos: 30, // pos ng templo; nasa likod nito (LANE.spawnPos) lumalabas ang halimaw
+    brazierPos: [5, 13.5, 25], // pos ng mga sulong bato (magkabilang gilid)
+    bannerPos: 19.5,
+    bayaniBanner: 0x2a4fc8, // asul (kaliwa ng screen)
+    halimawBanner: 0xc82a2a, // pula (kanan ng screen)
+    gazebos: [[11, 20], [12.5, 6.5]] as [number, number][], // [|x|, pos] ng mga pahingahan (magkabila)
+    palmCount: 16,
+    palmColor: 0x2f6a2a,
+    trunkColor: 0x6a4e34,
+    bushCount: 70,
+    bushColors: [0x2e6a2a, 0x3a7a30, 0x285a24, 0x447f34],
+    grassTufts: 500,
+    grassColor: 0x5a9a3c,
+    bannerSway: 0.08, // rad
+    flameColor: 0xffb040,
+  },
   unitScale: 1.0, // visual na laki ng units (hindi apektado ang gameplay)
   pixelScale: 3, // ire-render ang 3D sa (1920/3)x(1080/3) tapos palalakihin nang pixelated; mas malaki = mas blocky
   skyTop: '#0a0b2a',

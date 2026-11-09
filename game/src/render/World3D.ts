@@ -4,6 +4,8 @@ import { FX, GAME, LANE, SCENE3D as S } from '../config';
 import type { SimUnit, World, WorldEvent } from '../sim/World';
 import { randFloat } from '../sim/rand';
 import { buildKubo, buildModel, type Model } from './models';
+import { glowTexture, palm, torchFlame, type Torch } from './scenery';
+import { buildTemplo } from './templo';
 
 interface UnitView {
   unit: SimUnit;
@@ -35,7 +37,8 @@ const SPARK_MAT = new THREE.MeshBasicMaterial({ color: FX.sparkColor });
 const toVec = (u: SimUnit, out = new THREE.Vector3()) => out.set(-u.lat, u.alt, u.pos);
 /** Visual na taas ng unit (stats.size × unitScale). */
 /** Aktibong camera view (tingnan ang SCENE3D.view). */
-const V = S.views[S.view];
+const TEMPLO = S.battlefield === 'templo';
+const V = TEMPLO && S.view === 'behind' ? { ...S.views.behind, ...S.templo.camera } : S.views[S.view];
 const SIDE = S.view === 'side';
 const vsz = (u: SimUnit): number => u.stats.size * S.unitScale;
 const easeOutBack = (t: number) => 1 + 2.70158 * (t - 1) ** 3 + 1.70158 * (t - 1) ** 2;
@@ -47,7 +50,8 @@ export class World3D {
   private camera: THREE.PerspectiveCamera;
   private views = new Map<number, UnitView>();
   private fx: Fx[] = [];
-  private torches: { light: THREE.PointLight; flame: THREE.Mesh; phase: number }[] = [];
+  private torches: Torch[] = [];
+  private envTick: ((t: number) => void) | null = null;
   private kubo!: THREE.Group;
   private kuboShakeAt = -Infinity;
   private spawnGlow!: THREE.PointLight;
@@ -131,6 +135,31 @@ export class World3D {
     starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
     sc.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: S.starSize, fog: false })));
 
+    if (TEMPLO) {
+      const b = buildTemplo(sc);
+      this.torches.push(...b.torches);
+      this.envTick = b.tick;
+    } else {
+      this.buildBaryo();
+    }
+    this.spawnGlow = new THREE.PointLight(0xa040ff, 20, 16, 2);
+    this.spawnGlow.position.set(0, 2, LANE.spawnPos - 2);
+    sc.add(this.spawnGlow);
+
+    // Bahay Kubo (ang base)
+    this.kubo = buildKubo();
+    this.kubo.scale.setScalar(V.kuboScale);
+    this.kubo.position.set(0, 0, S.kuboPos);
+    this.kubo.rotation.y = SIDE ? Math.PI / 2 : 0; // pinto nakaharap sa camera
+    const kl = new THREE.PointLight(S.kuboLight, S.kuboLightIntensity, 12, 2);
+    kl.position.set(0, 2.6, -2.4);
+    this.kubo.add(kl);
+    sc.add(this.kubo);
+  }
+
+  /** Lumang battlefield: daang lupa, bakod na kawayan, sulo, niyog, kubo at gubat. */
+  private buildBaryo() {
+    const sc = this.scene;
     // Lupa at daan
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(120, 140), new THREE.MeshStandardMaterial({ color: S.groundColor, roughness: 1 }));
     ground.rotation.x = -Math.PI / 2;
@@ -198,17 +227,8 @@ export class World3D {
         const x = side * (LANE.halfWidth + S.fenceOffset + 1);
         const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.8, 6), new THREE.MeshStandardMaterial({ color: 0x3b2a1a }));
         pole.position.set(x, 0.9, z);
-        const flame = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.4, 8), new THREE.MeshBasicMaterial({ color: S.torchColor }));
-        const halo = new THREE.Sprite(
-          new THREE.SpriteMaterial({ map: glowTexture(), color: S.torchColor, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }),
-        );
-        halo.scale.setScalar(1.6);
-        flame.add(halo);
-        flame.position.set(x, 1.9, z);
-        const light = new THREE.PointLight(S.torchColor, S.torchIntensity, S.torchDistance, 2);
-        light.position.set(x, 2.1, z);
-        sc.add(pole, flame, light);
-        this.torches.push({ light, flame, phase: randFloat(0, 10) });
+        sc.add(pole);
+        this.torches.push(torchFlame(sc, x, 1.9, z, S.torchColor));
       }
     }
 
@@ -256,19 +276,6 @@ export class World3D {
     balete.add(trunk, canopy);
     balete.position.set(SIDE ? 10 : 0, 0, LANE.spawnPos + (SIDE ? 4 : 12));
     sc.add(balete);
-    this.spawnGlow = new THREE.PointLight(0xa040ff, 20, 16, 2);
-    this.spawnGlow.position.set(0, 2, LANE.spawnPos - 2);
-    sc.add(this.spawnGlow);
-
-    // Bahay Kubo (ang base)
-    this.kubo = buildKubo();
-    this.kubo.scale.setScalar(V.kuboScale);
-    this.kubo.position.set(0, 0, S.kuboPos);
-    this.kubo.rotation.y = SIDE ? Math.PI / 2 : 0; // pinto nakaharap sa camera
-    const kl = new THREE.PointLight(S.kuboLight, S.kuboLightIntensity, 12, 2);
-    kl.position.set(0, 2.6, -2.4);
-    this.kubo.add(kl);
-    sc.add(this.kubo);
   }
 
   // ---------- Events galing sa World ----------
@@ -613,6 +620,7 @@ export class World3D {
       tch.flame.scale.set(f, f, f);
     }
     this.spawnGlow.intensity = 16 + Math.sin(t * 2) * 6;
+    this.envTick?.(t);
 
     const shakeP = (this.time - this.kuboShakeAt) / S.kuboShakeMs;
     const shake = shakeP < 1 ? Math.sin(shakeP * Math.PI * 6) * S.kuboShakeAmount * (1 - shakeP) : 0;
@@ -727,55 +735,4 @@ function skyTexture() {
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
-}
-
-let glowTex: THREE.Texture | null = null;
-function glowTexture() {
-  if (glowTex) return glowTex;
-  const c = document.createElement('canvas');
-  c.width = c.height = 128;
-  const g = c.getContext('2d')!;
-  const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-  grad.addColorStop(0, 'rgba(255,255,255,1)');
-  grad.addColorStop(0.3, 'rgba(255,255,255,0.35)');
-  grad.addColorStop(1, 'rgba(255,255,255,0)');
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 128, 128);
-  glowTex = new THREE.CanvasTexture(c);
-  return glowTex;
-}
-
-function palm(x: number, z: number, height: number, side: number) {
-  const g = new THREE.Group();
-  const trunkMat = new THREE.MeshStandardMaterial({ color: S.trunkColor, roughness: 1 });
-  const leafMat = new THREE.MeshStandardMaterial({ color: S.palmColor, roughness: 1, side: THREE.DoubleSide });
-  const segs = 6;
-  const lean = -side * randFloat(0.4, 1.2);
-  let px = 0;
-  let py = 0;
-  for (let i = 0; i < segs; i++) {
-    const t1 = (i + 1) / segs;
-    const nx = lean * t1 * t1;
-    const ny = height * t1;
-    const seg = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.17, height / segs + 0.05, 7), trunkMat);
-    seg.position.set((px + nx) / 2, (py + ny) / 2, 0);
-    seg.rotation.z = -Math.atan2(nx - px, ny - py);
-    seg.castShadow = true;
-    g.add(seg);
-    px = nx;
-    py = ny;
-  }
-  for (let i = 0; i < 8; i++) {
-    const leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 2.6), leafMat);
-    leaf.geometry.translate(0, 1.3, 0);
-    const pivot = new THREE.Group();
-    pivot.position.set(px, py, 0);
-    pivot.rotation.y = (i / 8) * Math.PI * 2;
-    leaf.rotation.x = 1.05 + randFloat(-0.15, 0.25);
-    leaf.castShadow = true;
-    pivot.add(leaf);
-    g.add(pivot);
-  }
-  g.position.set(x, 0, z);
-  return g;
 }
