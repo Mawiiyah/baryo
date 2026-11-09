@@ -392,7 +392,12 @@ export class World {
     this.moveTo(a, LANE.baseHitPos - 0.2, kuboTargetLat, dt);
   }
 
-  /** Itinutulak palayo ang magkakapatong na units (parehong panig at magkalaban). */
+  /**
+   * Pini-prevent ang magkakapatong na units.
+   * PATAKARAN: Kapag magkalaban (defender vs attacker), HINDI itutulak paatras ang bayani!
+   * Naglalaban sila nang salpukan (hold the line). Banayad na lateral (kaliwa/kanan) slide lang
+   * para hindi magpatong, pero walang atrasan sa posisyon ng laban.
+   */
   private separate() {
     const all = [...this.defenders, ...this.attackers].filter((u) => u.alive);
     for (let i = 0; i < all.length; i++) {
@@ -410,11 +415,23 @@ export class World {
           dp = randFloat(-1, 1);
           d = Math.hypot(dp, dl);
         }
-        const push = (min - d) / 2 / d;
-        a.pos += dp * push;
-        a.lat += dl * push;
-        b.pos -= dp * push;
-        b.lat -= dl * push;
+
+        if (a.side === b.side) {
+          // Parehong panig (allies): banayad na ihiwalay para nakakalat sila
+          const push = (min - d) / 2 / d;
+          a.pos += dp * push;
+          a.lat += dl * push;
+          b.pos -= dp * push;
+          b.lat -= dl * push;
+        } else {
+          // Magkalaban (defender vs attacker): hindi tinutulak paatras ang bayani!
+          // Banayad na lateral slide lang sa lane (lat) upang hindi magsapawan
+          if (Math.abs(dl) > 1e-4) {
+            const pushLat = Math.sign(dl) * Math.min(0.06, (min - d) * 0.15);
+            a.lat += pushLat;
+            b.lat -= pushLat;
+          }
+        }
       }
     }
     for (const u of all) {

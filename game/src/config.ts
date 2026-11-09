@@ -439,8 +439,8 @@ export const FX = {
     bakunawa: 0x26c6da, // kagat ng dambuhalang dragon
   } as Record<UnitKind, number>,
   clashSparks: 10,
-  staggerMs: 140,
-  staggerAmount: 0.2,
+  staggerMs: 120,
+  staggerAmount: 0.04, // banayad na flinch lang, hindi tinutulak paatras para tuloy ang laban
   puffMs: 550,
   puffColor: 0x2a2030,
   ringMs: 600, // shockwave ng slam / summon
