@@ -15,7 +15,7 @@ import {
   type AttackerKind,
   type DefenderKind,
 } from '../config';
-import type { GameEvent } from '../events';
+import { setEventTarget, type GameEvent } from '../events';
 import { SpawnQueue } from '../systems/SpawnQueue';
 import { composeWave, hpScaleFor } from '../systems/Waves';
 import type { NetStatus } from '../systems/Net';
@@ -64,10 +64,13 @@ export class GameScene extends Phaser.Scene {
     this.drawBase();
     this.fx = this.add.graphics().setDepth(GAME.height);
     this.createHud();
+
+    setEventTarget((e) => this.onEvent(e));
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setEventTarget(null));
   }
 
-  // ---------- Iisang entry point para sa lahat ng input ----------
-  handleEvent(event: GameEvent) {
+  // ---------- Tinatawag lang ng handleEvent() sa events.ts ----------
+  private onEvent(event: GameEvent) {
     switch (event.type) {
       case 'like': {
         this.likeCounter += event.count;
@@ -250,7 +253,7 @@ export class GameScene extends Phaser.Scene {
         color: HUD.textColor,
         align: 'center',
         stroke: '#000',
-        strokeThickness: 6,
+        strokeThickness: HUD.strokeWidth * 2,
       })
       .setOrigin(0.5)
       .setDepth(GAME.height + 1);
@@ -261,39 +264,34 @@ export class GameScene extends Phaser.Scene {
   private drawBase() {
     const bottom = GAME.groundBottom - (GAME.groundBottom - GAME.groundTop) / 2;
     const x = BASE.x;
-    this.add.rectangle(x, bottom, BASE.width, BASE.height, BASE.wallColor).setOrigin(0.5, 1).setStrokeStyle(2, 0);
+    this.add.rectangle(x, bottom, BASE.width, BASE.height, BASE.wallColor).setOrigin(0.5, 1).setStrokeStyle(HUD.strokeWidth, HUD.barBg);
     const top = bottom - BASE.height;
     this.add
-      .triangle(x, top, -BASE.width / 2 - 10, 0, 0, -BASE.roofHeight, BASE.width / 2 + 10, 0, BASE.roofColor)
+      .triangle(x, top, -BASE.width / 2 - BASE.roofOverhang, 0, 0, -BASE.roofHeight, BASE.width / 2 + BASE.roofOverhang, 0, BASE.roofColor)
       .setOrigin(0, 0)
-      .setStrokeStyle(2, 0);
+      .setStrokeStyle(HUD.strokeWidth, HUD.barBg);
   }
 
   private createHud() {
     const style = { fontFamily: HUD.font, fontSize: `${HUD.fontSize}px`, color: HUD.textColor };
-    const small = { ...style, fontSize: `${HUD.smallFontSize + 2}px` };
+    const small = { ...style, fontSize: `${HUD.smallFontSize}px` };
     const pad = HUD.padding;
+    const gap = HUD.lineGap;
     const d = GAME.height + 2;
 
     this.add.text(pad, pad, BASE.name, style).setDepth(d);
-    const barY = pad + HUD.fontSize + 6;
+    const barY = pad + HUD.fontSize + gap;
     this.add.rectangle(pad, barY, HUD.barWidth, HUD.barHeight, HUD.barBg).setOrigin(0).setDepth(d);
     this.baseBar = this.add.rectangle(pad, barY, HUD.barWidth, HUD.barHeight, HUD.goodColor).setOrigin(0).setDepth(d);
 
-    const likeY = barY + HUD.barHeight + 8;
+    const likeY = barY + HUD.barHeight + gap;
     this.add.rectangle(pad, likeY, HUD.barWidth, HUD.barHeight / 2, HUD.barBg).setOrigin(0).setDepth(d);
-    this.likeBar = this.add
-      .rectangle(pad, likeY, 0, HUD.barHeight / 2, HUD.likeColor)
-      .setOrigin(0)
-      .setDepth(d);
+    this.likeBar = this.add.rectangle(pad, likeY, 0, HUD.barHeight / 2, HUD.likeColor).setOrigin(0).setDepth(d);
 
-    this.waveText = this.add.text(GAME.width / 2, pad, '', style).setOrigin(0.5, 0).setDepth(d);
-    this.statusText = this.add.text(GAME.width - pad, pad, '', small).setOrigin(1, 0).setDepth(d);
-    this.feedText = this.add
-      .text(GAME.width - pad, pad + HUD.fontSize * 3, '', small)
-      .setOrigin(1, 0)
-      .setAlign('right')
-      .setDepth(d);
+    const waveY = likeY + HUD.barHeight / 2 + gap * 2;
+    this.waveText = this.add.text(pad, waveY, '', style).setDepth(d);
+    this.statusText = this.add.text(pad, waveY + HUD.fontSize + gap, '', small).setDepth(d);
+    this.feedText = this.add.text(pad, GAME.groundBottom + pad, '', small).setDepth(d);
   }
 
   private updateHud(time: number) {
@@ -302,9 +300,8 @@ export class GameScene extends Phaser.Scene {
     const secs = Math.max(0, Math.ceil((this.nextWaveAt - time) / 1000));
     this.waveText.setText(`Wave ${this.wave}  •  susunod sa ${secs}s`);
     this.statusText.setText(
-      `bridge: ${this.netStatus}\n` +
-        `tagapagtanggol ${this.defenders.length}/${SPAWN.maxDefenders}  pila ${this.queue.size}\n` +
-        `halimaw ${this.attackers.length}`,
+      `tagapagtanggol ${this.defenders.length}/${SPAWN.maxDefenders}  pila ${this.queue.size}  ` +
+        `halimaw ${this.attackers.length}\nbridge: ${this.netStatus}`,
     );
   }
 

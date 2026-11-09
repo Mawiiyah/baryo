@@ -28,3 +28,16 @@ export function parseEvent(raw: unknown): GameEvent | null {
       return null;
   }
 }
+
+type Handler = (event: GameEvent) => void;
+let target: Handler | null = null;
+
+/** Kung saan ipapasa ang events (ang aktibong GameScene). */
+export function setEventTarget(handler: Handler | null) {
+  target = handler;
+}
+
+/** Iisang entry point ng lahat ng input: keyboard debug keys at bridge (TikTok). */
+export function handleEvent(event: GameEvent) {
+  target?.(event);
+}

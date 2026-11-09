@@ -27,16 +27,16 @@ export class Unit {
     const { width: w, height: h, color } = stats;
 
     this.body = makeShape(scene, stats, w, h, color);
-    this.body.setStrokeStyle(2, 0x000000);
+    this.body.setStrokeStyle(HUD.strokeWidth, HUD.barBg);
 
-    const barY = -h / 2 - 8;
+    const barY = -h / 2 - HUD.unitBarGap;
     const barBg = scene.add.rectangle(0, barY, w, HUD.unitBarHeight, HUD.barBg).setOrigin(0.5);
     this.hpBar = scene.add
       .rectangle(-w / 2, barY, w, HUD.unitBarHeight, side === 'defender' ? HUD.goodColor : HUD.badColor)
       .setOrigin(0, 0.5);
 
     const label = scene.add
-      .text(0, barY - 10, side === 'defender' ? owner : stats.name, {
+      .text(0, barY - HUD.unitLabelGap, side === 'defender' ? owner : stats.name, {
         fontFamily: HUD.font,
         fontSize: `${HUD.smallFontSize}px`,
         color: HUD.textColor,

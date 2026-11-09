@@ -23,74 +23,76 @@ export interface UnitStats {
 }
 
 export const GAME = {
-  width: 1280,
-  height: 720,
+  // Portrait 9:16 logical size; naka-scale sa window (Scale.FIT)
+  width: 1080,
+  height: 1920,
   background: 0x1d2b1f,
-  groundTop: 430,
-  groundBottom: 640,
+  groundTop: 1150,
+  groundBottom: 1650,
   groundColor: 0x3b5d2e,
-  flyHeight: 150, // gaano kataas lumilipad sa ibabaw ng ground
-  spawnX: 1320, // kanan, labas ng screen
-  defenderSpawnX: 150,
+  flyHeight: 260, // gaano kataas lumilipad sa ibabaw ng ground
+  spawnX: 1150, // kanan, labas ng screen
+  defenderSpawnX: 220,
   frontLineX: 560, // dito naghihintay ang defenders kapag walang kalaban
-  healerBackOffset: 120, // gaano kalayo sa likod ng front line ang healer
+  healerBackOffset: 160, // gaano kalayo sa likod ng front line ang healer
   restartDelayMs: 6000,
 } as const;
 
 export const BASE = {
   name: 'Bahay Kubo',
   hp: 2000,
-  x: 70,
-  width: 110,
-  height: 90,
-  roofHeight: 60,
+  x: 100,
+  width: 170,
+  height: 150,
+  roofHeight: 100,
+  roofOverhang: 16,
   wallColor: 0xc8a165,
   roofColor: 0x8a6d3b,
-  hitX: 130, // dito tumitigil at umaatake ang halimaw
+  hitX: 210, // dito tumitigil at umaatake ang halimaw
 } as const;
 
 export const DEFENDERS: Record<DefenderKind, UnitStats> = {
   tanod: {
-    name: 'Tanod', hp: 120, damage: 12, range: 40, cooldownMs: 800, speed: 70,
-    width: 26, height: 42, color: 0x3a7bd5, shape: 'rect',
+    name: 'Tanod', hp: 120, damage: 12, range: 64, cooldownMs: 800, speed: 112,
+    width: 42, height: 67, color: 0x3a7bd5, shape: 'rect',
     flying: false, canHitAir: false, heal: 0, ranged: false,
   },
   anito: {
-    name: 'Anito', hp: 600, damage: 18, range: 45, cooldownMs: 1400, speed: 40,
-    width: 44, height: 60, color: 0x8b5a2b, shape: 'rect',
+    name: 'Anito', hp: 600, damage: 18, range: 72, cooldownMs: 1400, speed: 64,
+    width: 70, height: 96, color: 0x8b5a2b, shape: 'rect',
     flying: false, canHitAir: false, heal: 0, ranged: false,
   },
   albularyo: {
-    name: 'Albularyo', hp: 100, damage: 0, range: 180, cooldownMs: 1200, speed: 55,
-    width: 30, height: 30, color: 0x4caf50, shape: 'circle',
+    name: 'Albularyo', hp: 100, damage: 0, range: 288, cooldownMs: 1200, speed: 88,
+    width: 48, height: 48, color: 0x4caf50, shape: 'circle',
     flying: false, canHitAir: false, heal: 25, ranged: true,
   },
   sarimanok: {
-    name: 'Sarimanok', hp: 220, damage: 45, range: 320, cooldownMs: 1000, speed: 60,
-    width: 40, height: 40, color: 0xff9800, shape: 'star',
+    name: 'Sarimanok', hp: 220, damage: 45, range: 512, cooldownMs: 1000, speed: 96,
+    width: 64, height: 64, color: 0xff9800, shape: 'star',
     flying: false, canHitAir: true, heal: 0, ranged: true,
   },
 };
 
 export const ATTACKERS: Record<AttackerKind, UnitStats> = {
   aswang: {
-    name: 'Aswang', hp: 90, damage: 10, range: 40, cooldownMs: 900, speed: 45,
-    width: 28, height: 40, color: 0x8e1b1b, shape: 'rect',
+    name: 'Aswang', hp: 90, damage: 10, range: 64, cooldownMs: 900, speed: 72,
+    width: 45, height: 64, color: 0x8e1b1b, shape: 'rect',
     flying: false, canHitAir: false, heal: 0, ranged: false,
   },
   manananggal: {
-    name: 'Manananggal', hp: 70, damage: 14, range: 40, cooldownMs: 1000, speed: 55,
-    width: 34, height: 28, color: 0x7b3fa0, shape: 'triangle',
+    name: 'Manananggal', hp: 70, damage: 14, range: 64, cooldownMs: 1000, speed: 88,
+    width: 54, height: 45, color: 0x7b3fa0, shape: 'triangle',
     flying: true, canHitAir: false, heal: 0, ranged: false,
   },
   tikbalang: {
-    name: 'Tikbalang', hp: 110, damage: 12, range: 40, cooldownMs: 700, speed: 110,
-    width: 22, height: 58, color: 0x5d4037, shape: 'rect',
+    name: 'Tikbalang', hp: 110, damage: 12, range: 64, cooldownMs: 700, speed: 176,
+    width: 35, height: 93, color: 0x5d4037, shape: 'rect',
     flying: false, canHitAir: false, heal: 0, ranged: false,
   },
   kapre: {
-    name: 'Kapre', hp: 1500, damage: 60, range: 55, cooldownMs: 1800, speed: 22,
-    width: 70, height: 110, color: 0x263238, shape: 'rect',
+    name: 'Kapre', hp: 1500, damage: 60, range: 88, cooldownMs: 1800, speed: 35,
+    width: 112, height: 176, color: 0x263238, shape: 'rect',
     flying: false, canHitAir: false, heal: 0, ranged: false,
   },
 };
@@ -141,15 +143,19 @@ export const WAVES = {
 } as const;
 
 export const HUD = {
-  feedLines: 7,
-  padding: 16,
+  feedLines: 8,
+  padding: 32,
   likeColor: 0xff4081,
   font: 'monospace',
-  fontSize: 18,
-  smallFontSize: 12,
-  barWidth: 400,
-  barHeight: 18,
-  unitBarHeight: 4,
+  fontSize: 36,
+  smallFontSize: 22,
+  lineGap: 12,
+  barWidth: 640,
+  barHeight: 32,
+  unitBarHeight: 8,
+  unitBarGap: 12, // agwat ng HP bar sa itaas ng unit
+  unitLabelGap: 20, // agwat ng label sa itaas ng HP bar
+  strokeWidth: 3,
   textColor: '#ffffff',
   goodColor: 0x4caf50,
   badColor: 0xe53935,
@@ -167,6 +173,8 @@ export const NET = {
 
 /** Debug keys → event (dumadaan pa rin sa handleEvent). */
 export const DEBUG_KEYS = {
+  // '1' = sapat na likes para sa isang Tanod
+  '1': { type: 'like', user: 'debug', count: SPAWN.likesPerTanod },
   L: { type: 'like', user: 'debug', count: 10 },
   R: { type: 'gift', user: 'debug', gift: 'Rose', count: 1 },
   D: { type: 'gift', user: 'debug', gift: 'Doughnut', count: 1 },
