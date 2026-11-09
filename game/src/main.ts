@@ -1,5 +1,5 @@
 import '@fontsource/silkscreen/700.css';
-import { DEBUG_KEYS, GAME, ROUND, SOUND } from './config';
+import { DEBUG_KEYS, GAME, ROUND, SCENE3D, SOUND } from './config';
 import { handleEvent, setEventTarget } from './events';
 import { renderPortraits } from './render/portraits';
 import { World3D } from './render/World3D';
@@ -24,6 +24,12 @@ window.addEventListener('resize', fit);
 fit();
 
 const params = new URLSearchParams(location.search);
+// Pumili ng mapa (battlefield: barangay | templo | baryo)
+const mapParam = params.get('map') || params.get('battlefield');
+if (mapParam === 'barangay' || mapParam === 'templo' || mapParam === 'baryo') {
+  (SCENE3D as { battlefield: string }).battlefield = mapParam;
+}
+
 // ?round=N segundo (kasama ng ?debug lang) → maikling round para sa testing
 const debugRoundSecs = params.has('debug') ? Number(params.get('round')) : 0;
 const world = new World(debugRoundSecs > 0 ? debugRoundSecs * 1000 : ROUND.durationMs);

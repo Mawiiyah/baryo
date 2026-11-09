@@ -19,8 +19,11 @@ kubo pagkaubos ng oras, HALIMAW kapag nawasak ito. May score kada round.
   sa window gamit ang CSS transform.
 - Camera: `SCENE3D.view` = 'behind' (likod ng Bahay Kubo, daan papalayo; default) o 'side'
   (kubo sa kaliwa, halimaw galing sa kanan). Visual na laki ng units: `SCENE3D.unitScale`.
-- Battlefield: `SCENE3D.battlefield` = 'templo' (default; isla, daang bato, templo sa dulo kung saan
-  lumalabas ang halimaw; may sariling camera sa `SCENE3D.templo.camera`) o 'baryo' (luma).
+- Battlefield: `SCENE3D.battlefield` = 'barangay' (default; kalsada, basketball court, Barangay Hall gate,
+  jeepney base na may headlight beams, sari-sari stores, monobloc chairs, traysikel, aspin, banderitas;
+  batay sa assets/reference/battlefield_barangay.jpg) o 'templo' (isla, daang bato, templo) o 'baryo' (luma;
+  daang lupa, bakod na kawayan). Puwedeng palitan via URL query (`?map=barangay`, `?map=templo`, `?map=baryo`)
+  o sa Test panel (`?debug`).
 - HUD: BAYANI column sa kaliwa, HALIMAW sa kanan. Itaas-kaliwa: score → likes → BAYANI coins/top
   gifter. Itaas-kanan: oras → HALIMAW coins/top gifter. Itaas-gitna: HP ng kubo (%). Ibaba: defenders
   at kills/natitirang halimaw. Layers: labels (z1) < HUD (z2) < panalo/talo overlay.
@@ -81,9 +84,10 @@ O sa loob mismo ng game/ o bridge/: npm run dev
 - game/src/sim/World.ts — game logic: combat, rounds (timer + score), base HP, likes, kills,
   top contributor, villain queue; naglalabas ng `WorldEvent`
 - game/src/sim/ — `SpawnQueue` (token bucket, para sa bayani at halimaw), `balance` (coins → lakas), `rand`
-- game/src/render/World3D.ts — Three.js na eksena (langit, ilaw, buwan, kubo; 'baryo'/'templo' na battlefield,
+- game/src/render/World3D.ts — Three.js na eksena (langit, ilaw, buwan, kubo/jeepney base; 'barangay'/'templo'/'baryo' na battlefield,
   katakut-takot na hamog at pagdilim kapag nag-spawn ang halimaw), unit views, effects, CSS2D labels
-- game/src/render/templo.ts — 'templo' na battlefield (assets/reference/battlefield.png)
+- game/src/render/barangay.ts — 'barangay' na battlefield (assets/reference/battlefield_barangay.jpg)
+- game/src/render/templo.ts — 'templo' na battlefield (assets/reference/battlefield_templo.png)
 - game/src/render/scenery.ts — pinagsasaluhan: glow texture, fog texture, sulo (`torchFlame`), niyog, `voxGroup`
 - game/src/render/models.ts — `Model` type at Bahay Kubo; ang mga karakter ay voxel (voxModels.ts)
 - game/src/render/voxel.ts — `Vox` builder → iisang mesh kada part (naka-cache ang geometry)

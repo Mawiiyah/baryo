@@ -3,6 +3,7 @@ import { CSS2DObject, CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRe
 import { FX, GAME, LANE, SCENE3D as S } from '../config';
 import type { SimUnit, World, WorldEvent } from '../sim/World';
 import { randFloat } from '../sim/rand';
+import { buildBarangay } from './barangay';
 import { buildKubo, buildModel, type Model } from './models';
 import { fogTexture, glowTexture, palm, torchFlame, type Torch } from './scenery';
 import { buildTemplo } from './templo';
@@ -37,8 +38,14 @@ const SPARK_MAT = new THREE.MeshBasicMaterial({ color: FX.sparkColor });
 const toVec = (u: SimUnit, out = new THREE.Vector3()) => out.set(-u.lat, u.alt, u.pos);
 /** Visual na taas ng unit (stats.size × unitScale). */
 /** Aktibong camera view (tingnan ang SCENE3D.view). */
-const TEMPLO = S.battlefield === 'templo';
-const V = TEMPLO && S.view === 'behind' ? { ...S.views.behind, ...S.templo.camera } : S.views[S.view];
+function getViewConfig() {
+  const bf = S.battlefield;
+  if (S.view === 'behind') {
+    if (bf === 'barangay') return { ...S.views.behind, ...S.barangay.camera };
+    if (bf === 'templo') return { ...S.views.behind, ...S.templo.camera };
+  }
+  return S.views[S.view];
+}
 const SIDE = S.view === 'side';
 const vsz = (u: SimUnit): number => u.stats.size * S.unitScale;
 const easeOutBack = (t: number) => 1 + 2.70158 * (t - 1) ** 3 + 1.70158 * (t - 1) ** 2;
@@ -70,6 +77,7 @@ export class World3D {
   private time = 0;
   private dt = 0;
   private tmp = new THREE.Vector3();
+  private V = getViewConfig();
 
   constructor(parent: HTMLElement, world: World) {
     // Pixelated: mababang resolution, pinalalaki nang walang blur
@@ -88,6 +96,7 @@ export class World3D {
     this.labels.domElement.className = 'labels';
     parent.appendChild(this.labels.domElement);
 
+    const V = this.V;
     this.camera = new THREE.PerspectiveCamera(V.fov, GAME.width / GAME.height, 0.1, 200);
     this.camera.position.set(V.cameraPos.x, V.cameraPos.y, V.cameraPos.z);
     this.camera.lookAt(V.cameraLookAt.x, V.cameraLookAt.y, V.cameraLookAt.z);
@@ -99,6 +108,7 @@ export class World3D {
   // ---------- Kapaligiran ----------
   private buildEnvironment() {
     const sc = this.scene;
+    const V = this.V;
     sc.background = skyTexture();
     this.fog = new THREE.Fog(S.fogColor, S.fogNear, S.fogFar);
     sc.fog = this.fog;
@@ -140,12 +150,20 @@ export class World3D {
     starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
     sc.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: S.starSize, fog: false })));
 
-    if (TEMPLO) {
+    const bf = S.battlefield;
+    if (bf === 'barangay') {
+      const b = buildBarangay(sc);
+      this.torches.push(...b.torches);
+      this.envTick = b.tick;
+      this.kubo = b.base as THREE.Group;
+    } else if (bf === 'templo') {
       const b = buildTemplo(sc);
       this.torches.push(...b.torches);
       this.envTick = b.tick;
+      this.buildBaseKubo(sc);
     } else {
       this.buildBaryo();
+      this.buildBaseKubo(sc);
     }
     this.spawnGlow = new THREE.PointLight(0x7a18b8, 22, 18, 2);
     this.spawnGlow.position.set(0, 2, LANE.spawnPos - 2);
@@ -169,10 +187,11 @@ export class World3D {
       sc.add(sp);
       this.ambientMist.push(sp);
     }
+  }
 
-    // Bahay Kubo (ang base)
+  private buildBaseKubo(sc: THREE.Scene) {
     this.kubo = buildKubo();
-    this.kubo.scale.setScalar(V.kuboScale);
+    this.kubo.scale.setScalar(this.V.kuboScale);
     this.kubo.position.set(0, 0, S.kuboPos);
     this.kubo.rotation.y = SIDE ? Math.PI / 2 : 0; // pinto nakaharap sa camera
     const kl = new THREE.PointLight(S.kuboLight, S.kuboLightIntensity, 12, 2);
@@ -738,7 +757,7 @@ export class World3D {
     else this.kubo.position.x = shake;
 
     // Camera shake
-    const base = V.cameraPos;
+    const base = this.V.cameraPos;
     const sk = this.time < this.shakeUntil ? this.shakeAmount * ((this.shakeUntil - this.time) / FX.shakeMs) : 0;
     this.camera.position.set(base.x + randFloat(-sk, sk), base.y + randFloat(-sk, sk), base.z);
 

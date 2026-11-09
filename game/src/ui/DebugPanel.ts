@@ -1,4 +1,4 @@
-import { DEBUG_PANEL, DEBUG_ROUND_LINKS } from '../config';
+import { DEBUG_PANEL, DEBUG_ROUND_LINKS, SCENE3D } from '../config';
 import { handleEvent, type GameEvent } from '../events';
 
 /** Mga test button sa labas ng #stage (hindi naka-scale). Bawat click → handleEvent. */
@@ -32,6 +32,27 @@ export function mountDebugPanel() {
       panel.append(btn);
     }
   }
+  // Pumili ng mapa (battlefield)
+  const mapTitle = document.createElement('div');
+  mapTitle.className = 'debug-title';
+  mapTitle.textContent = 'MAPA (Battlefield)';
+  panel.append(mapTitle);
+  const maps: { id: 'barangay' | 'templo' | 'baryo'; label: string }[] = [
+    { id: 'barangay', label: '🏘️ Barangay (Bago)' },
+    { id: 'templo', label: '🏛️ Templo (Isla)' },
+    { id: 'baryo', label: '🌾 Baryo (Luma)' },
+  ];
+  for (const m of maps) {
+    const a = document.createElement('a');
+    const sp = new URLSearchParams(location.search);
+    sp.set('map', m.id);
+    a.href = `?${sp.toString()}`;
+    const isActive = SCENE3D.battlefield === m.id;
+    a.textContent = (isActive ? '▶ ' : '') + m.label;
+    if (isActive) a.style.fontWeight = 'bold';
+    panel.append(a);
+  }
+
   // Maikling round para sa testing (nire-reload ang page na may ?round=N)
   const sub = document.createElement('div');
   sub.className = 'debug-title';

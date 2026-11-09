@@ -247,10 +247,38 @@ export const SCENE3D = {
     },
   },
   /**
-   * Battlefield: 'templo' = isla na may sinaunang templo (batay sa assets/reference/battlefield.png;
-   * ginawa para sa 'behind' na view), 'baryo' = luma (daang lupa, bakod na kawayan, gubat).
+   * Battlefield:
+   * 'barangay' = bagong mapa (kalsada, basketball court, Barangay Hall gate, jeepney base, sari-sari store, banderitas)
+   * 'templo' = isla na may sinaunang templo (batay sa assets/reference/battlefield_templo.png)
+   * 'baryo' = luma (daang lupa, bakod na kawayan, gubat)
    */
-  battlefield: 'templo' as 'templo' | 'baryo',
+  battlefield: 'barangay' as 'barangay' | 'templo' | 'baryo',
+  barangay: {
+    camera: { fov: 46, cameraPos: { x: 0, y: 17.5, z: -11 }, cameraLookAt: { x: 0, y: 0, z: 12 } },
+    roadColor: '#2b2c34',
+    roadGrout: '#22232a',
+    curbColor: 0xd8d6cb,
+    curbStripeColor: 0x3b3a40,
+    lineColor: '#eab32a',
+    roadPxPerM: 14,
+    textPos: 8.5,
+    courtPos: 16.5,
+    gatePos: 30,
+    brazierPos: [4.5, 13.5, 24],
+    bannerPos: 20,
+    bayaniBanner: 0x1c5bbd,
+    halimawBanner: 0xb82424,
+    flameColor: 0xff7522,
+    headlightColor: 0xffefb8,
+    windowColor: 0xffa434,
+    trunkColor: 0x3a2618,
+    palmColor: 0x182c16,
+    palmCount: 16,
+    grassTufts: 350,
+    grassColor: 0x223a1a,
+    groundColor: 0x1b2818,
+    bannerSway: 0.1,
+  },
   templo: {
     // camera para sa 'behind' (mas nakatingala nang kaunti para kita ang templo sa dulo)
     camera: { fov: 46, cameraPos: { x: 0, y: 17.5, z: -11 }, cameraLookAt: { x: 0, y: 0, z: 12 } },
