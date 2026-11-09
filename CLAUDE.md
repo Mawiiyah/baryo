@@ -86,6 +86,7 @@ O sa loob mismo ng game/ o bridge/: npm run dev
   banners (round, boss alert), panalo/talo screen
 - game/src/ui/ — `DebugPanel` (?debug), `giftIcons` (TikTok icon registry), `pixel` (pixelated icons)
 - game/src/systems/Net.ts — WS + reconnect
+- assets/reference/ — reference sheets (PNG) ng mga karakter; batayan ng voxel models (hindi bundled)
 - bridge/src/tiktok.ts — TikTok → `GameEvent` (proto v3 fields: `count`,
   `gift.name`, `content`, `user.displayId`; iba sa README ng library)
 - bridge/src/events.ts — kopya ng `GameEvent`; panatilihing kapareho ng game/src/events.ts

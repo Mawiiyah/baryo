@@ -213,28 +213,59 @@ function aswang(body: number) {
   return m.done();
 }
 
-function manananggal(skin: number) {
-  const m = new VoxModel('manananggal', 1 / 16);
+// Batay sa assets/reference/manananggal.png: itaas na kalahati lang ang lumilipad
+// (naiwan ang palda at paa), nakalawit ang bituka, malaking kayumangging pakpak.
+function manananggal(_tint: number) {
+  const m = new VoxModel('manananggal', 1 / 20);
   const v = new Vox();
-  const flesh = 0x8a7d8c;
-  v.box(-2, 5, -1, 2, 10, 1, flesh); // katawan (walang paa!)
-  v.box(-2, 5, -1, 2, 7, 1, skin); // punit na damit
-  v.set(-1, 4, 0, 0x7a1020).set(1, 4, 0, 0x7a1020).box(0, 1, 0, 0, 4, 0, 0x7a1020).box(-1, 2, 0, -1, 3, 0, 0x7a1020);
-  v.box(-2, 11, -1, 2, 14, 2, flesh); // ulo
-  v.box(-2, 15, -2, 2, 15, 1, C.black); // buhok
-  v.box(-2, 4, -2, 2, 14, -2, C.black);
-  v.boxSym(1, 13, 2, 1, 13, 2, C.redGlow, true);
-  v.box(-1, 11, 2, 1, 11, 2, C.white); // pangil
+  const skin = 0xd9a070;
+  const blouse = 0xeee2c4;
+  const blouseShade = 0xcdbf9e;
+  const gut = 0xb8404a;
+  const gutLight = 0xd8737a;
+  const raw = 0x6e1420;
+  // nakalawit na bituka
+  v.line([[-1, 6, 0], [-2, 4, 1], [-1, 2, 0], [-2, 0, 1]], gut);
+  v.line([[1, 6, 0], [2, 4, 0], [1, 3, 1], [2, 1, 0]], gutLight);
+  v.line([[0, 6, 1], [0, 4, 1], [1, 2, 1]], gut);
+  v.box(-2, 6, -1, 2, 6, 1, raw); // putol na baywang
+  // blusa (baro) na may puff sleeves
+  v.box(-2, 7, -1, 2, 8, 1, blouse);
+  v.box(-3, 9, -1, 3, 12, 1, blouse);
+  v.box(0, 8, 1, 0, 11, 1, blouseShade); // tahi sa harap
+  v.boxSym(4, 10, -1, 5, 12, 1, blouse);
+  v.boxSym(4, 10, 1, 5, 10, 1, blouseShade);
+  v.box(-1, 12, 1, 1, 12, 1, skin); // leeg ng blusa
+  // braso at kamay
+  v.boxSym(4, 5, 0, 4, 9, 0, skin);
+  v.boxSym(4, 4, 0, 4, 4, 1, skin);
+  // leeg at ulo
+  v.box(-1, 13, -1, 1, 13, 0, skin);
+  v.box(-2, 14, -1, 2, 18, 2, skin);
+  v.boxSym(1, 16, 2, 1, 16, 2, C.black); // mata
+  v.boxSym(1, 16, 3, 1, 16, 3, C.redGlow, true); // kislap ng mata
+  v.set(0, 14, 2, C.red); // labi
+  // mahabang itim na buhok
+  v.box(-2, 19, -2, 2, 19, 2, C.black);
+  v.boxSym(3, 12, -2, 3, 18, 1, C.black);
+  v.box(-2, 6, -2, 2, 18, -2, C.black);
+  v.box(-1, 18, 2, 2, 18, 2, C.black); // bangs
   m.part('body', v);
-  // pakpak ng paniki
+  // pakpak ng paniki (kanan; naka-mirror ang kaliwa)
+  const bone = 0x5a3428;
+  const membrane = 0x8f6150;
   const w = new Vox();
-  for (let x = 0; x <= 9; x++) {
-    const top = Math.round(x * 0.45);
-    const bottom = top - 2 - Math.round(3 * Math.abs(Math.sin(x * 0.9)));
-    for (let y = bottom; y <= top; y++) w.set(x, y, 0, y === top ? 0x150818 : 0x2a1036);
+  for (let x = 0; x <= 11; x++) {
+    const top = x <= 7 ? Math.round(x * 1.2) : Math.round(8.4 - (x - 7) * 0.8);
+    const bottom = -1 - Math.round(x * 0.8) + (x % 3 === 1 ? 2 : 0);
+    for (let y = bottom; y <= top; y++) {
+      const torn = x >= 4 && y === bottom && x % 4 === 0;
+      if (torn) continue;
+      w.set(x, y, 0, y === top || x % 3 === 0 ? bone : membrane);
+    }
   }
   for (const side of [-1, 1]) {
-    const p = m.pivot(side * 2, 9, -1);
+    const p = m.pivot(side * 2, 11, -2);
     p.scale.x = side;
     m.part('wing', w, p);
     m.wings.push(p);
