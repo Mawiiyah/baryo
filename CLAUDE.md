@@ -93,6 +93,7 @@ O sa loob mismo ng game/ o bridge/: npm run dev
   banners (round, boss alert), panalo/talo screen
 - game/src/ui/ — `DebugPanel` (?debug), `giftIcons` (TikTok icon registry), `pixel` (pixelated icons)
 - game/src/systems/Net.ts — WS + reconnect
+- game/src/systems/Sound.ts — synthesized na tunog (Web Audio) kada spawn; settings sa `SOUND` (config.ts)
 - assets/reference/ — reference sheets (PNG) ng mga karakter; batayan ng voxel models (hindi bundled)
 - bridge/src/tiktok.ts — TikTok → `GameEvent` (proto v3 fields: `count`,
   `gift.name`, `content`, `user.displayId`; iba sa README ng library)
@@ -103,6 +104,7 @@ BAYANI: 1 = Tanod (fake like event na sapat para sa isang Tanod), L = 10 likes, 
 A = Finger Heart (Anito), F = follow, T = chat `!tanod`
 HALIMAW: G = GG (Aswang), H = Heart Me (Manananggal), P = Perfume (Tikbalang), K = Hand Hearts (Kapre),
 C = Cap (Mangkukulam), B = Galaxy (Bakunawa), X = chat `!aswang`
+M = mute/unmute ng tunog (hindi game event)
 Clickable test buttons (bayani at halimaw): http://localhost:5173/?debug (naka-config sa `DEBUG_PANEL`; wala sa OBS kapag walang `?debug`).
 Maikling round: `?debug&round=30` (segundo; gumagana lang kasama ang `?debug`).
 

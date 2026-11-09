@@ -486,3 +486,43 @@ export const DEBUG_PANEL = {
     { label: '[X] 💬 !aswang', event: { type: 'chat', msg: '!aswang' } },
   ],
 } as const;
+
+/**
+ * Tunog (Web Audio, synthesized; walang audio files). Isang maikling "jingle" kada spawn.
+ * notes = Hz ng bawat nota (sunod-sunod), noteMs = haba ng bawat isa, wave = OscillatorType,
+ * slide = pag-glide ng pitch sa dulo ng nota (×), noise = halo ng ingay (0..1, pang-ungol/apoy).
+ */
+export interface SpawnSound {
+  wave: OscillatorType;
+  notes: number[];
+  noteMs: number;
+  gain: number;
+  slide: number;
+  noise: number;
+}
+export const SOUND = {
+  enabled: true,
+  masterGain: 0.5,
+  /** Pinakamaikling pagitan ng spawn sound kada panig (iwas ingay sa like spam). */
+  minGapMs: 90,
+  attackMs: 8,
+  releaseMs: 120,
+  noiseLowpassHz: 900,
+  /** Debug key para i-mute/unmute (hindi game event). */
+  muteKey: 'M',
+  spawn: {
+    // BAYANI: maliwanag, paakyat
+    tanod: { wave: 'square', notes: [523, 784], noteMs: 70, gain: 0.18, slide: 1, noise: 0 },
+    anito: { wave: 'triangle', notes: [196, 262, 392], noteMs: 110, gain: 0.35, slide: 1, noise: 0 },
+    albularyo: { wave: 'sine', notes: [659, 880, 1047], noteMs: 80, gain: 0.3, slide: 1, noise: 0 },
+    sarimanok: { wave: 'square', notes: [784, 988, 1175, 1568], noteMs: 70, gain: 0.18, slide: 1.06, noise: 0 },
+    // HALIMAW: madilim, pababa
+    aswang: { wave: 'sawtooth', notes: [220, 165], noteMs: 90, gain: 0.16, slide: 0.85, noise: 0.15 },
+    manananggal: { wave: 'sawtooth', notes: [880, 587], noteMs: 110, gain: 0.12, slide: 0.7, noise: 0.1 },
+    tikbalang: { wave: 'square', notes: [330, 247, 330, 196], noteMs: 50, gain: 0.14, slide: 0.9, noise: 0.1 },
+    // Bosses: mahaba at mababa
+    kapre: { wave: 'sawtooth', notes: [110, 82, 55], noteMs: 220, gain: 0.3, slide: 0.8, noise: 0.35 },
+    mangkukulam: { wave: 'triangle', notes: [440, 415, 392, 370, 349], noteMs: 120, gain: 0.3, slide: 1, noise: 0.1 },
+    bakunawa: { wave: 'sawtooth', notes: [147, 98, 73], noteMs: 300, gain: 0.3, slide: 0.6, noise: 0.5 },
+  } satisfies Record<UnitKind, SpawnSound>,
+} as const;
