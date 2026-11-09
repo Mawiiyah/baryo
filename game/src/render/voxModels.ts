@@ -57,18 +57,22 @@ class VoxModel {
   }
 
   /**
-   * Binti/braso na umuugoy: ang `v` ay ang kanang bahagi (+x) na nakaayos kaugnay
-   * ng pivot (x,y,z); ang kaliwa ay naka-mirror sa -x.
+   * Binti/braso na umuugoy, may pivot sa (x,y,z); ang `v` ay nakaayos kaugnay ng pivot.
+   * `side` = -1 (kanang panig ng karakter, -x) o 1; `swing` = bahagi ng FX na ugoy.
    */
+  limb(name: string, v: Vox, limb: 'leg' | 'arm', x: number, y: number, z: number, side: number, swing = 1) {
+    const p = this.pivot(x, y, z);
+    p.userData.limb = limb;
+    p.userData.side = side;
+    p.userData.swing = swing;
+    this.part(name, v, p);
+    this.limbs.push(p);
+    return p;
+  }
+
+  /** Magkaparehong binti/braso: ang `v` ay ang +x na bahagi; naka-mirror sa -x. */
   limbPair(name: string, v: Vox, limb: 'leg' | 'arm', x: number, y: number, z: number) {
-    for (const side of [-1, 1]) {
-      const p = this.pivot(side * x, y, z);
-      p.scale.x = side;
-      p.userData.limb = limb;
-      p.userData.side = side;
-      this.part(name, v, p);
-      this.limbs.push(p);
-    }
+    for (const side of [-1, 1]) this.limb(name, v, limb, side * x, y, z, side).scale.x = side;
   }
 
   done(): Model {
@@ -448,24 +452,115 @@ function kapre(_tint: number) {
   return m.done();
 }
 
-function mangkukulam(robe: number) {
-  const m = new VoxModel('mangkukulam', 1 / 18);
+// Batay sa assets/reference/mangkukulam.png: matandang babae, kuba nang bahagya,
+// uban na nakapusod (bun), kayumangging balabal sa balikat (patulis sa likod),
+// kuwintas na may bungo, maitim-asul na baro at mahabang palda na may disenyo sa
+// laylayan, kayumangging tapis sa harap, bungo sa sinturon, sandalyas. Kanang kamay:
+// baluktot na tungkod na may nakasabit na halamang-gamot; kaliwa: bayong ng halaman.
+function mangkukulam(_tint: number) {
+  const m = new VoxModel('mangkukulam', 1 / 34);
   const v = new Vox();
-  for (let y = 0; y <= 11; y++) {
-    const r = 4 - Math.floor(y / 4);
-    v.box(-r, y, -r, r, y, r, robe);
+  const skin = 0xb07850;
+  const skinDark = 0x8a5a3a;
+  const navy = 0x27314c;
+  const navyDark = 0x1c2338;
+  const pattern = 0x7088b0;
+  const brown = 0x6b4426;
+  const brownDark = 0x4a2e18;
+  const trim = 0x9a6a3a;
+  const sash = 0x2a1e18;
+  const grey = 0xa8a8a8;
+  const greyDark = 0x828282;
+  const skull = 0xe8dcc0;
+  const wood = 0x6a4428;
+  const woodDark = 0x4a2e1a;
+  const sandal = 0x3a2616;
+  const herb = 0x3e6a2e;
+  const herbDark = 0x2a4a22;
+  const curse = 0xc040ff;
+  // ---- mahabang palda (bahagyang lumalapad pababa) na may disenyo sa laylayan ----
+  for (let y = 3; y <= 13; y++) {
+    const rx = 4.4 - (y - 3) * 0.1;
+    const rz = 3.6 - (y - 3) * 0.08;
+    for (let x = -5; x <= 5; x++) for (let z = -4; z <= 5; z++) {
+      if ((x / rx) ** 2 + ((z - 0.3) / rz) ** 2 > 1) continue;
+      const band = y === 4 || (y === 6 && (x + z) % 3 === 0);
+      v.set(x, y, z, band ? pattern : y === 3 ? navyDark : navy);
+    }
   }
-  v.box(-2, 11, -1, 2, 14, 3, 0x8a9a7a); // maputlang mukha
-  v.set(0, 12, 4, 0x8a9a7a); // ilong
-  v.boxSym(1, 13, 3, 1, 13, 3, 0xc040ff, true);
-  v.box(-3, 12, -2, 3, 16, 0, robe); // talukbong
-  v.box(-2, 16, 0, 2, 16, 2, robe);
-  v.box(-2, 5, -3, 2, 12, -3, 0xdedede); // puting buhok
-  v.box(-5, 6, 2, -5, 8, 2, 0xd8c8a0); // manika
-  v.set(-5, 9, 2, 0xd8c8a0).set(-6, 7, 2, 0xb0b0b0);
-  v.box(5, 9, 2, 5, 10, 3, 0xc040ff, true); // orb ng sumpa
-  v.boxSym(4, 7, 1, 4, 8, 1, 0x8a9a7a);
+  // tapis sa harap (may gilid at guhit)
+  for (let y = 6; y <= 14; y++) for (let x = -3; x <= 3; x++) {
+    const edge = Math.abs(x) === 3 || y === 6;
+    v.set(x, y, 4, edge ? brownDark : y === 8 || y === 11 ? trim : brown);
+  }
+  // pamigkis sa baywang at bungo na nakasabit sa kanan
+  for (let x = -4; x <= 4; x++) for (let z = -3; z <= 4; z++) {
+    if ((x / 4.2) ** 2 + ((z - 0.5) / 3.6) ** 2 <= 1) v.set(x, 14, z, sash);
+  }
+  v.box(-3, 10, 4, -3, 13, 4, sash);
+  v.box(-4, 9, 4, -3, 10, 5, skull);
+  v.set(-4, 10, 5, C.black).set(-3, 10, 5, C.black);
+  // ---- baro (kuba nang bahagya: pasulong ang itaas) ----
+  v.ellipsoid(0, 17.5, 0.6, 3.8, 3.2, 2.8, navy);
+  v.ellipsoid(0, 20.5, 1.2, 3.4, 2, 2.6, navy);
+  // balabal sa balikat: nakabalot sa itaas, patulis na tatsulok sa likod
+  v.ellipsoid(0, 20.8, 0.8, 5, 2, 3.4, (x, y, z) => (z >= 3 && Math.abs(x) <= 1 ? null : y <= 19 ? brownDark : brown));
+  for (let y = 11; y <= 20; y++) {
+    const w = Math.floor((y - 10) * 0.55);
+    for (let x = -w; x <= w; x++) v.set(x, y, -3, Math.abs(x) === w || y === 11 ? trim : brown);
+  }
+  // nakalawit sa harap ng dibdib (dalawang gilid)
+  for (const s of [-1, 1]) v.box(s * 2, 15, 3, s * 3, 19, 3, brown).box(s * 3, 15, 3, s * 3, 19, 3, brownDark);
+  // kuwintas na may bungo
+  v.box(-1, 19, 4, 1, 19, 4, sash);
+  v.box(-1, 16, 4, 1, 18, 4, skull);
+  v.set(-1, 17, 5, C.black).set(1, 17, 5, C.black);
+  // ---- leeg at ulo (kulubot na mukha, uban na nakapusod) ----
+  v.box(-1, 22, 1, 1, 22, 2, skin);
+  v.ellipsoid(0, 24.8, 2, 2.6, 2.9, 2.5, skin);
+  v.boxSym(1, 25, 4, 1, 25, 4, C.black); // mata
+  v.boxSym(1, 26, 4, 2, 26, 4, skinDark); // kulubot na kilay
+  v.set(0, 24, 5, skinDark); // ilong
+  v.box(-1, 23, 4, 1, 23, 4, skinDark); // bibig
+  v.boxSym(2, 23, 3, 2, 24, 3, skinDark); // kulubot sa pisngi
+  v.ellipsoid(0, 25.6, 1.6, 2.9, 3, 2.8, (x, y, z) => (z >= 3 && y <= 26 ? null : (x + y) % 2 === 0 ? grey : greyDark));
+  v.ellipsoid(0, 28.4, -0.4, 1.7, 1.5, 1.6, (x, y) => ((x + y) % 2 === 0 ? grey : greyDark)); // pusod
   m.part('body', v);
+  // ---- paa (sandalyas): ang kita lang ay sa ilalim ng palda ----
+  const hip = [2, 10, 0] as const;
+  const leg = new Vox();
+  leg.box(0, 2 - hip[1], 0, 0, 5 - hip[1], 1, skin);
+  leg.box(-1, 1 - hip[1], 0, 1, 1 - hip[1], 2, skin);
+  leg.box(-1, -hip[1], -1, 1, -hip[1], 3, sandal);
+  m.limbPair('leg', leg, 'leg', ...hip);
+  // ---- kanang braso (-x) na may baluktot na tungkod ----
+  const rs = [-4, 20, 1] as const;
+  const ra = new Vox();
+  ra.box(-1, -5, -1, 0, 0, 1, navy); // manggas
+  ra.box(-1, -7, 0, 0, -5, 2, navy);
+  ra.box(-1, -8, 1, 0, -8, 3, navyDark); // laylayan ng manggas
+  ra.box(-2, -10, 2, 0, -9, 3, skin); // kamay na hawak ang tungkod
+  for (let y = -rs[1]; y <= 13; y++) ra.set(-2, y, 3, y % 3 === 0 ? woodDark : wood); // pilipit na kahoy
+  for (const y of [-9, -2, 5, 11]) ra.set(-2, y, 4, woodDark); // buko-buko
+  ra.line([[-2, 13, 3], [-1, 15, 3], [1, 15, 3], [2, 13, 3], [1, 12, 3]], woodDark); // kulot sa tuktok
+  ra.set(0, 14, 3, curse, true); // kislap ng sumpa
+  ra.box(2, 10, 3, 2, 11, 3, herbDark); // halamang nakasabit
+  ra.box(-3, 9, 3, -3, 12, 3, herbDark);
+  ra.set(-3, 8, 3, sash);
+  m.limb('armR', ra, 'arm', ...rs, -1, 0.5);
+  // ---- kaliwang braso (+x) na may bayong ng halaman ----
+  const ls = [4, 20, 1] as const;
+  const la = new Vox();
+  la.box(0, -5, -1, 1, 0, 1, navy);
+  la.box(0, -6, 1, 1, -5, 3, navy); // nakabaluktot na siko
+  la.box(0, -6, 4, 1, -5, 4, skin); // kamay
+  for (let x = 1; x <= 5; x++) for (let y = -11; y <= -8; y++) for (let z = 1; z <= 5; z++) {
+    if (((x - 3) / 2.4) ** 2 + ((z - 3) / 2.4) ** 2 > 1) continue;
+    la.set(x, y, z, (x + y + z) % 2 === 0 ? trim : wood);
+  }
+  for (const [x, z, h] of [[2, 2, 2], [3, 4, 3], [4, 3, 2], [3, 2, 1], [2, 4, 1]] as const) la.box(x, -7, z, x, -7 + h, z, h > 1 ? herb : herbDark);
+  la.line([[1, -8, 3], [1, -5, 3], [5, -5, 3], [5, -8, 3]], wood); // hawakan
+  m.limb('armL', la, 'arm', ...ls, 1, 0.6);
   return m.done();
 }
 

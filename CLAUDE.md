@@ -59,6 +59,7 @@ Base: Bahay Kubo (may HP) sa harap ng camera. Papalapit ang halimaw mula sa mala
   like spam).
 - Original art lang. Walang gagamitin na copyrighted characters.
 - Voxel (pixel 3D) ang mga karakter: game/src/render/voxModels.ts (pixel data) + voxel.ts (mesher).
+  Binti/braso na may pivot (`Model.limbs`, `limb`/`limbPair`) ay umuugoy habang naglalakad (`FX.legSwing`/`armSwing`).
 
 ## Mga command
 Mula sa root ng repo (~/laban-baryo):
