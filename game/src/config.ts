@@ -166,10 +166,13 @@ export interface GiftValue<K> {
 export const GIFTS: Record<string, GiftValue<DefenderKind>> = {
   Rose: { unit: 'tanod', perGift: 2, coins: 1 },
   TikTok: { unit: 'tanod', perGift: 3, coins: 1 },
+  Fire: { unit: 'malupiton', perGift: 1, coins: 1 },
   'Ice Cream Cone': { unit: 'malupiton', perGift: 1, coins: 1 },
   'Finger Heart': { unit: 'anito', perGift: 1, coins: 5 },
+  'I love you': { unit: 'sarimanok', perGift: 1, coins: 10 },
   Dolphin: { unit: 'sarimanok', perGift: 1, coins: 10 },
-  'Bravo!': { unit: 'higante', perGift: 1, coins: 10 },
+  'Bravo!': { unit: 'higante', perGift: 1, coins: 15 },
+  'G.O.A.T. Busker': { unit: 'higante', perGift: 1, coins: 20 },
   Doughnut: { unit: 'haliya', perGift: 1, coins: 30 },
 };
 
@@ -179,8 +182,8 @@ export const GIFTS: Record<string, GiftValue<DefenderKind>> = {
  */
 export const GIFT_TIERS: { min: number; unit: DefenderKind; perGift: number }[] = [
   { min: 30, unit: 'haliya', perGift: 1 },
-  { min: 10, unit: 'higante', perGift: 1 },
-  { min: 8, unit: 'sarimanok', perGift: 1 },
+  { min: 15, unit: 'higante', perGift: 1 },
+  { min: 10, unit: 'sarimanok', perGift: 1 },
   { min: 5, unit: 'anito', perGift: 1 },
   { min: 2, unit: 'malupiton', perGift: 1 },
   { min: 1, unit: 'tanod', perGift: 2 },
@@ -196,11 +199,18 @@ export const FOLLOW = { unit: 'malupiton' as DefenderKind, count: 1 };
  */
 export const VILLAIN_GIFTS: Record<string, GiftValue<AttackerKind>> = {
   GG: { unit: 'aswang', perGift: 2, coins: 1 },
+  'You\'re awesome': { unit: 'aswang', perGift: 2, coins: 1 },
   'Heart Me': { unit: 'manananggal', perGift: 1, coins: 1 },
+  'Love you so much': { unit: 'manananggal', perGift: 1, coins: 1 },
+  Overreact: { unit: 'tikbalang', perGift: 2, coins: 5 },
   Panda: { unit: 'tikbalang', perGift: 2, coins: 5 },
   Rosa: { unit: 'mangkukulam', perGift: 1, coins: 10 },
+  'Kudos for My Star': { unit: 'kapre', perGift: 1, coins: 15 },
+  'No Comment': { unit: 'kapre', perGift: 1, coins: 20 },
+  Perfume: { unit: 'kapre', perGift: 1, coins: 20 },
   'Gold Boxing Gloves': { unit: 'kapre', perGift: 1, coins: 10 },
   Capybara: { unit: 'bakunawa', perGift: 1, coins: 30 },
+  'KO!': { unit: 'bakunawa', perGift: 1, coins: 100 },
 };
 /** Chat commands para sa halimaw (parehong cooldown ng CHAT). */
 export const VILLAIN_CHAT: Record<string, AttackerKind> = { '!aswang': 'aswang' };
@@ -496,17 +506,27 @@ export const ICONS = {
   gifts: {
     Rose: '🌹',
     TikTok: '🎵',
+    Fire: '🔥',
     'Ice Cream Cone': '🍦',
     'Finger Heart': '🫰',
+    'I love you': '💖',
     Dolphin: '🐬',
     'Bravo!': '👏',
+    'G.O.A.T. Busker': '🐐',
     Doughnut: '🍩',
     GG: '🎮',
     'Heart Me': '💗',
+    'You\'re awesome': '🐱',
+    'Love you so much': '🥰',
+    Overreact: '🤪',
     Panda: '🐼',
     Rosa: '🌺',
+    'Kudos for My Star': '🎻',
+    'No Comment': '🥒',
+    Perfume: '🧴',
     'Gold Boxing Gloves': '🥊',
     Capybara: '🦫',
+    'KO!': '💥',
   } as Record<string, string>,
 } as const;
 
@@ -521,9 +541,9 @@ export const DEBUG_KEYS = {
   '1': { type: 'like', user: '', count: SPAWN.likesPerTanod },
   L: { type: 'like', user: '', count: 10 },
   R: { type: 'gift', user: '', gift: 'Rose', count: 1 },
-  I: { type: 'gift', user: '', gift: 'Ice Cream Cone', count: 1 },
+  I: { type: 'gift', user: '', gift: 'Fire', count: 1 },
   A: { type: 'gift', user: '', gift: 'Finger Heart', count: 1 },
-  D: { type: 'gift', user: '', gift: 'Dolphin', count: 1 },
+  D: { type: 'gift', user: '', gift: 'I love you', count: 1 },
   J: { type: 'gift', user: '', gift: 'Bravo!', count: 1 },
   Y: { type: 'gift', user: '', gift: 'Doughnut', count: 1 },
   F: { type: 'follow', user: '' },
@@ -531,9 +551,9 @@ export const DEBUG_KEYS = {
   // HALIMAW (versus, 1-30 coins)
   G: { type: 'gift', user: '', gift: 'GG', count: 1 },
   H: { type: 'gift', user: '', gift: 'Heart Me', count: 1 },
-  P: { type: 'gift', user: '', gift: 'Panda', count: 1 },
+  P: { type: 'gift', user: '', gift: 'Overreact', count: 1 },
   C: { type: 'gift', user: '', gift: 'Rosa', count: 1 },
-  K: { type: 'gift', user: '', gift: 'Gold Boxing Gloves', count: 1 },
+  K: { type: 'gift', user: '', gift: 'Kudos for My Star', count: 1 },
   B: { type: 'gift', user: '', gift: 'Capybara', count: 1 },
   X: { type: 'chat', user: '', msg: '!aswang' },
 } as const;
@@ -547,11 +567,10 @@ export const DEBUG_PANEL = {
   buttons: [
     { label: '❤️ 30 likes → Tanod', event: { type: 'like', count: SPAWN.likesPerTanod } },
     { label: '🌹 Rose (1c) → 2 Tanod', event: { type: 'gift', gift: 'Rose', count: 1 } },
-    { label: '🎵 TikTok (1c) → 3 Tanod', event: { type: 'gift', gift: 'TikTok', count: 1 } },
-    { label: '🍦 Ice Cream (1c) → Malupiton', event: { type: 'gift', gift: 'Ice Cream Cone', count: 1 } },
+    { label: '🔥 Fire (1c) → Malupiton', event: { type: 'gift', gift: 'Fire', count: 1 } },
     { label: '🫰 Finger Heart (5c) → Anito', event: { type: 'gift', gift: 'Finger Heart', count: 1 } },
-    { label: '🐬 Dolphin (10c) → Sarimanok', event: { type: 'gift', gift: 'Dolphin', count: 1 } },
-    { label: '👏 Bravo (10c) → Higante', event: { type: 'gift', gift: 'Bravo!', count: 1 } },
+    { label: '💖 I love you (10c) → Sarimanok', event: { type: 'gift', gift: 'I love you', count: 1 } },
+    { label: '👏 Bravo (15c) → Higante', event: { type: 'gift', gift: 'Bravo!', count: 1 } },
     { label: '🍩 Doughnut (30c) → Haliya', event: { type: 'gift', gift: 'Doughnut', count: 1 } },
     { label: '➕ Follow → Malupiton', event: { type: 'follow' } },
     { label: '💬 !tanod', event: { type: 'chat', msg: '!tanod' } },
@@ -560,9 +579,9 @@ export const DEBUG_PANEL = {
   villainButtons: [
     { label: '[G] 🎮 GG (1c) → 2 Aswang', event: { type: 'gift', gift: 'GG', count: 1 } },
     { label: '[H] 💗 Heart Me (1c) → Manananggal', event: { type: 'gift', gift: 'Heart Me', count: 1 } },
-    { label: '[P] 🐼 Panda (5c) → 2 Tikbalang', event: { type: 'gift', gift: 'Panda', count: 1 } },
+    { label: '[P] 🤪 Overreact (5c) → 2 Tikbalang', event: { type: 'gift', gift: 'Overreact', count: 1 } },
     { label: '[C] 🌺 Rosa (10c) → Mangkukulam', event: { type: 'gift', gift: 'Rosa', count: 1 } },
-    { label: '[K] 🥊 Gold Boxing Gloves (10c) → Kapre', event: { type: 'gift', gift: 'Gold Boxing Gloves', count: 1 } },
+    { label: '[K] 🎻 Kudos (15c) → Kapre', event: { type: 'gift', gift: 'Kudos for My Star', count: 1 } },
     { label: '[B] 🦫 Capybara (30c) → Bakunawa', event: { type: 'gift', gift: 'Capybara', count: 1 } },
     { label: '[X] 💬 !aswang', event: { type: 'chat', msg: '!aswang' } },
   ],

@@ -125,25 +125,25 @@ export class Hud {
         heroRows.replaceChildren(...heroList.map(toRow));
         villainRows.replaceChildren(...villainList.map(toRow));
       } else {
-        // Anti-Ban Safe Mode (Default): Malalaking Gift Icons LANG, walang coins/gifts text sa OCR ng TikTok
-        const heroRoster: { unit: DefenderKind; gift: string; count: number }[] = [
-          { unit: 'tanod', gift: 'Rose', count: 2 },
-          { unit: 'malupiton', gift: 'Ice Cream Cone', count: 1 },
-          { unit: 'anito', gift: 'Finger Heart', count: 1 },
-          { unit: 'sarimanok', gift: 'Dolphin', count: 1 },
-          { unit: 'higante', gift: 'Bravo!', count: 1 },
-          { unit: 'haliya', gift: 'Doughnut', count: 1 },
+        // HUD cards: May Malalaking Gift Icons + Malinaw na TikTok Gift Name & Coins
+        const heroRoster: { unit: DefenderKind; gift: string; count: number; coins: number }[] = [
+          { unit: 'tanod', gift: 'Rose', count: 2, coins: 1 },
+          { unit: 'malupiton', gift: 'Fire', count: 1, coins: 1 },
+          { unit: 'anito', gift: 'Finger Heart', count: 1, coins: 5 },
+          { unit: 'sarimanok', gift: 'I love you', count: 1, coins: 10 },
+          { unit: 'higante', gift: 'Bravo!', count: 1, coins: 15 },
+          { unit: 'haliya', gift: 'Doughnut', count: 1, coins: 30 },
         ];
-        const villainRoster: { unit: AttackerKind; gift: string; count: number }[] = [
-          { unit: 'aswang', gift: 'GG', count: 2 },
-          { unit: 'manananggal', gift: 'Heart Me', count: 1 },
-          { unit: 'tikbalang', gift: 'Panda', count: 2 },
-          { unit: 'mangkukulam', gift: 'Rosa', count: 1 },
-          { unit: 'kapre', gift: 'Gold Boxing Gloves', count: 1 },
-          { unit: 'bakunawa', gift: 'Capybara', count: 1 },
+        const villainRoster: { unit: AttackerKind; gift: string; count: number; coins: number }[] = [
+          { unit: 'aswang', gift: 'GG', count: 2, coins: 1 },
+          { unit: 'manananggal', gift: 'Heart Me', count: 1, coins: 1 },
+          { unit: 'tikbalang', gift: 'Overreact', count: 2, coins: 5 },
+          { unit: 'mangkukulam', gift: 'Rosa', count: 1, coins: 10 },
+          { unit: 'kapre', gift: 'Kudos for My Star', count: 1, coins: 15 },
+          { unit: 'bakunawa', gift: 'Capybara', count: 1, coins: 30 },
         ];
-        heroRows.replaceChildren(...heroRoster.map((r) => this.cleanUnitRow(r.unit, DEFENDERS[r.unit].name, r.gift, r.count)));
-        villainRows.replaceChildren(...villainRoster.map((r) => this.cleanUnitRow(r.unit, ATTACKERS[r.unit].name, r.gift, r.count)));
+        heroRows.replaceChildren(...heroRoster.map((r) => this.cleanUnitRow(r.unit, DEFENDERS[r.unit].name, r.gift, r.count, r.coins)));
+        villainRows.replaceChildren(...villainRoster.map((r) => this.cleanUnitRow(r.unit, ATTACKERS[r.unit].name, r.gift, r.count, r.coins)));
       }
     };
     fillColumns();
@@ -203,9 +203,9 @@ export class Hud {
     this.net = s;
   }
 
-  private cleanUnitRow(unit: UnitKind, name: string, giftName: string, count: number) {
+  private cleanUnitRow(unit: UnitKind, name: string, giftName: string, count: number, coins: number) {
     const row = h('div', 'icon-row clean-card');
-    row.title = `${name} (${giftName})`;
+    row.title = `${name} (Gift: ${giftName} • ${coins} coins)`;
 
     const cardPair = h('div', 'card-pair');
 
@@ -215,7 +215,7 @@ export class Hud {
     img.src = this.portraits[unit];
     pic.append(img);
 
-    // Malaking Gift Icon (walang coins o pangalan ng gift)
+    // Malaking Gift Icon
     const giftBox = h('div', 'big-gift-box');
     const gIcon = giftIconEl(giftName, 'big-gift-img', 54);
     giftBox.append(gIcon);
@@ -223,7 +223,17 @@ export class Hud {
     cardPair.append(pic, giftBox);
 
     const labelText = count > 1 ? `${name} x${count}` : name;
-    row.append(cardPair, h('div', 'clean-name', labelText));
+    const nameEl = h('div', 'clean-name', labelText);
+
+    // Malinaw na pangalan ng gift at coins para alam agad ng viewers ang ise-send sa TikTok
+    const giftBadge = h('div', 'clean-gift-name');
+    giftBadge.append(
+      h('span', 'g-prefix', 'GIFT: '),
+      h('span', 'g-title', giftName),
+      h('span', 'g-coins', ` (${coins}⭐)`),
+    );
+
+    row.append(cardPair, nameEl, giftBadge);
     return row;
   }
 

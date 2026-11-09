@@ -107,7 +107,7 @@ function generateSmallGift(): BridgeMessage {
   if (isHero) {
     const gifts = [
       { name: 'Rose', coins: 1, count: 1 },
-      { name: 'Ice Cream Cone', coins: 1, count: 1 },
+      { name: 'Fire', coins: 1, count: 1 },
     ];
     const g = gifts[Math.floor(Math.random() * gifts.length)]!;
     console.log(`[MOCK GIFT] 🌹 [BAYANI] ${user} sent ${g.name} x1`);
