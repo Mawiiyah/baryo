@@ -1,8 +1,9 @@
 import { DEBUG_PANEL, DEBUG_ROUND_LINKS, SCENE3D } from '../config';
 import { handleEvent, type GameEvent } from '../events';
+import type { MonsterFog } from '../render/MonsterFog';
 
 /** Mga test button sa labas ng #stage (hindi naka-scale). Bawat click → handleEvent. */
-export function mountDebugPanel() {
+export function mountDebugPanel(monsterFog?: MonsterFog) {
   const panel = document.createElement('div');
   panel.className = 'debug-panel';
   const title = document.createElement('div');
@@ -51,6 +52,39 @@ export function mountDebugPanel() {
     a.textContent = (isActive ? '▶ ' : '') + m.label;
     if (isActive) a.style.fontWeight = 'bold';
     panel.append(a);
+  }
+
+  // Atmospera (Monster Fog & Moon Overlay)
+  if (monsterFog) {
+    const fogTitle = document.createElement('div');
+    fogTitle.className = 'debug-title';
+    fogTitle.textContent = 'ATMOSPERA (Monster Fog & Moon)';
+    panel.append(fogTitle);
+
+    let fogOn = true;
+    const toggleFogBtn = document.createElement('button');
+    toggleFogBtn.textContent = '👻 Monster Fog: ON';
+    toggleFogBtn.addEventListener('click', () => {
+      fogOn = !fogOn;
+      monsterFog.setEnabled(fogOn);
+      toggleFogBtn.textContent = `👻 Monster Fog: ${fogOn ? 'ON' : 'OFF'}`;
+    });
+    panel.append(toggleFogBtn);
+
+    const flareBtn = document.createElement('button');
+    flareBtn.textContent = '🔥 Eerie Eye Flare';
+    flareBtn.addEventListener('click', () => monsterFog.triggerFlare(2000));
+    panel.append(flareBtn);
+
+    let bloodOn = false;
+    const bloodBtn = document.createElement('button');
+    bloodBtn.textContent = '🩸 Blood Moon';
+    bloodBtn.addEventListener('click', () => {
+      bloodOn = !bloodOn;
+      monsterFog.setBloodMoon(bloodOn);
+      bloodBtn.textContent = bloodOn ? '🌕 Normal Moon' : '🩸 Blood Moon';
+    });
+    panel.append(bloodBtn);
   }
 
   // Maikling round para sa testing (nire-reload ang page na may ?round=N)

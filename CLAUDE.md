@@ -9,8 +9,7 @@ kubo pagkaubos ng oras, HALIMAW kapag nawasak ito. May score kada round.
 
 ## Stack
 - Language: TypeScript (strict) sa buong project
-- game/: Vite + Three.js (3D na eksena) + HTML/CSS na HUD. PIXEL ART na istilo: 3D ay nire-render
-  sa mababang resolution (`SCENE3D.pixelScale`) at pinalalaki nang pixelated; font: @fontsource/silkscreen;
+- game/: Vite + Three.js (3D na eksena) + HTML/CSS na HUD. PIXEL ART na istilo ang HUD; ang 3D ay nire-render sa `SCENE3D.pixelScale` (1 = buong resolution, makinis; 2-3 = mababang resolution, pixelated); font: @fontsource/silkscreen;
   emoji/gift icons/portraits ay dino-drawing sa maliit na canvas (ui/pixel.ts).
 - bridge/: Node.js + tiktok-live-connector + ws (WebSocket, port 8080)
 - DB: wala muna. SQLite + Drizzle kapag kailangan na ang leaderboard.

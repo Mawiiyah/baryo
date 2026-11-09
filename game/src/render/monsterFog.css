@@ -1,0 +1,182 @@
+/* Eerie Monster Fog & Moon Overlay (Pinoy Folklore Atmosphere) */
+
+.monster-fog-root {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+
+/* ---- Pixel Moon & Drifting Clouds ---- */
+.mf-moon-container {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 820px;
+  max-width: 46%;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  transition: filter 0.8s ease;
+  animation: mf-moon-float 7s ease-in-out infinite alternate;
+}
+
+.mf-moon-clouds {
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 20px rgba(220, 240, 255, 0.45));
+}
+
+.mf-moon-blood {
+  filter: hue-rotate(290deg) saturate(3.5) brightness(1.2) drop-shadow(0 0 28px rgba(255, 20, 20, 0.95)) !important;
+}
+
+@keyframes mf-moon-float {
+  0% {
+    transform: translateX(-50%) translateY(0px);
+  }
+  50% {
+    transform: translateX(-49.7%) translateY(3px);
+  }
+  100% {
+    transform: translateX(-50.3%) translateY(-2px);
+  }
+}
+
+/* ---- Fog Flanks (Left & Right) ---- */
+.mf-flank {
+  position: absolute;
+  bottom: 0;
+  pointer-events: none;
+  transform-origin: bottom center;
+}
+
+.mf-flank-left {
+  left: 0;
+  width: 530px;
+  height: 940px;
+  animation: mf-fog-sway-left 8s ease-in-out infinite alternate;
+}
+
+.mf-flank-right {
+  right: 0;
+  width: 500px;
+  height: 940px;
+  animation: mf-fog-sway-right 8.5s ease-in-out infinite alternate;
+}
+
+.mf-fog-img {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  image-rendering: pixelated;
+  opacity: 0.96;
+  filter: drop-shadow(0 0 14px rgba(75, 20, 110, 0.5));
+  transition: filter 0.4s ease, transform 0.4s ease;
+}
+
+/* Flare effect when halimaw/boss spawns */
+.mf-flank.mf-flare .mf-fog-img {
+  filter: drop-shadow(0 0 32px rgba(180, 20, 240, 0.9)) brightness(1.25);
+  transform: scale(1.03);
+}
+
+@keyframes mf-fog-sway-left {
+  0% {
+    transform: translateY(0px) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.015, 1.01) rotate(0.4deg);
+  }
+  100% {
+    transform: translateY(-4px) scale(0.99, 1.02) rotate(-0.3deg);
+  }
+}
+
+@keyframes mf-fog-sway-right {
+  0% {
+    transform: translateY(0px) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.018, 1.01) rotate(-0.4deg);
+  }
+  100% {
+    transform: translateY(-3px) scale(0.995, 1.015) rotate(0.3deg);
+  }
+}
+
+/* ---- Peeking Monster Eyes in Fog ---- */
+.mf-eye, .mf-pupil {
+  display: block;
+  background: radial-gradient(circle, #fff5d0 0%, #ff4422 55%, #c01010 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 10px 4px rgba(255, 40, 20, 0.9), 0 0 18px 8px rgba(200, 10, 10, 0.4);
+  transform-origin: center center;
+  transition: transform 0.08s ease, filter 0.3s ease, box-shadow 0.3s ease;
+  animation: mf-eye-pulse 3.5s ease-in-out infinite alternate;
+}
+
+.mf-eye {
+  position: absolute;
+  width: 9px;
+  height: 6px;
+  transform: translate(-50%, -50%);
+}
+
+.mf-eye-pair {
+  position: absolute;
+  display: flex;
+  gap: 7px;
+  transform: translate(-50%, -50%);
+}
+
+.mf-eye-pair .mf-pupil {
+  width: 8px;
+  height: 5px;
+}
+
+/* Blinking state */
+.mf-eye.mf-blink, .mf-pupil.mf-blink {
+  transform: scaleY(0.06) !important;
+  box-shadow: 0 0 2px 1px rgba(255, 40, 20, 0.3) !important;
+}
+
+/* Flare state on enemy spawn */
+.mf-eye.mf-flare, .mf-pupil.mf-flare {
+  filter: brightness(1.7);
+  box-shadow: 0 0 18px 9px rgba(255, 60, 20, 1), 0 0 28px 14px rgba(255, 120, 0, 0.7);
+  transform: scale(1.35) !important;
+}
+
+@keyframes mf-eye-pulse {
+  0% {
+    filter: brightness(0.92);
+    box-shadow: 0 0 8px 3px rgba(255, 40, 20, 0.8), 0 0 14px 6px rgba(180, 10, 10, 0.35);
+  }
+  50% {
+    filter: brightness(1.15);
+    box-shadow: 0 0 12px 5px rgba(255, 50, 20, 0.95), 0 0 20px 9px rgba(220, 20, 10, 0.5);
+  }
+  100% {
+    filter: brightness(1);
+    box-shadow: 0 0 9px 4px rgba(255, 40, 20, 0.85), 0 0 16px 7px rgba(190, 10, 10, 0.4);
+  }
+}
+
+/* Ambient ground creeping mist at the edges */
+.mf-creeping-mist-left, .mf-creeping-mist-right {
+  position: absolute;
+  bottom: 0;
+  width: 380px;
+  height: 220px;
+  pointer-events: none;
+  background: radial-gradient(ellipse at bottom, rgba(50, 15, 75, 0.45) 0%, rgba(20, 5, 35, 0) 70%);
+}
+.mf-creeping-mist-left { left: 0; }
+.mf-creeping-mist-right { right: 0; }

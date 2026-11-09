@@ -80,16 +80,30 @@ export class World3D {
   private V = getViewConfig();
 
   constructor(parent: HTMLElement, world: World) {
-    // Pixelated: mababang resolution, pinalalaki nang walang blur
-    this.renderer = new THREE.WebGLRenderer({ antialias: false });
+    // Pixelated kapag pixelScale > 1 (mababang resolution, pinalalaki nang walang blur); makinis kapag 1
+    const smooth = S.pixelScale <= 1;
+    this.renderer = new THREE.WebGLRenderer({ antialias: smooth });
     this.renderer.setPixelRatio(1);
     this.renderer.setSize(Math.round(GAME.width / S.pixelScale), Math.round(GAME.height / S.pixelScale), false);
-    Object.assign(this.renderer.domElement.style, { width: `${GAME.width}px`, height: `${GAME.height}px`, imageRendering: 'pixelated' });
+    Object.assign(this.renderer.domElement.style, { width: `${GAME.width}px`, height: `${GAME.height}px`, imageRendering: smooth ? 'auto' : 'pixelated' });
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = S.exposure;
     parent.appendChild(this.renderer.domElement);
+
+    // Vignette: madilim na purple-black sa mga gilid (nasa pagitan ng 3D at labels/HUD)
+    if (S.vignette > 0) {
+      const vg = document.createElement('div');
+      Object.assign(vg.style, {
+        position: 'absolute',
+        inset: '0',
+        zIndex: '1',
+        pointerEvents: 'none',
+        background: `radial-gradient(ellipse at 50% 55%, rgba(10,4,24,0) 42%, rgba(10,4,24,${S.vignette * 0.55}) 75%, rgba(4,1,12,${S.vignette}) 100%)`,
+      });
+      parent.appendChild(vg);
+    }
 
     this.labels = new CSS2DRenderer();
     this.labels.setSize(GAME.width, GAME.height);
@@ -139,6 +153,10 @@ export class World3D {
     glow.scale.setScalar(S.moonGlowScale);
     glow.position.copy(moonMesh.position);
     this.moonGlow = glow;
+    if (S.battlefield === 'barangay') {
+      moonMesh.visible = false;
+      glow.visible = false;
+    }
     sc.add(moonMesh, glow);
     const starPos: number[] = [];
     for (let i = 0; i < S.starCount; i++) {

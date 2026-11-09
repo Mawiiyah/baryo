@@ -2,6 +2,7 @@ import '@fontsource/silkscreen/700.css';
 import { DEBUG_KEYS, GAME, ROUND, SCENE3D, SOUND } from './config';
 import { handleEvent, setEventTarget } from './events';
 import { renderPortraits } from './render/portraits';
+import { MonsterFog } from './render/MonsterFog';
 import { World3D } from './render/World3D';
 import { World } from './sim/World';
 import { connectBridge } from './systems/Net';
@@ -34,6 +35,7 @@ if (mapParam === 'barangay' || mapParam === 'templo' || mapParam === 'baryo') {
 const debugRoundSecs = params.has('debug') ? Number(params.get('round')) : 0;
 const world = new World(debugRoundSecs > 0 ? debugRoundSecs * 1000 : ROUND.durationMs);
 const view = new World3D(stage, world);
+const monsterFog = new MonsterFog(stage, world);
 const hud = new Hud(stage, world, renderPortraits());
 const sound = new Sound(world);
 setEventTarget((e) => {
@@ -52,7 +54,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 // Clickable test buttons: buksan ang http://localhost:5173/?debug
-if (params.has('debug')) mountDebugPanel();
+if (params.has('debug')) mountDebugPanel(monsterFog);
 
 connectBridge(import.meta.env.VITE_WS_URL, handleEvent, (s) => hud.setNet(s), setGiftIcons);
 
@@ -62,6 +64,7 @@ const frame = (now: number) => {
   last = now;
   world.update(dt);
   view.update(dt);
+  monsterFog.update(dt);
   hud.update();
   requestAnimationFrame(frame);
 };

@@ -1,4 +1,4 @@
-// LAHAT ng numbers ng laro ay dito. Walang magic numbers sa ibang file
+﻿// LAHAT ng numbers ng laro ay dito. Walang magic numbers sa ibang file
 // (maliban sa hugis ng placeholder models sa render/models.ts, na parang sprite data).
 //
 // Coordinates ng mundo (metro):
@@ -38,7 +38,7 @@ export const GAME = {
 /** Sukat ng lane at mga posisyon (metro). */
 export const LANE = {
   length: 30, // hanggang saan ang daan
-  halfWidth: 4.8, // lapad ng daan / 2 (dito naglalakad ang units)
+  halfWidth: 7.0, // lapad ng daan / 2 (pinalapad mula 4.8 para maluwag ang labanan)
   spawnPos: 32, // dito lumalabas ang halimaw (labas ng screen sa kanan)
   baseHitPos: 3.2, // dito tumitigil at umaatake sa kubo ang halimaw
   defenderSpawnPos: 3.0,
@@ -47,8 +47,8 @@ export const LANE = {
   idleJitterPos: 3.5, // random na ± sa front line para hindi magpatong-patong
   flyHeight: 2.4,
   separation: 0.32, // min na layo ng dalawang unit = (size A + size B) × ito (para hindi magpatong)
-  aggroRange: 5, // halimaw: lumalapit sa bayani na nasa loob nito (para kita ang laban)
-  leash: 4, // bayani: hinahabol lang ang halimaw hanggang frontLinePos + ito (laban sa gitna ng screen)
+  aggroRange: 5.5, // halimaw: lumalapit sa bayani na nasa loob nito (para kita ang laban)
+  leash: 4.5, // bayani: hinahabol lang ang halimaw hanggang frontLinePos + ito
   rangeJitter: 0.45, // ranged units: tumitigil sa (1 - random×ito) ng range para nakakalat sila
   meleeReach: 1.4, // abot ng suntok; ranged na halimaw ay tumitigil nang (range - meleeReach) mas malayo sa kubo
 } as const;
@@ -57,8 +57,8 @@ export const BASE = {
   name: 'Bahay Kubo',
   hp: 3000, // ipinapakita bilang % sa HUD
   /**
-   * Tama sa kubo ng halimaw na pinalakas ng coins = normal na damage × k^ito
-   * (hindi buong √k), para makunat ang kubo at may oras pang sumagot ang BAYANI.
+   * Tama sa kubo ng halimaw na pinalakas ng coins = normal na damage Ã— k^ito
+   * (hindi buong âˆšk), para makunat ang kubo at may oras pang sumagot ang BAYANI.
    */
   damagePowerExp: 0.25,
 } as const;
@@ -110,20 +110,20 @@ export const ATTACKERS: Record<AttackerKind, UnitStats> = {
 };
 
 /**
- * PATAS NA HALAGA: ang lakas (HP × damage/s) ng unit galing sa gift ay ayon sa coins na binayad:
- *   lakas = refPower × (coins / refCoins) ^ coinExponent
+ * PATAS NA HALAGA: ang lakas (HP Ã— damage/s) ng unit galing sa gift ay ayon sa coins na binayad:
+ *   lakas = refPower Ã— (coins / refCoins) ^ coinExponent
  * Mas mataas sa 1 ang exponent dahil sa laban, mas malakas ang maraming maliit kaysa iisang malaki
- * na may parehong kabuuang lakas (sabay-sabay silang tumatama). HP at damage ay × √k.
+ * na may parehong kabuuang lakas (sabay-sabay silang tumatama). HP at damage ay Ã— âˆšk.
  * Libre (likes/follow/chat) = normal na lakas.
  */
 export const BALANCE = {
-  refCoins: 0.5, // 1 Rose = 2 Tanod → 0.5 coin bawat Tanod…
-  refPower: 1800, // …na may normal na lakas (120 HP × 15 dmg/s)
+  refCoins: 0.5, // 1 Rose = 2 Tanod â†’ 0.5 coin bawat Tanodâ€¦
+  refPower: 1800, // â€¦na may normal na lakas (120 HP Ã— 15 dmg/s)
   coinExponent: 1.6, // na-calibrate: equal-coin na laban ay halos tabla
   rangedFactor: 2, // dagdag na halaga ng nakakatira mula sa malayo
-  bossFactor: 1, // boss ability ay hiwalay na pinalalakas (× √k)
+  bossFactor: 1, // boss ability ay hiwalay na pinalalakas (Ã— âˆšk)
   /**
-   * Dagdag na "halaga" ng karakter na hindi nasusukat ng HP × damage (abilities, AoE, summon).
+   * Dagdag na "halaga" ng karakter na hindi nasusukat ng HP Ã— damage (abilities, AoE, summon).
    * > 1 = mas mahina ang ibibigay kada coin; < 1 = mas malakas. Na-calibrate sa equal-coin na laban.
    */
   valueFactor: { mangkukulam: 2.5, bakunawa: 2, kapre: 0.5 } as Partial<Record<UnitKind, number>>,
@@ -154,7 +154,7 @@ export interface GiftValue<K> {
   coins: number;
 }
 
-/** Gift name (gaya ng galing sa TikTok) → anong BAYANI, ilan kada gift, at halaga. */
+/** Gift name (gaya ng galing sa TikTok) â†’ anong BAYANI, ilan kada gift, at halaga. */
 export const GIFTS: Record<string, GiftValue<DefenderKind>> = {
   Rose: { unit: 'tanod', perGift: 2, coins: 1 },
   'TikTok': { unit: 'tanod', perGift: 3, coins: 1 },
@@ -164,7 +164,7 @@ export const GIFTS: Record<string, GiftValue<DefenderKind>> = {
 };
 
 /**
- * Gift na wala sa GIFTS/VILLAIN_GIFTS → BAYANI ayon sa halaga (unang tier na `coins >= min`).
+ * Gift na wala sa GIFTS/VILLAIN_GIFTS â†’ BAYANI ayon sa halaga (unang tier na `coins >= min`).
  * Mas mahal na gift = mas malakas o mas maraming bayani.
  */
 export const GIFT_TIERS: { min: number; unit: DefenderKind; perGift: number }[] = [
@@ -230,17 +230,17 @@ export const SCENE3D = {
   view: 'behind' as 'behind' | 'side',
   views: {
     behind: {
-      fov: 42,
-      cameraPos: { x: 0, y: 19, z: -11 },
-      cameraLookAt: { x: 0, y: 0, z: 9 }, // mataas na POV: kita ang buong daan, hindi magulo kahit marami
+      fov: 46,
+      cameraPos: { x: 0, y: 21, z: -12.5 },
+      cameraLookAt: { x: 0, y: 0, z: 12 }, // mataas na POV: kita ang buong malapad na daan
       moonPos: { x: -20, y: 18, z: 75 },
       moonLightPos: { x: -10, y: 22, z: 30 },
-      kuboScale: 0.8,
+      kuboScale: 0.85,
     },
     side: {
       fov: 38,
       cameraPos: { x: -22, y: 11, z: 10.5 },
-      cameraLookAt: { x: 0, y: 4, z: 10.5 }, // mataas ang tinitingnan → nasa ibaba ng screen ang daan
+      cameraLookAt: { x: 0, y: 4, z: 10.5 }, // mataas ang tinitingnan â†’ nasa ibaba ng screen ang daan
       moonPos: { x: 70, y: 30, z: 26 },
       moonLightPos: { x: -14, y: 24, z: 4 },
       kuboScale: 0.9,
@@ -254,9 +254,9 @@ export const SCENE3D = {
    */
   battlefield: 'barangay' as 'barangay' | 'templo' | 'baryo',
   barangay: {
-    camera: { fov: 46, cameraPos: { x: 0, y: 17.5, z: -11 }, cameraLookAt: { x: 0, y: 0, z: 12 } },
-    roadColor: '#2b2c34',
-    roadGrout: '#22232a',
+    camera: { fov: 52, cameraPos: { x: 0, y: 22, z: -13 }, cameraLookAt: { x: 0, y: 0, z: 15 } },
+    roadColor: '#41424f',
+    roadGrout: '#30313c',
     curbColor: 0xd8d6cb,
     curbStripeColor: 0x3b3a40,
     lineColor: '#eab32a',
@@ -276,13 +276,13 @@ export const SCENE3D = {
     palmCount: 16,
     grassTufts: 350,
     grassColor: 0x223a1a,
-    groundColor: 0x1b2818,
+    groundColor: 0x24351e,
     bannerSway: 0.1,
   },
   templo: {
     // camera para sa 'behind' (mas nakatingala nang kaunti para kita ang templo sa dulo)
-    camera: { fov: 46, cameraPos: { x: 0, y: 17.5, z: -11 }, cameraLookAt: { x: 0, y: 0, z: 12 } },
-    island: { rx: 15.5, rz: 26, cz: 13, depth: 2.4, roundness: 2.6 }, // superellipse na hugis ng isla (metro)
+    camera: { fov: 48, cameraPos: { x: 0, y: 19, z: -12 }, cameraLookAt: { x: 0, y: 0, z: 13 } },
+    island: { rx: 18.5, rz: 28, cz: 13, depth: 2.4, roundness: 2.6 }, // superellipse na hugis ng isla (metro)
     waterLevel: 1.9, // gaano kababa ang tubig sa ilalim ng damo
     waterColor: 0x091b2c, // madilim at malalim na tubig
     waterGlow: 0x030b14,
@@ -312,21 +312,21 @@ export const SCENE3D = {
     flameColor: 0xff9030,
   },
   unitScale: 1.0, // visual na laki ng units (hindi apektado ang gameplay)
-  pixelScale: 3, // ire-render ang 3D sa (1920/3)x(1080/3) tapos palalakihin nang pixelated; mas malaki = mas blocky
-  skyTop: '#03030b', // madilim na langit ng hatinggabi
-  skyMid: '#0e0b1c', // katakut-takot na purpura/itim
-  skyHorizon: '#241226', // malabong mapanganib na abot-tanaw
-  fogColor: 0x0d0916, // maitim at nakakatakot na hamog
-  fogNear: 16, // mas malapit para may misteryosong hamog sa daan
-  fogFar: 55, // nababalot sa hamog ang sinaunang templo at gubat
-  hemiSky: 0x4b5278, // malamig na liwanag mula sa langit
-  hemiGround: 0x10140c,
-  hemiIntensity: 0.95, // mas madilim at nakakatakot
-  exposure: 1.05,
+  pixelScale: 1, // 1 = buong resolution, makinis (may antialias); 2-3 = ire-render sa (1920/n)x(1080/n) tapos palalakihin nang pixelated
+  skyTop: '#02020a', // madilim na langit ng hatinggabi
+  skyMid: '#130c2a', // katakut-takot na purpura/itim
+  skyHorizon: '#33183a', // malabong mapanganib na abot-tanaw
+  fogColor: 0x1c1034, // maitim at nakakatakot na hamog
+  fogNear: 40, // mas malapit para may misteryosong hamog sa daan
+  fogFar: 120, // nababalot sa hamog ang sinaunang templo at gubat
+  hemiSky: 0x8a92d0, // malamig na liwanag mula sa langit
+  hemiGround: 0x2a2a3c,
+  hemiIntensity: 2.4, // mas madilim at nakakatakot
+  exposure: 1.45,
   moonLight: 0x8ea0c8, // maputlang liwanag ng buwan
-  moonIntensity: 1.5,
+  moonIntensity: 2.1,
   shadowMapSize: 2048,
-  shadowArea: 24, // kalahating lapad ng shadow camera
+  shadowArea: 28, // kalahating lapad ng shadow camera
   moonRadius: 3.2,
   moonColor: 0xeae0cc, // maputlang buwan
   moonGlowColor: 0x908cac,
@@ -349,8 +349,8 @@ export const SCENE3D = {
   fenceOffset: 0.6, // layo ng bakod sa gilid ng daan
   torchSpacing: 9,
   torchColor: 0xff9030,
-  torchIntensity: 7.5,
-  torchDistance: 9,
+  torchIntensity: 10,
+  torchDistance: 11,
   torchFlicker: 0.3,
   palmCount: 14,
   palmColor: 0x121c10,
@@ -368,6 +368,7 @@ export const SCENE3D = {
   ambientMistCount: 8,
   ambientMistColor: 0x140e22,
   ambientMistOpacity: 0.28,
+  vignette: 0.55, // dilim sa mga gilid ng screen (0 = wala); purple-black na kulay
 } as const;
 
 /** Animasyon at effects (3D). */
@@ -449,8 +450,8 @@ export const HUD = {
   toastMax: 3,
   toastMs: 5000,
   bannerMs: 2200,
-  hpWarn: 0.5, // < 50% → dilaw
-  hpDanger: 0.25, // < 25% → pula
+  hpWarn: 0.5, // < 50% â†’ dilaw
+  hpDanger: 0.25, // < 25% â†’ pula
   font: '"Silkscreen", monospace',
   portraitPx: 36, // resolution ng larawan ng karakter sa HUD (pinalalaki nang pixelated)
   iconPx: 18, // resolution ng emoji / gift icon sa HUD (pinalalaki nang pixelated)
@@ -458,22 +459,22 @@ export const HUD = {
 
 /** Emoji sa HUD. Walang emoji ang gift = ICONS.gift. */
 export const ICONS = {
-  like: '❤️',
-  follow: '➕',
-  chat: '💬',
-  gift: '🎁',
+  like: 'â¤ï¸',
+  follow: 'âž•',
+  chat: 'ðŸ’¬',
+  gift: 'ðŸŽ',
   gifts: {
-    Rose: '🌹',
-    TikTok: '🎵',
-    'Ice Cream Cone': '🍦',
-    'Finger Heart': '🫰',
-    Doughnut: '🍩',
-    GG: '🎮',
-    'Heart Me': '💗',
-    Perfume: '🧴',
-    'Hand Hearts': '🫶',
-    Cap: '🧢',
-    Galaxy: '🌌',
+    Rose: 'ðŸŒ¹',
+    TikTok: 'ðŸŽµ',
+    'Ice Cream Cone': 'ðŸ¦',
+    'Finger Heart': 'ðŸ«°',
+    Doughnut: 'ðŸ©',
+    GG: 'ðŸŽ®',
+    'Heart Me': 'ðŸ’—',
+    Perfume: 'ðŸ§´',
+    'Hand Hearts': 'ðŸ«¶',
+    Cap: 'ðŸ§¢',
+    Galaxy: 'ðŸŒŒ',
   } as Record<string, string>,
 } as const;
 
@@ -482,7 +483,7 @@ export const NET = {
   reconnectMaxMs: 10000,
 } as const;
 
-/** Debug keys → event (dumadaan pa rin sa handleEvent). */
+/** Debug keys â†’ event (dumadaan pa rin sa handleEvent). */
 export const DEBUG_KEYS = {
   // '1' = sapat na likes para sa isang Tanod
   '1': { type: 'like', user: 'debug', count: SPAWN.likesPerTanod },
@@ -502,41 +503,41 @@ export const DEBUG_KEYS = {
   X: { type: 'chat', user: 'kontra', msg: '!aswang' },
 } as const;
 
-/** Para sa testing: ?debug&round=N → N segundo lang ang round. */
+/** Para sa testing: ?debug&round=N â†’ N segundo lang ang round. */
 export const DEBUG_ROUND_LINKS = [30, 60] as const;
 
 /** Clickable test buttons (lalabas lang sa URL na may ?debug). Dumadaan pa rin sa handleEvent. */
 export const DEBUG_PANEL = {
   users: ['juan', 'maria', 'pedro', 'ana', 'jose', 'liza'], // random na pangalan para iba-iba
   buttons: [
-    { label: '❤️ 30 likes → Tanod', event: { type: 'like', count: SPAWN.likesPerTanod } },
-    { label: '❤️ 300 likes → 10 Tanod', event: { type: 'like', count: SPAWN.likesPerTanod * 10 } },
-    { label: '🎁 Ibang gift (50 coins) → 2 Anito', event: { type: 'gift', gift: 'Mystery', count: 1, coins: 50 } },
-    { label: '🌹 Rose → 2 Tanod', event: { type: 'gift', gift: 'Rose', count: 1 } },
-    { label: '🎵 TikTok → 3 Tanod', event: { type: 'gift', gift: 'TikTok', count: 1 } },
-    { label: '🫰 Finger Heart → Anito', event: { type: 'gift', gift: 'Finger Heart', count: 1 } },
-    { label: '🍩 Doughnut → Sarimanok', event: { type: 'gift', gift: 'Doughnut', count: 1 } },
-    { label: '🍦 Ice Cream → Albularyo', event: { type: 'gift', gift: 'Ice Cream Cone', count: 1 } },
-    { label: '🍩 Doughnut ×5 (streak)', event: { type: 'gift', gift: 'Doughnut', count: 5 } },
-    { label: '➕ Follow → Albularyo', event: { type: 'follow' } },
-    { label: '💬 !tanod', event: { type: 'chat', msg: '!tanod' } },
+    { label: 'â¤ï¸ 30 likes â†’ Tanod', event: { type: 'like', count: SPAWN.likesPerTanod } },
+    { label: 'â¤ï¸ 300 likes â†’ 10 Tanod', event: { type: 'like', count: SPAWN.likesPerTanod * 10 } },
+    { label: 'ðŸŽ Ibang gift (50 coins) â†’ 2 Anito', event: { type: 'gift', gift: 'Mystery', count: 1, coins: 50 } },
+    { label: 'ðŸŒ¹ Rose â†’ 2 Tanod', event: { type: 'gift', gift: 'Rose', count: 1 } },
+    { label: 'ðŸŽµ TikTok â†’ 3 Tanod', event: { type: 'gift', gift: 'TikTok', count: 1 } },
+    { label: 'ðŸ«° Finger Heart â†’ Anito', event: { type: 'gift', gift: 'Finger Heart', count: 1 } },
+    { label: 'ðŸ© Doughnut â†’ Sarimanok', event: { type: 'gift', gift: 'Doughnut', count: 1 } },
+    { label: 'ðŸ¦ Ice Cream â†’ Albularyo', event: { type: 'gift', gift: 'Ice Cream Cone', count: 1 } },
+    { label: 'ðŸ© Doughnut Ã—5 (streak)', event: { type: 'gift', gift: 'Doughnut', count: 5 } },
+    { label: 'âž• Follow â†’ Albularyo', event: { type: 'follow' } },
+    { label: 'ðŸ’¬ !tanod', event: { type: 'chat', msg: '!tanod' } },
   ],
   // Panig ng HALIMAW (versus)
   villainButtons: [
-    { label: '[G] 🎮 GG → 3 Aswang', event: { type: 'gift', gift: 'GG', count: 1 } },
-    { label: '[H] 💗 Heart Me → 2 Manananggal', event: { type: 'gift', gift: 'Heart Me', count: 1 } },
-    { label: '[P] 🧴 Perfume → 3 Tikbalang', event: { type: 'gift', gift: 'Perfume', count: 1 } },
-    { label: '[K] 🫶 Hand Hearts → Kapre', event: { type: 'gift', gift: 'Hand Hearts', count: 1 } },
-    { label: '[C] 🧢 Cap → Mangkukulam', event: { type: 'gift', gift: 'Cap', count: 1 } },
-    { label: '[B] 🌌 Galaxy → Bakunawa', event: { type: 'gift', gift: 'Galaxy', count: 1 } },
-    { label: '[X] 💬 !aswang', event: { type: 'chat', msg: '!aswang' } },
+    { label: '[G] ðŸŽ® GG â†’ 3 Aswang', event: { type: 'gift', gift: 'GG', count: 1 } },
+    { label: '[H] ðŸ’— Heart Me â†’ 2 Manananggal', event: { type: 'gift', gift: 'Heart Me', count: 1 } },
+    { label: '[P] ðŸ§´ Perfume â†’ 3 Tikbalang', event: { type: 'gift', gift: 'Perfume', count: 1 } },
+    { label: '[K] ðŸ«¶ Hand Hearts â†’ Kapre', event: { type: 'gift', gift: 'Hand Hearts', count: 1 } },
+    { label: '[C] ðŸ§¢ Cap â†’ Mangkukulam', event: { type: 'gift', gift: 'Cap', count: 1 } },
+    { label: '[B] ðŸŒŒ Galaxy â†’ Bakunawa', event: { type: 'gift', gift: 'Galaxy', count: 1 } },
+    { label: '[X] ðŸ’¬ !aswang', event: { type: 'chat', msg: '!aswang' } },
   ],
 } as const;
 
 /**
  * Tunog (Web Audio, synthesized; walang audio files). Isang maikling "jingle" kada spawn.
  * notes = Hz ng bawat nota (sunod-sunod), noteMs = haba ng bawat isa, wave = OscillatorType,
- * slide = pag-glide ng pitch sa dulo ng nota (×), noise = halo ng ingay (0..1, pang-ungol/apoy).
+ * slide = pag-glide ng pitch sa dulo ng nota (Ã—), noise = halo ng ingay (0..1, pang-ungol/apoy).
  */
 export interface SpawnSound {
   wave: OscillatorType;
