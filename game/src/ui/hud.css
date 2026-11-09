@@ -67,8 +67,8 @@
   flex-direction: column;
   gap: 10px;
 }
-.left-stack { left: calc(var(--side) + var(--col-w) + 60px); }
-.right-stack { right: calc(var(--side) + var(--col-w) + 60px); }
+.left-stack { left: calc(var(--side) + var(--col-w) + 24px); }
+.right-stack { right: calc(var(--side) + var(--col-w) + 24px); }
 .stack-col > .wave, .stack-col > .timer { height: var(--top-h); }
 .wave { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 22px 10px; position: relative; }
 .wave-icon { width: 54px; height: 54px; }
@@ -160,7 +160,7 @@
 }
 .heroes { left: var(--side); }
 .villains { right: var(--side); }
-.col-title { font-size: 27px; color: #8dff4a; margin-bottom: 6px; white-space: nowrap; --o: 4px; }
+.col-title { font-size: 32px; color: #8dff4a; margin-bottom: 8px; white-space: nowrap; --o: 4px; }
 .col-title.bad { color: var(--bad); }
 .col-rows { display: flex; flex-direction: column; align-items: center; gap: 0; }
 .icon-row { display: flex; flex-direction: column; align-items: center; margin-bottom: 4px; }
@@ -178,65 +178,69 @@
 
 /* Anti-ban Clean HUD cards with BIG GIFT ICONS (No OCR text / No coins) */
 .clean-card {
-  margin-bottom: 8px;
+  width: var(--col-w);
+  margin-bottom: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(15, 10, 6, 0.75);
-  padding: 4px 6px;
-  border-radius: 6px;
-  border: 2px solid var(--wood-lo);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+  background: rgba(15, 10, 6, 0.85);
+  padding: 6px 6px;
+  border-radius: 8px;
+  border: 3px solid var(--wood-lo);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
 }
 .card-pair {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
+  width: 100%;
 }
 .clean-card .pic {
-  width: 58px;
-  height: 58px;
+  width: 82px;
+  height: 82px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 6px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  flex: none;
 }
 .clean-card .pic > img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   transform: scale(1.15);
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.7));
 }
 .big-gift-box {
-  width: 56px;
-  height: 56px;
+  width: 82px;
+  height: 82px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle, rgba(255, 220, 100, 0.25) 0%, rgba(20, 15, 10, 0.6) 80%);
-  border: 2px solid var(--gold);
-  border-radius: 6px;
-  box-shadow: 0 0 8px rgba(255, 210, 90, 0.35);
+  background: radial-gradient(circle, rgba(255, 220, 100, 0.3) 0%, rgba(20, 15, 10, 0.7) 80%);
+  border: 3px solid var(--gold);
+  border-radius: 8px;
+  box-shadow: 0 0 12px rgba(255, 210, 90, 0.45);
+  flex: none;
 }
 .big-gift-img {
-  width: 48px;
-  height: 48px;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
 }
 .clean-name {
-  font-size: 15px;
+  font-size: 20px;
   line-height: 1.1;
-  margin-top: 4px;
+  margin-top: 6px;
   text-align: center;
   max-width: var(--col-w);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  --o: 2px;
+  --o: 3px;
 }
 .heroes .clean-name { color: #8dff4a; }
 .villains .clean-name { color: #ff8585; }
@@ -252,8 +256,8 @@
 }
 /* Pantay ang dalawang kahon sa ibaba (pareho ang laki at layo sa gilid) */
 .bottom-left, .bottom-right { width: var(--side-panel-w); height: 112px; padding: 0 20px; justify-content: center; }
-.bottom-left { left: calc(var(--side) + var(--col-w) + 60px); }
-.bottom-right { right: calc(var(--side) + var(--col-w) + 60px); gap: 14px; }
+.bottom-left { left: calc(var(--side) + var(--col-w) + 24px); }
+.bottom-right { right: calc(var(--side) + var(--col-w) + 24px); gap: 14px; }
 .big.bad { color: var(--bad); }
 .mini { width: 76px; height: 76px; object-fit: contain; flex: none; }
 .stack { flex: 1; display: flex; flex-direction: column; gap: 6px; }

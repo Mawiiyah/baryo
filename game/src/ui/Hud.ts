@@ -200,7 +200,7 @@ export class Hud {
 
     // Malaking Gift Icon (walang coins o pangalan ng gift)
     const giftBox = h('div', 'big-gift-box');
-    const gIcon = giftIconEl(giftName, 'big-gift-img', 36);
+    const gIcon = giftIconEl(giftName, 'big-gift-img', 54);
     giftBox.append(gIcon);
 
     cardPair.append(pic, giftBox);

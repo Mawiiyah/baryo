@@ -475,16 +475,16 @@ export const HUD = {
   // Lugar na tinatakpan ng TikTok UI (itaas: host/viewers, ibaba: comments)
   safeTop: 24,
   safeBottom: 24,
-  sidePad: 18,
-  columnWidth: 150,
+  sidePad: 16,
+  columnWidth: 210, // pinalaki mula 150 para kitang-kita sa mobile
   toastMax: 3,
   toastMs: 5000,
   bannerMs: 2200,
-  hpWarn: 0.5, // < 50% â†’ dilaw
-  hpDanger: 0.25, // < 25% â†’ pula
+  hpWarn: 0.5,
+  hpDanger: 0.25,
   font: '"Silkscreen", monospace',
-  portraitPx: 36, // resolution ng larawan ng karakter sa HUD (pinalalaki nang pixelated)
-  iconPx: 18, // resolution ng emoji / gift icon sa HUD (pinalalaki nang pixelated)
+  portraitPx: 54, // pinalaki para sa mas malinaw na portraits sa mobile
+  iconPx: 24, // default emoji size
 } as const;
 
 /** Emoji sa HUD. Walang emoji ang gift = ICONS.gift. */
