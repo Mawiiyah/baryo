@@ -27,14 +27,14 @@ function randInt(min: number, max: number): number {
 
 function generateLike(): BridgeMessage {
   const user = pick(MOCK_USERS);
-  const count = randInt(10, 25);
+  const count = randInt(2, 6);
   console.log(`[MOCK LIKE] ❤️  ${user} sent ${count} likes`);
   return { type: 'like', user, count };
 }
 
 function generateChat(): BridgeMessage {
   const user = pick(MOCK_USERS);
-  const isHero = Math.random() < 0.55;
+  const isHero = Math.random() < 0.5;
   const msg = isHero ? (Math.random() < 0.5 ? '!tanod' : 'tanod') : (Math.random() < 0.5 ? '!aswang' : 'aswang');
   console.log(`[MOCK CHAT] 💬  ${user}: ${msg}`);
   return { type: 'chat', user, msg };
@@ -45,46 +45,20 @@ function generateSmallGift(): BridgeMessage {
   const isHero = Math.random() < 0.5;
   if (isHero) {
     const gifts = [
-      { name: 'Rose', coins: 1, count: randInt(1, 2) },
+      { name: 'Rose', coins: 1, count: 1 },
       { name: 'Ice Cream Cone', coins: 1, count: 1 },
     ];
     const g = pick(gifts);
-    console.log(`[MOCK GIFT] 🌹 [BAYANI] ${user} sent ${g.name} x${g.count}`);
-    return { type: 'gift', user, gift: g.name, count: g.count, coins: g.coins };
+    console.log(`[MOCK GIFT] 🌹 [BAYANI] ${user} sent ${g.name} x1`);
+    return { type: 'gift', user, gift: g.name, count: 1, coins: g.coins };
   } else {
     const gifts = [
-      { name: 'GG', coins: 1, count: randInt(1, 2) },
+      { name: 'GG', coins: 1, count: 1 },
       { name: 'Heart Me', coins: 1, count: 1 },
     ];
     const g = pick(gifts);
-    console.log(`[MOCK GIFT] 👹 [HALIMAW] ${user} sent ${g.name} x${g.count}`);
-    return { type: 'gift', user, gift: g.name, count: g.count, coins: g.coins };
-  }
-}
-
-function generateMidGift(): BridgeMessage {
-  const user = pick(MOCK_USERS);
-  const isHero = Math.random() < 0.5;
-  if (isHero) {
-    const gifts = [
-      { name: 'Finger Heart', coins: 5, count: 1 },
-      { name: 'Dolphin', coins: 10, count: 1 },
-      { name: 'Bravo!', coins: 10, count: 1 },
-      { name: 'Doughnut', coins: 30, count: 1 },
-    ];
-    const g = pick(gifts);
-    console.log(`[MOCK GIFT] 🌟 [BAYANI] ${user} sent ${g.name}!`);
-    return { type: 'gift', user, gift: g.name, count: g.count, coins: g.coins };
-  } else {
-    const gifts = [
-      { name: 'Panda', coins: 5, count: 1 },
-      { name: 'Rosa', coins: 10, count: 1 },
-      { name: 'Gold Boxing Gloves', coins: 10, count: 1 },
-      { name: 'Capybara', coins: 30, count: 1 },
-    ];
-    const g = pick(gifts);
-    console.log(`[MOCK GIFT] 👹 [HALIMAW] ${user} sent ${g.name}!`);
-    return { type: 'gift', user, gift: g.name, count: g.count, coins: g.coins };
+    console.log(`[MOCK GIFT] 👹 [HALIMAW] ${user} sent ${g.name} x1`);
+    return { type: 'gift', user, gift: g.name, count: 1, coins: g.coins };
   }
 }
 
@@ -96,18 +70,17 @@ function generateFollow(): BridgeMessage {
 
 export function getNextMockEvent(): BridgeMessage {
   const roll = Math.random();
-  if (roll < 0.40) return generateLike();
-  if (roll < 0.72) return generateChat();
-  if (roll < 0.90) return generateSmallGift();
-  if (roll < 0.96) return generateFollow();
-  return generateMidGift();
+  if (roll < 0.45) return generateChat();        // 45% chance: isa-isang Tanod o Aswang
+  if (roll < 0.80) return generateLike();        // 35% chance: marahang likes (+2 hanggang +6)
+  if (roll < 0.95) return generateSmallGift();   // 15% chance: 1 gift lang (1-2 units)
+  return generateFollow();                       // 5% chance: follow
 }
 
 /**
  * Nagpapatakbo ng background simulator para tuloy-tuloy ang laban
- * kahit walang nanonood sa TikTok LIVE.
+ * nang isa-isa o dalawa lang ang naglalaban sa screen (hindi mukhang bot).
  */
-export function startAmbientMock(onEvent: (e: BridgeMessage) => void, minMs = 3500, maxMs = 7500) {
+export function startAmbientMock(onEvent: (e: BridgeMessage) => void, minMs = 7000, maxMs = 14000) {
   let timer: NodeJS.Timeout | undefined;
   let running = true;
 
