@@ -1,254 +1,289 @@
-import Phaser from 'phaser';
 import {
+  ATTACKERS,
   BASE,
+  BOSSES,
   CHAT,
   DEFENDERS,
   FOLLOW,
-  GAME,
   GIFTS,
   HUD,
   ICONS,
+  ROUND,
   SPAWN,
-  THEME,
-  WAVES,
-  type DefenderKind,
+  VILLAIN_CHAT,
+  VILLAIN_GIFTS,
+  type BossKind,
+  type UnitKind,
 } from '../config';
+import type { World, WorldEvent } from '../sim/World';
 import type { NetStatus } from '../systems/Net';
-import { makeShape } from '../units/Unit';
+import { giftIconEl, onGiftIconsChange } from './giftIcons';
+import { pixelEmoji } from './pixel';
+import './hud.css';
 
-const DEPTH = GAME.height + 10;
+const h = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = '') => {
+  const el = document.createElement(tag);
+  if (cls) el.className = cls;
+  if (text) el.textContent = text;
+  return el;
+};
 
-const text = (size: number, color: string = THEME.text): Phaser.Types.GameObjects.Text.TextStyle => ({
-  fontFamily: THEME.font,
-  fontStyle: 'bold',
-  fontSize: `${size}px`,
-  color,
-  stroke: THEME.stroke,
-  strokeThickness: HUD.textStroke,
-});
+const fmtTime = (ms: number) => {
+  const s = Math.ceil(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
 
-export interface HudState {
-  baseHp: number;
-  likes: number;
-  wave: number;
-  secsToWave: number;
-  defenders: number;
-  queued: number;
-  attackers: number;
-  net: NetStatus;
-}
-
+/** HTML/CSS overlay sa ibabaw ng 3D canvas. */
 export class Hud {
-  private bars: Phaser.GameObjects.Graphics;
-  private hpText: Phaser.GameObjects.Text;
-  private waveText: Phaser.GameObjects.Text;
-  private nextText: Phaser.GameObjects.Text;
-  private likeText: Phaser.GameObjects.Text;
-  private statsText: Phaser.GameObjects.Text;
-  private netDot: Phaser.GameObjects.Arc;
-  private netText: Phaser.GameObjects.Text;
-  private toasts: Phaser.GameObjects.Container[] = [];
+  private root = h('div', 'hud');
+  private scoreNum = h('span', 'wave-num');
+  private roundLabel = h('span', 'round-label');
+  private roundFill = h('div', 'fill');
+  /** Kabuuang coins at top gifter ng bawat panig. */
+  private teams = {
+    defender: { total: h('span', 'team-total'), name: h('span', 'team-name'), coins: h('span', 'team-coins') },
+    attacker: { total: h('span', 'team-total'), name: h('span', 'team-name'), coins: h('span', 'team-coins') },
+  };
+  private timer = h('span', 'timer-text');
+  private timerLabel = h('span', 'timer-label');
+  private netDot = h('span', 'net-dot');
+  private hpFill = h('div', 'fill');
+  private hpText = h('span', 'bar-text');
+  private likeFill = h('div', 'fill');
+  private likeText = h('span', 'bar-text');
+  private defCount = h('span', 'big');
+  private defFill = h('div', 'fill');
+  private killCount = h('span', 'big');
+  private remainCount = h('span', 'big bad');
+  private toasts = h('div', 'toasts');
+  private overlay = h('div', 'overlay hidden');
+  private overTitle = h('div', 'over-title');
+  private overSub = h('div', 'over-sub');
+  private overCount = h('div', 'over-count');
+  private net: NetStatus = 'connecting';
 
-  private readonly x0 = HUD.padding;
-  private readonly innerX = HUD.padding + HUD.panelPad;
-  private readonly innerW = GAME.width - 2 * (HUD.padding + HUD.panelPad);
-  private readonly hpY: number;
-  private readonly likeY: number;
+  constructor(parent: HTMLElement, private world: World, private portraits: Record<UnitKind, string>) {
+    const r = this.root;
+    r.style.setProperty('--safe-top', `${HUD.safeTop}px`);
+    r.style.setProperty('--safe-bottom', `${HUD.safeBottom}px`);
+    r.style.setProperty('--side', `${HUD.sidePad}px`);
+    r.style.setProperty('--col-w', `${HUD.columnWidth}px`);
+    r.style.setProperty('--font', HUD.font);
 
-  constructor(private scene: Phaser.Scene) {
-    const pad = HUD.panelPad;
-    const gap = HUD.gap;
-    const top = HUD.padding;
-    let y = top + pad;
+    // Itaas-kaliwa: score → likes → BAYANI coins; itaas-kanan: oras → HALIMAW coins
+    const wave = h('div', 'panel wave');
+    const score = h('div', 'score');
+    score.append(this.roundLabel, this.scoreNum);
+    wave.append(pixelEmoji('🏮', 'wave-icon'), score, barEl(this.roundFill, 'wave-bar'));
+    const timer = h('div', 'panel timer');
+    timer.append(this.netDot, this.timerLabel, this.timer);
 
-    // Row 1: pangalan ng base + HP + bridge status
-    const title = scene.add.text(this.innerX, y, `🏠 ${BASE.name.toUpperCase()}`, text(HUD.titleSize, THEME.accentCss));
-    this.netText = scene.add
-      .text(this.innerX + this.innerW, y + HUD.titleSize / 2, '', text(HUD.smallFontSize, THEME.textDim))
-      .setOrigin(1, 0.5);
-    this.netDot = scene.add.circle(0, y + HUD.titleSize / 2, HUD.netDotR, THEME.netColors.connecting);
-    y += HUD.titleSize + gap;
-    this.hpY = y;
-    this.hpText = scene.add
-      .text(this.innerX + this.innerW / 2, y + HUD.barHeight / 2, '', text(HUD.smallFontSize))
-      .setOrigin(0.5);
-    y += HUD.barHeight + gap * 1.5;
+    // Base HP at likes
+    const hp = h('div', 'hp-row');
+    hp.append(pixelEmoji('🛖', 'hp-icon'), barEl(this.hpFill, 'hp-bar', this.hpText));
+    const likes = h('div', 'like-row');
+    likes.append(pixelEmoji(ICONS.like, 'like-icon'), barEl(this.likeFill, 'like-bar', this.likeText));
+    const leftStack = h('div', 'stack-col left-stack');
+    leftStack.append(wave, likes, this.teamBox('defender', 'BAYANI'));
+    const rightStack = h('div', 'stack-col right-stack');
+    rightStack.append(timer, this.teamBox('attacker', 'HALIMAW'));
 
-    // Row 2: wave + countdown
-    this.waveText = scene.add.text(this.innerX, y, '', text(HUD.fontSize, THEME.accentCss));
-    this.nextText = scene.add.text(this.innerX + this.innerW, y + 4, '', text(HUD.smallFontSize)).setOrigin(1, 0);
-    y += HUD.fontSize + gap * 1.5;
+    // Kaliwa: BAYANI, kanan: HALIMAW (versus) — paano tumulong / umatake
+    const heroes = h('div', 'col heroes');
+    const heroRows = h('div', 'col-rows');
+    heroes.append(h('div', 'col-title', 'BAYANI'), heroRows);
+    const villains = h('div', 'col villains');
+    const villainRows = h('div', 'col-rows');
+    villains.append(h('div', 'col-title bad', 'HALIMAW'), villainRows);
+    const fillColumns = () => {
+      // Caption lang sa likes/follow/chat; sa gift ay kapag wala pang totoong icon (emoji pa)
+      // Gift row: icon + halaga (coins); pangalan lang kapag emoji pa ang icon
+      const giftRow = (gift: string, coins: number) => {
+        const icon = giftIconEl(gift, 'badge-img');
+        const cap = h('div', 'caption value');
+        if (icon.classList.contains('emoji')) cap.append(h('span', 'gname', gift));
+        cap.append(pixelEmoji('🪙', 'coin'), h('span', '', String(coins)));
+        return { icon, caption: cap };
+      };
+      type Row = { icon: HTMLElement | string; caption: string | HTMLElement; unit: UnitKind; n: number };
+      const heroList: Row[] = [
+        { icon: ICONS.like, caption: `${SPAWN.likesPerTanod} LIKES`, unit: 'tanod', n: 1 },
+        ...Object.entries(GIFTS).map(([gift, m]) => ({ ...giftRow(gift, m.coins), unit: m.unit, n: m.perGift })),
+        { icon: ICONS.follow, caption: 'FOLLOW', unit: FOLLOW.unit, n: FOLLOW.count },
+        ...Object.entries(CHAT.commands).map(([cmd, unit]) => ({ icon: ICONS.chat, caption: cmd, unit, n: 1 })),
+      ];
+      const villainList: Row[] = [
+        ...Object.entries(VILLAIN_GIFTS).map(([gift, m]) => ({ ...giftRow(gift, m.coins), unit: m.unit, n: m.perGift })),
+        ...Object.entries(VILLAIN_CHAT).map(([cmd, unit]) => ({ icon: ICONS.chat, caption: cmd, unit, n: 1 })),
+      ];
+      const all = { ...DEFENDERS, ...ATTACKERS };
+      const toRow = (r: Row) => this.iconRow(r.unit, `X${r.n}`, r.icon, r.caption, all[r.unit].name);
+      heroRows.replaceChildren(...heroList.map(toRow));
+      villainRows.replaceChildren(...villainList.map(toRow));
+    };
+    fillColumns();
+    onGiftIconsChange(fillColumns); // papalitan ng totoong TikTok icons pagdating galing sa bridge
 
-    // Row 3: like meter
-    this.likeText = scene.add.text(this.innerX, y, '', text(HUD.smallFontSize, THEME.likeCss));
-    y += HUD.smallFontSize + gap / 2;
-    this.likeY = y;
-    y += HUD.likeBarHeight + gap;
+    // Ibaba: defenders at kills
+    const bl = h('div', 'panel bottom-left');
+    const tanodImg = h('img', 'mini');
+    tanodImg.src = portraits.tanod;
+    const blInner = h('div', 'stack');
+    blInner.append(this.defCount, barEl(this.defFill, 'def-bar'));
+    bl.append(tanodImg, blInner);
+    const br = h('div', 'panel bottom-right');
+    br.append(pixelEmoji('💀', 'skull'), this.killCount, pixelEmoji('👹', 'skull'), this.remainCount);
 
-    // Row 4: bilang ng units
-    this.statsText = scene.add.text(this.innerX, y, '', text(HUD.smallFontSize, THEME.textDim));
-    y += HUD.smallFontSize + pad;
 
-    const panel = scene.add.graphics();
-    drawPanel(panel, this.x0, top, GAME.width - 2 * HUD.padding, y - top);
-    this.bars = scene.add.graphics();
+    const banner = h('div', 'banner-layer');
+    this.overlay.append(this.overTitle, this.overSub, this.overCount);
+    r.append(leftStack, rightStack, hp, heroes, villains, bl, br, this.toasts, banner, this.overlay);
+    parent.appendChild(r);
 
-    for (const o of [panel, this.bars, title, this.netText, this.netDot, this.hpText, this.waveText, this.nextText, this.likeText, this.statsText]) {
-      o.setDepth(DEPTH);
+    world.on((e) => this.onWorld(e));
+    // Unang round: nagsimula na bago pa nakinig ang HUD
+    setTimeout(() => this.banner(`ROUND ${world.round}`, 'LABAN! Bayani vs Halimaw', false), ROUND.firstBannerDelayMs);
+  }
+
+  /** Kahon: "BAYANI 🪙 kabuuan" at sa ilalim "👑 top gifter 🪙 coins". */
+  private teamBox(side: 'defender' | 'attacker', label: string) {
+    const t = this.teams[side];
+    const box = h('div', `panel team-box ${side}`);
+    const row1 = h('div', 'team-row');
+    row1.append(h('span', 'team-label', label), pixelEmoji('🪙', 'coin'), t.total);
+    const row2 = h('div', 'team-row small');
+    row2.append(pixelEmoji('👑', 'crown'), t.name, t.coins);
+    box.append(row1, row2);
+    return box;
+  }
+
+  setNet(s: NetStatus) {
+    this.net = s;
+  }
+
+  private iconRow(unit: UnitKind, count: string, badge: HTMLElement | string, caption: string | HTMLElement, title: string) {
+    const row = h('div', 'icon-row');
+    row.title = title;
+    const pic = h('div', 'pic');
+    const img = h('img');
+    img.src = this.portraits[unit];
+    pic.append(img);
+    if (typeof badge !== 'string') {
+      badge.classList.add('badge');
+      pic.append(badge);
+    } else if (badge) pic.append(pixelEmoji(badge, 'badge'));
+    row.append(pic, h('div', 'count', count));
+    if (typeof caption !== 'string') row.append(caption);
+    else if (caption) row.append(h('div', 'caption', caption));
+    return row;
+  }
+
+  private onWorld(e: WorldEvent) {
+    switch (e.type) {
+      case 'gift':
+        this.toast(
+          `${e.user} x${e.count} (${e.coins}c) > ${e.n} ${({ ...DEFENDERS, ...ATTACKERS })[e.unit].name}`,
+          e.side === 'attacker' ? 'villain' : 'gift',
+          giftIconEl(e.gift, 'toast-icon'),
+        );
+        break;
+      case 'follow':
+        this.toast(`${e.user} nag-follow > ${DEFENDERS[e.unit].name}`, 'follow', pixelEmoji(ICONS.follow, 'toast-icon'));
+        break;
+      case 'chat':
+        this.toast(`${e.user}: ${e.msg}`, 'chat', pixelEmoji(ICONS.chat, 'toast-icon'));
+        break;
+      case 'round':
+        this.banner(`ROUND ${e.round}`, 'LABAN! Bayani vs Halimaw', false);
+        break;
+      case 'spawn':
+        // Boss na pinadala ng viewer → malaking anunsyo
+        if (e.unit.stats.boss && e.unit.owner) {
+          this.banner(`${e.unit.stats.name.toUpperCase()}!`, `mula kay ${e.unit.owner} - ${BOSSES[e.unit.kind as BossKind].intro}`, true);
+        }
+        break;
+      case 'over':
+        this.overTitle.textContent = e.won ? 'PANALO ANG BAYANI!' : 'PANALO ANG HALIMAW!';
+        this.overTitle.classList.toggle('won', e.won);
+        this.overSub.textContent = `Round ${e.round}: BAYANI ${this.world.score.bayani} - ${this.world.score.halimaw} HALIMAW`;
+        this.overlay.classList.remove('hidden');
+        break;
+      case 'reset':
+        this.overlay.classList.add('hidden');
+        break;
+      default:
+        break;
     }
-    panel.setDepth(DEPTH - 1);
-
-    this.createLegend();
   }
 
-  update(s: HudState) {
-    const g = this.bars.clear();
-    const hpRatio = s.baseHp / BASE.hp;
-    const hpColor = hpRatio < HUD.hpDanger ? THEME.danger : hpRatio < HUD.hpWarn ? THEME.warn : THEME.good;
-    drawBar(g, this.innerX, this.hpY, this.innerW, HUD.barHeight, hpRatio, hpColor);
-    drawBar(g, this.innerX, this.likeY, this.innerW, HUD.likeBarHeight, s.likes / SPAWN.likesPerTanod, THEME.like);
-
-    this.hpText.setText(`${Math.ceil(s.baseHp)} / ${BASE.hp}`);
-    this.waveText.setText(s.wave === 0 ? 'HANDA NA?' : `WAVE ${s.wave}`);
-    const bossNext = (s.wave + 1) % WAVES.bossEvery === 0;
-    this.nextText
-      .setText(`${bossNext ? '⚠️ KAPRE ' : 'Susunod '}sa ${s.secsToWave}s`)
-      .setColor(bossNext ? THEME.dangerCss : THEME.text);
-    this.likeText.setText(`${ICONS.like} ${s.likes} / ${SPAWN.likesPerTanod} likes → +1 ${DEFENDERS.tanod.name}`);
-    this.statsText.setText(
-      `🛡️ ${s.defenders}/${SPAWN.maxDefenders}    ⏳ ${s.queued}    💀 ${s.attackers}`,
-    );
-    this.netText.setText(`bridge ${s.net}`);
-    this.netDot.setFillStyle(THEME.netColors[s.net]).setX(this.netText.x - this.netText.width - HUD.netDotR * 2);
+  private toast(text: string, kind: string, icon?: HTMLElement) {
+    const t = h('div', `toast ${kind}`);
+    if (icon) t.append(icon);
+    t.append(text);
+    this.toasts.prepend(t);
+    while (this.toasts.children.length > HUD.toastMax) this.toasts.lastElementChild?.remove();
+    setTimeout(() => {
+      t.classList.add('out');
+      t.addEventListener('animationend', () => t.remove());
+    }, HUD.toastMs);
   }
 
-  /** Alert sa kanan; nawawala pagkatapos ng ilang segundo. */
-  toast(msg: string, color: string = THEME.text) {
-    const t = this.scene.add.text(0, 0, msg, text(HUD.toastFontSize, color)).setOrigin(1, 0.5);
-    const w = t.width + HUD.panelPad * 1.5;
-    const h = HUD.toastRowH - HUD.gap / 2;
-    const bg = this.scene.add.graphics();
-    drawPanel(bg, -w + HUD.panelPad * 0.75, -h / 2, w, h, h / 2);
-    t.setX(0);
-    const c = this.scene.add
-      .container(GAME.width - HUD.padding - HUD.panelPad * 0.75 + HUD.toastSlidePx, HUD.toastBottomY, [bg, t])
-      .setDepth(DEPTH)
-      .setAlpha(0);
-    this.toasts.push(c);
-    const oldest = this.toasts[0];
-    if (oldest && this.toasts.length > HUD.toastMax) this.dropToast(oldest);
-    this.layoutToasts();
-    this.scene.tweens.add({ targets: c, alpha: 1, x: c.x - HUD.toastSlidePx, duration: HUD.toastFadeMs, ease: 'Cubic.easeOut' });
-    this.scene.time.delayedCall(HUD.toastMs, () => this.dropToast(c));
+  private banner(title: string, sub: string, boss: boolean) {
+    const layer = this.root.querySelector('.banner-layer')!;
+    layer.replaceChildren();
+    const b = h('div', `banner${boss ? ' boss' : ''}`);
+    b.style.animationDuration = `${HUD.bannerMs}ms`;
+    b.append(h('div', 'banner-title', title), h('div', 'banner-sub', sub));
+    layer.append(b);
+    b.addEventListener('animationend', () => b.remove());
   }
 
-  private dropToast(c: Phaser.GameObjects.Container) {
-    const i = this.toasts.indexOf(c);
-    if (i < 0) return;
-    this.toasts.splice(i, 1);
-    this.layoutToasts();
-    this.scene.tweens.add({ targets: c, alpha: 0, duration: HUD.toastFadeMs, onComplete: () => c.destroy() });
-  }
+  update() {
+    const w = this.world;
+    // Score: BAYANI (berde) - HALIMAW (pula), at progreso ng oras ng round
+    this.roundLabel.textContent = `ROUND ${w.round}`;
+    this.scoreNum.innerHTML = `<b class="good">${w.score.bayani}</b><small>-</small><b class="bad">${w.score.halimaw}</b>`;
+    this.roundFill.style.width = `${(1 - w.msLeft / w.roundDurationMs) * 100}%`;
 
-  private layoutToasts() {
-    const n = this.toasts.length;
-    this.toasts.forEach((c, i) => {
-      this.scene.tweens.add({ targets: c, y: HUD.toastBottomY - (n - 1 - i) * HUD.toastRowH, duration: HUD.toastFadeMs / 2 });
-    });
-  }
+    // Coins na naipadala at top gifter ng bawat panig ("WALA PA" kapag wala pa)
+    for (const side of ['defender', 'attacker'] as const) {
+      const t = this.teams[side];
+      const top = w.topContributor(side);
+      t.total.textContent = String(w.totalCoins(side));
+      t.name.textContent = top ? top.user : 'WALA PA';
+      t.coins.textContent = top ? String(top.coins) : '';
+    }
 
-  /** Malaking anunsyo sa gitna (hal. bagong wave). */
-  banner(title: string, sub: string, color: string = THEME.accentCss) {
-    const t = this.scene.add.text(0, 0, title, text(HUD.bannerFontSize, color)).setOrigin(0.5);
-    const s = this.scene.add.text(0, HUD.bannerFontSize * 0.75, sub, text(HUD.bannerSubSize)).setOrigin(0.5);
-    const c = this.scene.add.container(GAME.width / 2, HUD.bannerY, [t, s]).setDepth(DEPTH + 1).setScale(0.3).setAlpha(0);
-    this.scene.tweens.chain({
-      targets: c,
-      tweens: [
-        { scale: 1, alpha: 1, duration: HUD.bannerMs * 0.2, ease: 'Back.easeOut' },
-        { scale: 1.05, duration: HUD.bannerMs * 0.6 },
-        { alpha: 0, y: HUD.bannerY - HUD.bannerFontSize / 2, duration: HUD.bannerMs * 0.2, ease: 'Quad.easeIn' },
-      ],
-      onComplete: () => c.destroy(),
-    });
-  }
+    const warn = w.msLeft <= ROUND.warnMs;
+    this.timerLabel.textContent = 'ORAS';
+    this.timerLabel.classList.toggle('bad', warn);
+    this.timer.classList.toggle('bad', warn);
 
-  /** Lose screen na may countdown bago mag-restart. */
-  gameOver(wave: number, restartMs: number) {
-    const cx = GAME.width / 2;
-    const cy = GAME.height / 2;
-    const overlay = this.scene.add.rectangle(0, 0, GAME.width, GAME.height, 0x000000, HUD.overlayAlpha).setOrigin(0);
-    const title = this.scene.add.text(cx, cy - HUD.overFontSize, 'NASAKOP\nANG BARYO!', {
-      ...text(HUD.overFontSize, THEME.dangerCss),
-      align: 'center',
-    }).setOrigin(0.5);
-    const sub = this.scene.add
-      .text(cx, cy + HUD.overFontSize * 0.6, `Umabot sa Wave ${wave}`, text(HUD.fontSize * 1.4, THEME.accentCss))
-      .setOrigin(0.5);
-    const count = this.scene.add.text(cx, cy + HUD.overFontSize * 1.4, '', text(HUD.fontSize)).setOrigin(0.5);
-    for (const o of [overlay, title, sub, count]) o.setDepth(DEPTH + 2);
-    overlay.setAlpha(0);
-    this.scene.tweens.add({ targets: overlay, alpha: 1, duration: HUD.toastFadeMs });
-    const end = this.scene.time.now + restartMs;
-    this.scene.time.addEvent({
-      delay: 100,
-      loop: true,
-      callback: () => count.setText(`Bagong laban sa ${Math.max(0, Math.ceil((end - this.scene.time.now) / 1000))}s…`),
-    });
-  }
+    this.timer.textContent = fmtTime(w.msLeft);
+    this.netDot.className = `net-dot ${this.net}`;
+    this.netDot.title = `bridge: ${this.net}`;
 
-  /** "Paano tumulong" card — galing sa config para laging tugma sa mapping. */
-  private createLegend() {
-    const rows: { icon: string; label: string; unit: DefenderKind; n: number }[] = [
-      { icon: ICONS.like, label: `${SPAWN.likesPerTanod} likes`, unit: 'tanod', n: 1 },
-      ...Object.entries(GIFTS).map(([gift, m]) => ({
-        icon: ICONS.gifts[gift] ?? ICONS.gift,
-        label: gift,
-        unit: m.unit,
-        n: m.perGift,
-      })),
-      { icon: ICONS.follow, label: 'Follow', unit: FOLLOW.unit, n: FOLLOW.count },
-      ...Object.entries(CHAT.commands).map(([cmd, unit]) => ({ icon: ICONS.chat, label: cmd, unit, n: 1 })),
-    ];
-    const pad = HUD.panelPad;
-    const x = HUD.padding;
-    const y = HUD.legendY;
-    const w = HUD.legendWidth;
-    const h = pad * 2 + HUD.legendFontSize + HUD.gap + rows.length * HUD.legendRowH;
-    const panel = this.scene.add.graphics();
-    drawPanel(panel, x, y, w, h);
-    const objs: Phaser.GameObjects.GameObject[] = [panel];
-    objs.push(this.scene.add.text(x + pad, y + pad, 'PAANO TUMULONG', text(HUD.legendFontSize, THEME.accentCss)));
-    rows.forEach((r, i) => {
-      const ry = y + pad + HUD.legendFontSize + HUD.gap + i * HUD.legendRowH + HUD.legendRowH / 2;
-      const s = DEFENDERS[r.unit];
-      const icon = HUD.legendIconSize;
-      const scale = icon / Math.max(s.width, s.height);
-      objs.push(
-        this.scene.add.text(x + pad, ry, `${r.icon} ${r.label}`, text(HUD.legendFontSize)).setOrigin(0, 0.5),
-        this.scene.add
-          .text(x + w - pad - icon - HUD.gap, ry, `${r.n > 1 ? `${r.n}× ` : ''}${s.name}`, text(HUD.legendFontSize, THEME.textDim))
-          .setOrigin(1, 0.5),
-        makeShape(this.scene, s.shape, s.width * scale, s.height * scale, s.color)
-          .setPosition(x + w - pad - icon / 2, ry)
-          .setStrokeStyle(2, THEME.outline),
-      );
-    });
-    for (const o of objs) (o as unknown as Phaser.GameObjects.Components.Depth).setDepth(DEPTH);
+    const hpR = w.baseHp / BASE.hp;
+    this.hpFill.style.width = `${hpR * 100}%`;
+    this.hpFill.className = `fill ${hpR < HUD.hpDanger ? 'danger' : hpR < HUD.hpWarn ? 'warn' : ''}`;
+    this.hpText.textContent = `${Math.ceil(hpR * 100)}%`;
+    this.likeFill.style.width = `${(w.likes / SPAWN.likesPerTanod) * 100}%`;
+    this.likeText.textContent = `${w.likes}/${SPAWN.likesPerTanod} > +1 ${DEFENDERS.tanod.name}`;
+
+    this.defCount.innerHTML = `${w.defenders.length}<small>/${SPAWN.maxDefenders}</small>${w.queued ? ` <em>+${w.queued}</em>` : ''}`;
+    this.defFill.style.width = `${(w.defenders.length / SPAWN.maxDefenders) * 100}%`;
+    this.killCount.textContent = String(w.kills);
+
+    // Natitirang halimaw (buhay + parating)
+    this.remainCount.textContent = String(w.remaining);
+
+    if (w.state === 'over') this.overCount.textContent = `Bagong laban sa ${Math.ceil(w.msToRestart / 1000)}s...`;
   }
 }
 
-function drawPanel(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number, r: number = HUD.panelRadius) {
-  g.fillStyle(THEME.panel, THEME.panelAlpha).fillRoundedRect(x, y, w, h, r);
-  g.lineStyle(2, THEME.panelBorder, THEME.panelBorderAlpha).strokeRoundedRect(x, y, w, h, r);
-}
-
-function drawBar(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number, ratio: number, color: number) {
-  const r = Math.min(HUD.barRadius, h / 2);
-  g.fillStyle(THEME.barBg, THEME.barBgAlpha).fillRoundedRect(x, y, w, h, r);
-  const fw = w * Phaser.Math.Clamp(ratio, 0, 1);
-  if (fw <= 0) return;
-  g.fillStyle(color, 1).fillRoundedRect(x, y, fw, h, Math.min(r, fw / 2));
-  // kintab sa itaas na kalahati
-  g.fillStyle(0xffffff, 0.18).fillRoundedRect(x, y, fw, h / 2, { tl: Math.min(r, fw / 2), tr: Math.min(r, fw / 2), bl: 0, br: 0 });
+function barEl(fill: HTMLElement, cls: string, text?: HTMLElement) {
+  const bar = h('div', `bar ${cls}`);
+  bar.append(fill);
+  if (text) bar.append(text);
+  return bar;
 }

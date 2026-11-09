@@ -8,6 +8,7 @@ export function connectBridge(
   url: string,
   onEvent: (e: GameEvent) => void,
   onStatus: (s: NetStatus) => void,
+  onGiftIcons: (icons: Record<string, unknown>) => void,
 ) {
   let delay: number = NET.reconnectMinMs;
   let ws: WebSocket | undefined;
@@ -23,7 +24,14 @@ export function connectBridge(
     };
     ws.onmessage = (msg) => {
       try {
-        const e = parseEvent(JSON.parse(String(msg.data)));
+        const raw: unknown = JSON.parse(String(msg.data));
+        // Hindi input: listahan ng gift icons (para sa HUD lang)
+        if (typeof raw === 'object' && raw !== null && (raw as { type?: unknown }).type === 'giftIcons') {
+          const icons = (raw as { icons?: unknown }).icons;
+          if (typeof icons === 'object' && icons !== null) onGiftIcons(icons as Record<string, unknown>);
+          return;
+        }
+        const e = parseEvent(raw);
         if (e) onEvent(e);
       } catch {
         console.warn('[net] invalid message', msg.data);

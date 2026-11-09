@@ -1,0 +1,329 @@
+/* HUD overlay — PIXEL ART na istilo. Landscape 1920x1080 logical (naka-scale ang #stage).
+   Columns sa magkabilang gilid; score/oras/HP sa itaas na gitna.
+   --o = kapal ng pixel outline ng teksto; --b = kapal ng pixel border. */
+.hud {
+  position: absolute;
+  inset: 0;
+  z-index: 2; /* laging nasa ibabaw ng mga label ng units */
+  pointer-events: none;
+  font-family: var(--font);
+  font-weight: 700;
+  color: #fff;
+  --wood-hi: #c48a48;
+  --wood: #8a5a2b;
+  --wood-lo: #5c3a19;
+  --ink: #1a0d04;
+  --gold: #ffd25a;
+  --bad: #ff5048;
+  --good: #6fdc5a;
+  --like: #ff4f8b;
+  --b: 6px;
+  --top-h: 100px; /* taas ng mga panel sa itaas */
+  --side-panel-w: 340px; /* lapad ng score/oras at ng dalawang kahon sa ibaba */
+}
+.hud * { box-sizing: border-box; }
+.hud .hidden { display: none !important; }
+
+/* Pixel outline ng teksto (8 direksyon, walang blur) */
+.hud *, .labels * {
+  --o: 3px;
+  text-shadow:
+    var(--o) 0 0 var(--ink, #1a0d04), calc(-1 * var(--o)) 0 0 var(--ink, #1a0d04),
+    0 var(--o) 0 var(--ink, #1a0d04), 0 calc(-1 * var(--o)) 0 var(--ink, #1a0d04),
+    var(--o) var(--o) 0 var(--ink, #1a0d04), calc(-1 * var(--o)) var(--o) 0 var(--ink, #1a0d04),
+    var(--o) calc(-1 * var(--o)) 0 var(--ink, #1a0d04), calc(-1 * var(--o)) calc(-1 * var(--o)) 0 var(--ink, #1a0d04);
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+/* Lahat ng larawan/canvas ay pinalalaki nang pixelated */
+.hud img, .hud canvas, .px { image-rendering: pixelated; }
+.hud canvas.px { flex: none; }
+
+/* Kahon na may pinutol na kanto (pixel corner) at bevel */
+.panel, .bar, .toast, .net-dot, .uname, .uhp {
+  --c: var(--b);
+  clip-path: polygon(
+    var(--c) 0, calc(100% - var(--c)) 0, calc(100% - var(--c)) var(--c), 100% var(--c),
+    100% calc(100% - var(--c)), calc(100% - var(--c)) calc(100% - var(--c)), calc(100% - var(--c)) 100%,
+    var(--c) 100%, var(--c) calc(100% - var(--c)), 0 calc(100% - var(--c)), 0 var(--c), var(--c) var(--c)
+  );
+}
+.panel {
+  background: var(--wood);
+  box-shadow:
+    inset 0 0 0 var(--b) var(--ink),
+    inset calc(var(--b) * 2) calc(var(--b) * 2) 0 0 var(--wood-hi),
+    inset calc(var(--b) * -2) calc(var(--b) * -2) 0 0 var(--wood-lo);
+}
+
+/* ---------- Itaas ---------- */
+/* Kaliwa: score → likes → BAYANI coins. Kanan: oras → HALIMAW coins. Gitna: HP ng kubo. */
+.stack-col {
+  position: absolute;
+  top: var(--safe-top);
+  width: var(--side-panel-w);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.left-stack { left: calc(var(--side) + var(--col-w) + 60px); }
+.right-stack { right: calc(var(--side) + var(--col-w) + 60px); }
+.stack-col > .wave, .stack-col > .timer { height: var(--top-h); }
+.wave { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 22px 10px; position: relative; }
+.wave-icon { width: 54px; height: 54px; }
+.score { display: flex; flex-direction: column; align-items: center; line-height: 1; }
+.round-label { font-size: 16px; color: var(--gold); --o: 2px; margin-bottom: 4px; }
+.wave-num { font-size: 46px; line-height: 1; --o: 4px; }
+.wave-num small { font-size: 30px; margin: 0 6px; }
+.wave-num .good { color: #8dff4a; }
+.wave-num .bad { color: var(--bad); }
+.wave-bar { position: absolute; left: 22px; right: 22px; bottom: 12px; height: 14px; --b: 3px; }
+
+/* Coins kada panig */
+.team-box { padding: 12px 20px 14px; display: flex; flex-direction: column; gap: 6px; }
+.team-box.defender { --wood: #2f6a2a; --wood-hi: #4f9a44; --wood-lo: #1d4519; }
+.team-box.attacker { --wood: #8a1f1a; --wood-hi: #c0392b; --wood-lo: #5a0f0c; }
+.team-row { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.team-label { font-size: 24px; flex: 1; }
+.team-box.defender .team-label { color: #8dff4a; }
+.team-box.attacker .team-label { color: #ffb0a8; }
+.team-total { font-size: 30px; color: var(--gold); --o: 3px; }
+.team-row .coin { width: 28px; height: 28px; }
+.team-row.small { font-size: 18px; --o: 2px; }
+.team-row.small .crown { width: 26px; height: 26px; }
+.team-row.small .coin { width: 20px; height: 20px; }
+.team-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.team-coins { color: var(--gold); }
+
+.timer { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 22px; font-size: 46px; --o: 4px; }
+.timer-label { font-size: 18px; max-width: 110px; line-height: 1.1; text-align: right; --o: 2px; }
+.timer-label.bad, .timer-text.bad { color: var(--bad); }
+.net-dot { width: 18px; height: 18px; background: #ffb300; box-shadow: inset 0 0 0 3px var(--ink); --c: 3px; }
+.net-dot.connected { background: var(--good); }
+.net-dot.disconnected { background: var(--bad); }
+
+/* ---------- Bars (blocky, may segment) ---------- */
+.bar {
+  position: relative;
+  padding: var(--b);
+  background: #1a0e06;
+  box-shadow: inset 0 0 0 var(--b) var(--ink);
+}
+.bar .fill {
+  height: 100%;
+  width: 0;
+  background-color: var(--gold);
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0 30%, transparent 30% 75%, rgba(0, 0, 0, 0.25) 75%),
+    repeating-linear-gradient(90deg, transparent 0 20px, rgba(0, 0, 0, 0.28) 20px 24px);
+  transition: width 0.25s steps(5);
+}
+.bar-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.hp-row {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.like-row { display: flex; align-items: center; gap: 8px; }
+.hp-row { top: calc(var(--safe-top) + 22px); width: 700px; }
+.hp-icon { width: 56px; height: 56px; }
+.like-icon { width: 36px; height: 36px; }
+.hp-bar { flex: 1; height: 50px; }
+.hp-bar .fill { background-color: var(--good); }
+.hp-bar .fill.warn { background-color: var(--gold); }
+.hp-bar .fill.danger { background-color: var(--bad); }
+
+.like-bar { flex: 1; height: 30px; --b: 4px; }
+.like-bar .fill { background-color: var(--like); }
+.like-bar .bar-text { font-size: 15px; --o: 2px; }
+
+/* ---------- Mga column ---------- */
+.col {
+  position: absolute;
+  top: var(--safe-top);
+  width: var(--col-w);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.heroes { left: var(--side); }
+.villains { right: var(--side); }
+.col-title { font-size: 27px; color: #8dff4a; margin-bottom: 6px; white-space: nowrap; --o: 4px; }
+.col-title.bad { color: var(--bad); }
+.col-rows { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.icon-row { display: flex; flex-direction: column; align-items: center; margin-bottom: 4px; }
+.icon-row .count, .icon-row .caption { z-index: 2; position: relative; }
+.pic { position: relative; width: 86px; height: 74px; }
+.pic > img { width: 100%; height: 100%; object-fit: contain; transform: scale(1.2); }
+.pic .badge, .pic .badge-img { position: absolute; left: -16px; top: -6px; width: 44px; height: 44px; z-index: 1; }
+.icon-row .count { margin-top: -14px; font-size: 26px; line-height: 1; color: #8dff4a; --o: 4px; }
+.villains .icon-row .count { color: var(--bad); }
+.caption.value { width: var(--col-w); display: flex; align-items: center; justify-content: center; gap: 3px; color: var(--gold); }
+.caption .coin { width: 18px; height: 18px; flex: none; }
+.caption .gname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 4px; }
+.caption.value span:last-child { flex: none; }
+.caption { font-size: 15px; line-height: 1; margin-top: 4px; max-width: var(--col-w); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+
+/* ---------- Ibaba ---------- */
+.bottom-left, .bottom-right {
+  position: absolute;
+  bottom: var(--safe-bottom);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px 14px 14px;
+}
+/* Pantay ang dalawang kahon sa ibaba (pareho ang laki at layo sa gilid) */
+.bottom-left, .bottom-right { width: var(--side-panel-w); height: 112px; padding: 0 20px; justify-content: center; }
+.bottom-left { left: calc(var(--side) + var(--col-w) + 60px); }
+.bottom-right { right: calc(var(--side) + var(--col-w) + 60px); gap: 14px; }
+.big.bad { color: var(--bad); }
+.mini { width: 76px; height: 76px; object-fit: contain; flex: none; }
+.stack { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.big { font-size: 46px; line-height: 1; --o: 4px; }
+.big small { font-size: 26px; }
+.big em { font-style: normal; font-size: 22px; color: var(--gold); }
+.def-bar { height: 20px; --b: 3px; }
+.def-bar .fill { background-color: var(--good); }
+.skull { width: 52px; height: 52px; }
+
+/* ---------- Toasts ---------- */
+.toasts {
+  position: absolute;
+  top: calc(var(--safe-top) + 100px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 660px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  padding: 8px 18px 8px 10px;
+  font-size: 20px;
+  background: #1e0e28;
+  box-shadow: inset 0 0 0 4px #4a2a60;
+  --c: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  animation: toast-in 0.3s steps(3);
+}
+.toast.gift { color: var(--gold); box-shadow: inset 0 0 0 4px #8a6a1a; }
+.toast.villain { color: #ff8a80; background: #2a0808; box-shadow: inset 0 0 0 4px #8a1a1a; }
+.toast.follow { color: #ff9cc0; box-shadow: inset 0 0 0 4px #8a1f4a; }
+.toast-icon { width: 36px; height: 36px; flex: none; }
+.toast.out { animation: toast-out 0.3s steps(3) forwards; }
+@keyframes toast-in { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes toast-out { to { transform: translateY(-20px); opacity: 0; } }
+
+/* ---------- Banner ---------- */
+.banner-layer { position: absolute; left: 0; right: 0; top: 40%; display: flex; justify-content: center; }
+.banner { text-align: center; animation: banner steps(12) forwards; }
+.banner-title { font-size: 78px; white-space: nowrap; line-height: 1; color: var(--gold); --o: 8px; }
+.banner.boss .banner-title { color: var(--bad); }
+.banner-sub { font-size: 30px; margin-top: 16px; padding: 0 30px; }
+@keyframes banner {
+  0% { transform: scale(0.2); opacity: 0; }
+  15% { transform: scale(1.1); opacity: 1; }
+  25% { transform: scale(1); }
+  80% { transform: scale(1); opacity: 1; }
+  100% { transform: translateY(-60px); opacity: 0; }
+}
+
+/* ---------- Game over / panalo ---------- */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10; /* panalo/talo: pinakaitaas */
+  background: rgba(5, 3, 15, 0.75);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  text-align: center;
+  animation: fade 0.5s steps(4);
+}
+.over-title { font-size: 84px; line-height: 1.15; color: var(--bad); padding: 0 40px; --o: 8px; }
+.over-title.won { color: var(--gold); }
+.over-sub { font-size: 26px; color: var(--gold); --o: 3px; padding: 0 40px; }
+.over-count { font-size: 30px; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- Labels sa ibabaw ng units (CSS2D) ---------- */
+.labels { position: absolute; inset: 0; z-index: 1; /* sariling layer: hindi lalampas sa HUD ang z-index ng labels */ pointer-events: none; font-family: "Silkscreen", monospace; font-weight: 700; color: #fff; --ink: #1a0d04; }
+.ulabel { display: flex; flex-direction: column; align-items: center; gap: 4px; transform-origin: 50% 100%; }
+.uname {
+  font-size: 22px;
+  padding: 4px 10px;
+  background: #142a5a;
+  --c: 3px;
+  --o: 2px;
+  white-space: nowrap;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ulabel.attacker .uname { background: #5a0a0a; }
+.ulabel.boss .uname { background: #6a0a0a; font-size: 28px; color: #ffd25a; }
+.uowner { font-size: 16px; --o: 2px; color: #ffb0a8; margin-top: -2px; }
+.uhp { width: 90px; height: 14px; padding: 2px; background: #000; overflow: hidden; visibility: hidden; --c: 2px; }
+.ulabel.boss .uhp { width: 180px; height: 18px; }
+.ulabel.damaged .uhp { visibility: visible; }
+.ulabel.quiet .uname { display: none; }
+.uhp div { height: 100%; background: #6fdc5a; }
+.ulabel.attacker .uhp div { background: #ff5048; }
+
+.float { font-size: 32px; --o: 3px; animation: float-up 0.8s steps(8) forwards; }
+.float.dmg { color: #ffd25a; }
+.float.dmg-bad { color: #ff5048; }
+.float.heal { color: #9cff57; }
+@keyframes float-up { from { transform: translateY(0) scale(1.2); opacity: 1; } to { transform: translateY(-70px) scale(0.9); opacity: 0; } }
+
+/* ---------- Debug panel (?debug lang; hindi kasama sa stream) ---------- */
+.debug-panel {
+  position: fixed;
+  right: 12px;
+  top: 12px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  font-family: "Silkscreen", monospace;
+}
+.debug-title { color: #ffd25a; font-size: 12px; text-align: center; }
+.debug-panel button {
+  font: 700 12px "Silkscreen", monospace;
+  padding: 8px 10px;
+  border: 0;
+  background: #ffd25a;
+  color: #2a1607;
+  box-shadow: inset -3px -3px 0 #c89a20, inset 3px 3px 0 #fff0a0;
+  cursor: pointer;
+  text-align: left;
+}
+.debug-panel button:hover { background: #ffe680; }
+.debug-panel button.villain { background: #ff6b5e; box-shadow: inset -3px -3px 0 #b02a20, inset 3px 3px 0 #ffb0a8; }
+.debug-panel button.villain:hover { background: #ff8a80; }
+.debug-panel button:active { box-shadow: inset 3px 3px 0 #c89a20; }
+.debug-panel a { color: #9fd3ff; font: 700 11px "Silkscreen", monospace; text-decoration: none; padding: 4px 2px; }
+.debug-panel a:hover { text-decoration: underline; }

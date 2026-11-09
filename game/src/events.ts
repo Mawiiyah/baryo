@@ -1,7 +1,7 @@
 // Iisang event format para sa TikTok (via bridge) at keyboard debug keys.
 export type GameEvent =
   | { type: 'like'; user: string; count: number }
-  | { type: 'gift'; user: string; gift: string; count: number }
+  | { type: 'gift'; user: string; gift: string; count: number; icon?: string; coins?: number }
   | { type: 'follow'; user: string }
   | { type: 'chat'; user: string; msg: string };
 
@@ -18,7 +18,14 @@ export function parseEvent(raw: unknown): GameEvent | null {
       return isNum(e.count) ? { type: 'like', user: e.user, count: e.count } : null;
     case 'gift':
       return isStr(e.gift) && isNum(e.count)
-        ? { type: 'gift', user: e.user, gift: e.gift, count: e.count }
+        ? {
+            type: 'gift',
+            user: e.user,
+            gift: e.gift,
+            count: e.count,
+            ...(isStr(e.icon) ? { icon: e.icon } : {}),
+            ...(isNum(e.coins) && e.coins > 0 ? { coins: e.coins } : {}),
+          }
         : null;
     case 'follow':
       return { type: 'follow', user: e.user };
