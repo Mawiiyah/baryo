@@ -27,6 +27,7 @@ class VoxModel {
   readonly mats: THREE.MeshStandardMaterial[] = [];
   readonly wings: THREE.Object3D[] = [];
   readonly segments: THREE.Object3D[] = [];
+  readonly limbs: THREE.Object3D[] = [];
 
   constructor(private kind: UnitKind, readonly unit: number) {}
 
@@ -55,8 +56,23 @@ class VoxModel {
     return g;
   }
 
+  /**
+   * Binti/braso na umuugoy: ang `v` ay ang kanang bahagi (+x) na nakaayos kaugnay
+   * ng pivot (x,y,z); ang kaliwa ay naka-mirror sa -x.
+   */
+  limbPair(name: string, v: Vox, limb: 'leg' | 'arm', x: number, y: number, z: number) {
+    for (const side of [-1, 1]) {
+      const p = this.pivot(side * x, y, z);
+      p.scale.x = side;
+      p.userData.limb = limb;
+      p.userData.side = side;
+      this.part(name, v, p);
+      this.limbs.push(p);
+    }
+  }
+
   done(): Model {
-    return { root: this.root, mats: this.mats, wings: this.wings, segments: this.segments };
+    return { root: this.root, mats: this.mats, wings: this.wings, segments: this.segments, limbs: this.limbs };
   }
 }
 
@@ -340,11 +356,12 @@ function tikbalang(body: number) {
   return m.done();
 }
 
-// Batay sa assets/reference/kapre.png: mabalahibong higante (maitim na kayumanggi),
-// malapad na balikat at dibdib, bahagyang nakayuko ang ulo na parang gorilya,
-// mahabang buhok mula ulo hanggang likod, maputlang kumikinang na mata, tabako sa
-// kaliwang gilid ng bibig, palda ng dahon na may lubid, mahahabang braso hanggang
-// tuhod na may malalaking kamao, makakapal na binti at malalapad na paa.
+// Batay sa assets/reference/kapre.png (at kapre walk sheet): mabalahibong higante
+// (maitim na kayumanggi), malapad na balikat at dibdib, bahagyang nakayuko ang ulo na
+// parang gorilya, mahabang buhok mula ulo hanggang likod, maputlang kumikinang na mata,
+// tabako sa kaliwang gilid ng bibig, palda ng dahon na may lubid, mahahabang braso
+// hanggang tuhod na may malalaking kamao, makakapal na binti at malalapad na paa.
+// Hiwalay ang binti at braso (may pivot sa balakang at balikat) para sa lakad.
 function kapre(_tint: number) {
   const m = new VoxModel('kapre', 1 / 32);
   const v = new Vox();
@@ -361,27 +378,17 @@ function kapre(_tint: number) {
   const hash = (x: number, y: number, z: number) => ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) >>> 0;
   // balahibo: halo-halong kulay; mas maliwanag sa harap para may hugis ang kalamnan
   const fur = (x: number, y: number, z: number) => (z >= 3 && hash(x, y, z) % 3 === 0 ? furLit : furs[hash(x, y, z) % furs.length]!);
-  const blob = (cx: number, cy: number, cz: number, rx: number, ry: number, rz: number) => v.ellipsoid(cx, cy, cz, rx, ry, rz, fur);
-  const blobSym = (cx: number, cy: number, cz: number, rx: number, ry: number, rz: number) => {
-    blob(cx, cy, cz, rx, ry, rz);
-    blob(-cx, cy, cz, rx, ry, rz);
-  };
-  // malalapad na paa (may daliri sa harap)
-  v.boxSym(2, 0, -2, 5, 1, 3, furDark);
-  for (const x of [2, 3, 4, 5]) v.boxSym(x, 0, 4, x, 0, 4, x % 2 ? skin : furDark);
-  // makakapal na binti: binti, tuhod at hita
-  blobSym(3.5, 4.5, 0.5, 2.3, 3.5, 2.3);
-  blobSym(3.5, 9, 0.5, 2.6, 2.5, 2.6);
-  blobSym(3.3, 12, 0.3, 3, 2.5, 3);
+  const blob = (t: Vox, cx: number, cy: number, cz: number, rx: number, ry: number, rz: number) => t.ellipsoid(cx, cy, cz, rx, ry, rz, fur);
+  // ---- katawan ----
   // balakang at tiyan
-  blob(0, 14.5, 0.3, 5.5, 3, 3.6);
-  blob(0, 16, 1, 5, 2.5, 3.8);
+  blob(v, 0, 14.5, 0.3, 5.5, 3, 3.6);
+  blob(v, 0, 16, 1, 5, 2.5, 3.8);
   // malapad na dibdib (pecs) at likod
-  blob(0, 20, 0, 7, 4.2, 4.2);
-  blobSym(2.6, 20.5, 2.2, 2.8, 2.2, 2.2);
+  blob(v, 0, 20, 0, 7, 4.2, 4.2);
+  for (const s of [-1, 1]) blob(v, s * 2.6, 20.5, 2.2, 2.8, 2.2, 2.2);
   // trapezius at balikat
-  blob(0, 23.5, -0.8, 5.5, 2.2, 3);
-  blobSym(7.2, 21.8, -0.2, 2.8, 2.6, 2.8);
+  blob(v, 0, 23.5, -0.8, 5.5, 2.2, 3);
+  for (const s of [-1, 1]) blob(v, s * 7.2, 21.8, -0.2, 2.8, 2.6, 2.8);
   // lubid na sinturon at nakalawit na tali
   for (let x = -6; x <= 6; x++) for (let z = -4; z <= 5; z++) {
     if ((x / 5.6) ** 2 + ((z - 0.5) / 4.3) ** 2 <= 1 && (x / 4.6) ** 2 + ((z - 0.5) / 3.3) ** 2 > 1) v.set(x, 13, z, rope);
@@ -396,14 +403,6 @@ function kapre(_tint: number) {
     const len = 4 + (a % 2) + (Math.abs(Math.cos(t)) > 0.7 ? 1 : 0);
     const c = leafs[a % leafs.length]!;
     for (let k = 0; k < len; k++) v.set(x, 12 - k, z, c);
-  }
-  // mahahabang braso: balikat → siko → pulso, malalaking kamao sa tuhod
-  blobSym(8.6, 18.5, 0, 2.2, 3, 2.3);
-  blobSym(9, 14, 0.5, 2, 2.6, 2.1);
-  blobSym(9.2, 10.8, 0.8, 1.8, 1.6, 1.9);
-  for (const s of [-1, 1]) {
-    v.ellipsoid(s * 9.3, 8, 1, 2.2, 2.2, 2.2, furDark);
-    v.box(s * 9, 6, 2, s * 10, 7, 3, skin); // mga daliri
   }
   // ulo: nakayuko pasulong, may noo, nguso at panga na parang gorilya
   v.ellipsoid(0, 26.5, 1.6, 3.3, 3.3, 3.2, skin);
@@ -428,6 +427,24 @@ function kapre(_tint: number) {
   v.boxSym(4, 21, -3, 4, 27, 1, mane); // buhok na nakalawit sa gilid ng mukha
   v.boxSym(5, 19, -3, 5, 23, -1, mane);
   m.part('body', v);
+  // ---- binti (pivot sa balakang: x=3, y=13) ----
+  const hip = [3, 13, 0] as const;
+  const leg = new Vox();
+  blob(leg, 0.5, 4.5 - hip[1], 0.5, 2.3, 3.5, 2.3);
+  blob(leg, 0.5, 9 - hip[1], 0.5, 2.6, 2.5, 2.6);
+  blob(leg, 0.3, 12 - hip[1], 0.3, 3, 2.5, 3);
+  leg.box(-1, -hip[1], -2, 2, 1 - hip[1], 3, furDark); // malapad na paa
+  for (const x of [-1, 0, 1, 2]) leg.set(x, -hip[1], 4, x % 2 ? skin : furDark); // daliri
+  m.limbPair('leg', leg, 'leg', ...hip);
+  // ---- braso (pivot sa balikat: x=8, y=21): balikat → siko → pulso → kamao ----
+  const sh = [8, 21, 0] as const;
+  const arm = new Vox();
+  blob(arm, 0.6, 18.5 - sh[1], 0, 2.2, 3, 2.3);
+  blob(arm, 1, 14 - sh[1], 0.5, 2, 2.6, 2.1);
+  blob(arm, 1.2, 10.8 - sh[1], 0.8, 1.8, 1.6, 1.9);
+  arm.ellipsoid(1.3, 8 - sh[1], 1, 2.2, 2.2, 2.2, furDark);
+  arm.box(1, 6 - sh[1], 2, 2, 7 - sh[1], 3, skin); // mga daliri
+  m.limbPair('arm', arm, 'arm', ...sh);
   return m.done();
 }
 

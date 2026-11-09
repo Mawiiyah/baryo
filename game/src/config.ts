@@ -311,6 +311,9 @@ export const FX = {
   flyBobAmount: 0.25,
   flapSpeed: 14,
   walkSway: 0.12, // rad
+  legSwing: 0.5, // rad, ugoy ng binti habang naglalakad (sabay sa bob)
+  armSwing: 0.35, // rad, ugoy ng braso (kabaligtaran ng binti sa parehong panig)
+  limbSettle: 8, // 1/s, bilis ng pagbalik ng binti/braso kapag huminto
   lungeMs: 220,
   lungeAmount: 0.35, // m
   hitFlashMs: 110,

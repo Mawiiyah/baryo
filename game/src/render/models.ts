@@ -10,6 +10,8 @@ export interface Model {
   mats: THREE.MeshStandardMaterial[];
   wings: THREE.Object3D[];
   segments: THREE.Object3D[]; // katawan ng ahas (Bakunawa), umaalon
+  /** Binti/braso na umuugoy habang naglalalakad (userData: limb 'leg'|'arm', side ±1). */
+  limbs: THREE.Object3D[];
 }
 
 
@@ -18,6 +20,7 @@ class Builder {
   readonly mats: THREE.MeshStandardMaterial[] = [];
   readonly wings: THREE.Object3D[] = [];
   readonly segments: THREE.Object3D[] = [];
+  readonly limbs: THREE.Object3D[] = [];
 
   mat(color: number, emissive = 0, roughness = 0.75) {
     const m = new THREE.MeshStandardMaterial({ color, roughness, emissive, emissiveIntensity: emissive ? 2 : 0 });
@@ -37,7 +40,7 @@ class Builder {
 
 
   done(): Model {
-    return { root: this.root, mats: this.mats, wings: this.wings, segments: this.segments };
+    return { root: this.root, mats: this.mats, wings: this.wings, segments: this.segments, limbs: this.limbs };
   }
 }
 
