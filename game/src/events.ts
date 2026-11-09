@@ -1,9 +1,9 @@
 // Iisang event format para sa TikTok (via bridge) at keyboard debug keys.
 export type GameEvent =
-  | { type: 'like'; user: string; count: number }
-  | { type: 'gift'; user: string; gift: string; count: number; icon?: string; coins?: number }
-  | { type: 'follow'; user: string }
-  | { type: 'chat'; user: string; msg: string };
+  | { type: 'like'; user: string; count: number; mock?: boolean }
+  | { type: 'gift'; user: string; gift: string; count: number; icon?: string; coins?: number; mock?: boolean }
+  | { type: 'follow'; user: string; mock?: boolean }
+  | { type: 'chat'; user: string; msg: string; mock?: boolean };
 
 const isStr = (v: unknown): v is string => typeof v === 'string';
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -13,9 +13,10 @@ export function parseEvent(raw: unknown): GameEvent | null {
   if (typeof raw !== 'object' || raw === null) return null;
   const e = raw as Record<string, unknown>;
   if (!isStr(e.user)) return null;
+  const mockOpt = e.mock === true ? { mock: true as const } : {};
   switch (e.type) {
     case 'like':
-      return isNum(e.count) ? { type: 'like', user: e.user, count: e.count } : null;
+      return isNum(e.count) ? { type: 'like', user: e.user, count: e.count, ...mockOpt } : null;
     case 'gift':
       return isStr(e.gift) && isNum(e.count)
         ? {
@@ -25,12 +26,13 @@ export function parseEvent(raw: unknown): GameEvent | null {
             count: e.count,
             ...(isStr(e.icon) ? { icon: e.icon } : {}),
             ...(isNum(e.coins) && e.coins > 0 ? { coins: e.coins } : {}),
+            ...mockOpt,
           }
         : null;
     case 'follow':
-      return { type: 'follow', user: e.user };
+      return { type: 'follow', user: e.user, ...mockOpt };
     case 'chat':
-      return isStr(e.msg) ? { type: 'chat', user: e.user, msg: e.msg } : null;
+      return isStr(e.msg) ? { type: 'chat', user: e.user, msg: e.msg, ...mockOpt } : null;
     default:
       return null;
   }

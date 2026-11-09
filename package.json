@@ -4,6 +4,26 @@
   "scripts": {
     "dev": "npm --prefix game run dev",
     "build": "npm --prefix game run build",
-    "bridge": "npm --prefix bridge run dev"
+    "bridge": "npm --prefix bridge run dev",
+    "mock": "npm --prefix bridge run mock"
+  },
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mawiiyah/baryo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Mawiiyah/baryo/issues"
+  },
+  "homepage": "https://github.com/Mawiiyah/baryo#readme",
+  "dependencies": {
+    "tiktok-live-connector": "^2.5.0",
+    "ws": "^8.22.2"
   }
 }

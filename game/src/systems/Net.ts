@@ -17,7 +17,8 @@ export function connectBridge(
 
   const open = () => {
     onStatus('connecting');
-    ws = new WebSocket(url);
+    const wsUrl = url || 'ws://localhost:8080';
+    ws = new WebSocket(wsUrl);
     ws.onopen = () => {
       delay = NET.reconnectMinMs;
       onStatus('connected');

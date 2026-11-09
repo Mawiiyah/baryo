@@ -100,6 +100,8 @@ export class World {
   /** Kabuuang coins na naibigay ng bawat viewer sa round na ito. */
   private contributions: Record<Side, Map<string, number>> = { defender: new Map(), attacker: new Map() };
   private listeners: Listener[] = [];
+  /** May totoong viewer (hindi mock) na nag-gift sa panig ng Aswang/Halimaw. */
+  private hasRealAttackerGifts = false;
 
   /** @param roundMs haba ng round (mas maikli para sa testing: ?round=N). */
   constructor(private readonly roundMs: number = ROUND.durationMs) {
@@ -127,6 +129,7 @@ export class World {
     this.pendingHits = [];
     this.contributions.defender.clear();
     this.contributions.attacker.clear();
+    this.hasRealAttackerGifts = false;
     this.roundEndsAt = this.now + this.roundMs;
     this.emit({ type: 'reset' });
     this.emit({ type: 'round', round: this.round });
@@ -187,6 +190,9 @@ export class World {
         const hero = GIFTS[event.gift];
         const unitCoins = event.coins ?? villain?.coins ?? hero?.coins ?? 1;
         const coins = unitCoins * event.count;
+        if (villain && !event.mock && coins > 0) {
+          this.hasRealAttackerGifts = true;
+        }
         const side: Side = villain ? 'attacker' : 'defender';
         const book = this.contributions[side];
         book.set(event.user, (book.get(event.user) ?? 0) + coins);
@@ -256,13 +262,7 @@ export class World {
     this.pendingHits = this.pendingHits.filter((h) => {
       if (h.at <= this.now) {
         if (h.target === 'base') {
-          // Clutch protection: hindi bababa sa 8% para laging sure panalo ang Bayani sa dulo
-          const minClutch = Math.ceil(BASE.hp * 0.08);
-          this.baseHp = Math.max(minClutch, this.baseHp - h.amount);
-          this.emit({ type: 'baseHit', amount: h.amount, by: h.by });
-          if (this.defenders.filter((d) => d.alive).length === 0 && this.state === 'playing') {
-            this.request('tanod', 'Huling Tanod');
-          }
+          this.applyBaseDamage(h.amount, h.by);
         } else {
           this.damage(h.target, h.amount, h.by);
         }
@@ -387,12 +387,7 @@ export class World {
           this.pendingHits.push({ at: this.now + FX.projectileMs, target: 'base', amount: hit, by: a });
         } else {
           this.emit({ type: 'attack', unit: a });
-          const minClutch = Math.ceil(BASE.hp * 0.08);
-          this.baseHp = Math.max(minClutch, this.baseHp - hit);
-          this.emit({ type: 'baseHit', amount: hit, by: a });
-          if (this.defenders.filter((d) => d.alive).length === 0 && this.state === 'playing') {
-            this.request('tanod', 'Huling Tanod');
-          }
+          this.applyBaseDamage(hit, a);
         }
       }
       return;
@@ -475,6 +470,22 @@ export class World {
         this.emit({ type: 'breath', unit: a, length });
         for (const d of hit) this.damage(d, Math.round(damage * Math.sqrt(a.power)));
       }
+    }
+  }
+
+  private applyBaseDamage(amount: number, by?: SimUnit) {
+    if (!this.hasRealAttackerGifts) {
+      // Mock vs Mock: Clutch protection para laging sure panalo ang Bayani sa dulo
+      const minClutch = Math.ceil(BASE.hp * 0.08);
+      this.baseHp = Math.max(minClutch, this.baseHp - amount);
+      this.emit({ type: 'baseHit', amount, by });
+      if (this.defenders.filter((d) => d.alive).length === 0 && this.state === 'playing') {
+        this.request('tanod', 'Huling Tanod');
+      }
+    } else {
+      // Totoong viewer ang nag-gift sa Aswang/Halimaw: patas na laban (game flow), pwedeng mawasak ang kubo!
+      this.baseHp = Math.max(0, this.baseHp - amount);
+      this.emit({ type: 'baseHit', amount, by });
     }
   }
 

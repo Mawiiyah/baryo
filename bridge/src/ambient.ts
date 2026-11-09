@@ -88,7 +88,7 @@ function generateLike(): BridgeMessage {
   const user = getNextUser();
   const count = randInt(2, 6);
   console.log(`[MOCK LIKE] ❤️  ${user} sent ${count} likes`);
-  return { type: 'like', user, count };
+  return { type: 'like', user, count, mock: true };
 }
 
 // 2. Chat commands (60% pabor kay Bayani para laging may Tanod na nagtatanggol)
@@ -97,7 +97,7 @@ function generateChat(): BridgeMessage {
   const isHero = Math.random() < 0.60;
   const msg = isHero ? (Math.random() < 0.5 ? '!tanod' : 'tanod') : (Math.random() < 0.5 ? '!aswang' : 'aswang');
   console.log(`[MOCK CHAT] 💬  ${user}: ${msg}`);
-  return { type: 'chat', user, msg };
+  return { type: 'chat', user, msg, mock: true };
 }
 
 // 3. Small gifts (Rose para sa Tanod o GG para sa Aswang, 1 unit lang)
@@ -111,7 +111,7 @@ function generateSmallGift(): BridgeMessage {
     ];
     const g = gifts[Math.floor(Math.random() * gifts.length)]!;
     console.log(`[MOCK GIFT] 🌹 [BAYANI] ${user} sent ${g.name} x1`);
-    return { type: 'gift', user, gift: g.name, count: 1, coins: g.coins };
+    return { type: 'gift', user, gift: g.name, count: 1, coins: g.coins, mock: true };
   } else {
     const gifts = [
       { name: 'GG', coins: 1, count: 1 },
@@ -119,14 +119,14 @@ function generateSmallGift(): BridgeMessage {
     ];
     const g = gifts[Math.floor(Math.random() * gifts.length)]!;
     console.log(`[MOCK GIFT] 👹 [HALIMAW] ${user} sent ${g.name} x1`);
-    return { type: 'gift', user, gift: g.name, count: 1, coins: g.coins };
+    return { type: 'gift', user, gift: g.name, count: 1, coins: g.coins, mock: true };
   }
 }
 
 function generateFollow(): BridgeMessage {
   const user = getNextUser();
   console.log(`[MOCK FOLLOW] ➕  ${user} followed (spawns Malupiton)!`);
-  return { type: 'follow', user };
+  return { type: 'follow', user, mock: true };
 }
 
 export function getNextMockEvent(): BridgeMessage {

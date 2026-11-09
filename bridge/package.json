@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "mock": "tsx src/mock.ts",
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit"
   },
