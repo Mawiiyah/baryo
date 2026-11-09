@@ -680,7 +680,8 @@ export class World3D {
       const axis = (w.userData.flapAxis as 'y' | 'z' | undefined) ?? 'y';
       const amp = (w.userData.flapAmp as number | undefined) ?? 0.7;
       const speed = u.stats.flying ? FX.flapSpeed : FX.flapSpeed * 0.4;
-      w.rotation[axis] = Math.sin(t * speed + v.phase) * amp;
+      // × scale.x: magkasabay na pumapagaspas ang naka-mirror na pakpak (hindi parang seesaw)
+      w.rotation[axis] = Math.sin(t * speed + v.phase) * amp * Math.sign(w.scale.x);
     }
     // lakad: cos para magkatabi ang paa sa tuktok ng bob (mid-stance)
     const settle = Math.min(1, (FX.limbSettle * this.dt) / 1000);

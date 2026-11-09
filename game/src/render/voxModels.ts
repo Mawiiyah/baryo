@@ -203,57 +203,124 @@ function albularyo(robe: number) {
   return m.done();
 }
 
-function sarimanok(blue: number) {
-  const m = new VoxModel('sarimanok', 1 / 22);
+// Batay sa assets/reference/sarimanok.png: maalamat na ibon. Kremang katawan, ulo na
+// may bahagharing kwelyo ng balahibo (pula → kahel → dilaw → berde → asul), pulang mukha,
+// dilaw na baluktot na tuka, palong na pula/kahel/dilaw na pabalik. Malalaking pakpak na
+// nakataas: kremang balahibo sa itaas, tapos pula, asul at lila sa dulo (hiwa-hiwalay na
+// dulo). Mahahabang laso na buntot (pula, dilaw, asul, lila) na sumasayad at kumukulot.
+// Binti: may pivot (lakad); pakpak: pumapagaspas.
+function sarimanok(_tint: number) {
+  const m = new VoxModel('sarimanok', 1 / 30);
   const v = new Vox();
-  // paa at kuko
-  v.boxSym(1, 1, 0, 1, 5, 0, C.bone);
-  v.boxSym(1, 0, 0, 2, 0, 2, C.bone);
-  // katawan na may "kaliskis" sa dibdib
-  v.ellipsoid(0, 9, 0, 4.2, 4.5, 3.6, (x, y, z) => (z >= 2 ? ((x + y) % 2 === 0 ? C.teal : C.deepBlue) : blue));
-  // leeg at ulo
-  v.box(-2, 13, -1, 2, 15, 2, blue);
-  v.box(-2, 15, 0, 2, 18, 4, C.deepBlue);
-  v.boxSym(2, 16, 2, 2, 17, 4, C.red); // pulang mukha
-  v.boxSym(2, 17, 3, 2, 17, 3, 0xfff4e0, true); // mata
-  v.box(0, 16, 5, 0, 17, 6, C.bone); // tuka
-  v.set(0, 15, 5, C.red); // lambi
-  v.box(0, 19, 0, 0, 20, 3, C.red); // palong
-  // kulot na crest
+  const cream = 0xf6e3a0;
+  const creamShade = 0xdcc07a;
+  const gold = 0xe8b448;
+  const red = 0xd8283a;
+  const redDark = 0xa01c2c;
+  const orange = 0xf07a28;
+  const yellow = 0xffd23a;
+  const green = 0x4cb84a;
+  const blue = 0x2e5ad8;
+  const blueDark = 0x24338e;
+  const purple = 0x6a3aa8;
+  const beak = 0xf2b230;
+  const leg = 0xd9a441;
+  const talon = 0x4a3a2a;
+  // ---- katawan: dibdib na nakataas sa harap, puwitan sa likod ----
+  const body = (x: number, y: number, z: number) => (y >= 14 && z <= 1 ? creamShade : (x + y + z) % 5 === 0 ? creamShade : cream);
+  v.ellipsoid(0, 13, 1.5, 4, 4.2, 3.8, body);
+  v.ellipsoid(0, 11.5, -2.5, 3.5, 3.3, 4, body);
+  // leeg
+  v.ellipsoid(0, 16.5, 2.8, 2.2, 2.8, 2.2, cream);
+  // ---- bahagharing kwelyo: mga singsing sa paligid ng mukha ----
+  const ruff = [red, orange, yellow, green, blue, purple];
+  const face = [0, 20.5, 7] as const;
+  v.ellipsoid(0, 19.5, 2.8, 4.3, 4.6, 3.2, (x, y, z) => {
+    const d = Math.hypot(x - face[0], (y - face[1]) * 0.9, (z - face[2]) * 0.55) - 2.2;
+    const band = Math.max(0, Math.min(ruff.length - 1, Math.floor(d / 0.8)));
+    return ruff[band]!;
+  });
+  // matulis na dulo ng kwelyo (pababa at sa gilid)
   for (const s of [-1, 1]) {
-    for (const k of [1, 2, 3]) {
-      v.line([[0, 19, 1], [s * k, 21, 0], [s * k * 2, 22, -1], [s * (k * 2 + 1), 21, -2]], C.red);
-    }
+    v.line([[s * 3, 17, 2], [s * 4, 15, 1], [s * 4, 14, 0]], purple);
+    v.line([[s * 2, 16, 3], [s * 2, 14, 3]], blue);
   }
-  // laso na buntot
-  const ribbon = [C.deepBlue, C.teal, C.orange, C.red];
-  for (let i = 0; i < 8; i++) {
-    const s = i % 2 ? 1 : -1;
-    const w = 2 + (i % 4) * 1.5;
-    v.line([[0, 7, -3], [s * w * 0.5, 4, -6], [s * w, 1, -5], [s * w * 1.3, 0, -1 + (i % 3)], [s * w * 1.1, 2 + (i % 3), 2]], ribbon[i % 4]!);
+  v.line([[0, 16, 4], [0, 14, 4]], purple);
+  // ---- ulo: kremang ulo, pulang mukha, mata, tuka at lambi ----
+  v.ellipsoid(0, 21, 5, 2.2, 2.3, 2.2, cream);
+  v.boxSym(2, 20, 5, 2, 22, 6, red); // pulang balat sa paligid ng mata
+  v.boxSym(2, 21, 6, 2, 21, 6, C.black); // mata
+  v.boxSym(2, 22, 6, 2, 22, 6, C.white); // kislap
+  v.box(-1, 20, 7, 1, 21, 8, beak); // tuka
+  v.box(0, 20, 9, 0, 20, 9, beak);
+  v.set(0, 19, 9, gold); // baluktot na dulo
+  v.box(0, 18, 7, 0, 19, 7, red); // lambi
+  // ---- palong: mga balahibong pataas at pabalik ----
+  const crest = [red, orange, yellow, red, orange];
+  for (let i = 0; i < crest.length; i++) {
+    const s = i - 2;
+    v.line([[s * 0.5, 23, 5 - Math.abs(s) * 0.3], [s, 25.5, 4 - i * 0.4], [s * 1.4, 27.5 - Math.abs(s) * 0.6, 2 - i * 0.5]], crest[i]!);
   }
-  // isda sa kaliwang kuko
-  v.box(-3, 2, -1, -3, 3, 3, 0xb8985a);
-  v.box(-3, 1, -2, -3, 4, -2, 0xb8985a);
-  v.set(-4, 3, 2, C.black);
+  v.box(0, 23, 4, 0, 24, 6, red);
+  // ---- mahahabang laso na buntot: sumasayad sa lupa at kumukulot pataas ----
+  const tails: [number, number, number, number][] = [
+    // [x sa dulo, haba, kulay ng puno, kulay ng dulo]
+    [-6, 14, red, purple],
+    [-4, 17, yellow, blue],
+    [-1.5, 19, blue, purple],
+    [0, 21, red, yellow],
+    [1.5, 19, purple, blue],
+    [4, 17, yellow, red],
+    [6, 14, blue, purple],
+  ];
+  for (const [x, len, base, tip] of tails) {
+    const z0 = -5;
+    const z1 = z0 - len;
+    const curl = 3 + (len % 3);
+    const pts: [number, number, number][] = [[x * 0.25, 11, z0], [x * 0.5, 7, z0 - len * 0.3], [x * 0.85, 2, z0 - len * 0.65], [x, 1, z1 + 2], [x, 1 + curl, z1]];
+    v.line(pts.slice(0, 3), base);
+    v.line(pts.slice(2), tip);
+    v.set(x, 2 + curl, z1 + 1, tip);
+  }
+  // balahibo sa puwitan na nagtatakip sa puno ng buntot
+  v.ellipsoid(0, 11, -6, 2.6, 2, 2, (x, y) => ((x + y) % 2 === 0 ? orange : red));
   m.part('body', v);
-  // pakpak na nakataas (kanang pakpak; ang kaliwa ay naka-mirror)
+  // ---- binti (pivot sa balakang): mabalahibong hita, dilaw na binti, kuko ----
+  const hip = [2, 9, 0] as const;
+  const lg = new Vox();
+  lg.ellipsoid(0, -0.5, 0.3, 1.9, 2.4, 2, creamShade); // hita
+  lg.box(0, -6, 0, 1, -3, 0, leg);
+  lg.set(0, -5, 1, leg);
+  lg.box(0, -9, 1, 0, -7, 1, leg);
+  for (const dx of [-1, 0, 1]) lg.line([[0, -9, 1], [dx, -9, 3]], leg); // daliri
+  for (const dx of [-1, 0, 1]) lg.set(dx, -9, 4, talon);
+  lg.set(0, -9, -1, talon);
+  m.limbPair('leg', lg, 'leg', ...hip);
+  // ---- pakpak na nakataas (kanang pakpak; ang kaliwa ay naka-mirror) ----
+  // Gilid sa harap: balikat → siko → dulo; ang balahibo ay nakalawit pababa-palabas.
   const w = new Vox();
-  for (let i = 0; i <= 8; i++) {
-    const ax = i;
-    const ay = Math.round(i * 0.9);
-    w.set(ax, ay, 0, blue);
-    const len = 3 + Math.round(i * 0.7);
-    for (let d = 1; d <= len; d++) {
-      const c = i >= 7 ? C.teal : d <= 2 ? (i % 2 ? C.teal : C.deepBlue) : C.red;
-      w.set(ax + Math.floor(d / 3), ay - d, 0, c);
+  const edge = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0, 0), new THREE.Vector3(4, 5, -1), new THREE.Vector3(8, 10, -3), new THREE.Vector3(11, 15, -5)]);
+  const n = 52;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const p = edge.getPoint(t);
+    const len = 4 + t * 8; // mas mahaba ang balahibo sa dulo
+    const finger = t > 0.55 && i % 4 >= 2; // hiwa-hiwalay na dulo
+    for (let d = 0; d <= len; d += 0.5) {
+      const f = d / len;
+      if (finger && f > 0.7) break;
+      const x = p.x + d * (0.45 + t * 0.4);
+      const y = p.y - d * (0.95 - t * 0.25);
+      const c = f < 0.12 ? gold : f < 0.38 ? cream : f < 0.62 ? (i % 6 === 0 ? redDark : red) : f < 0.86 ? blue : t > 0.5 ? purple : blueDark;
+      w.set(x, y, p.z, c);
+      if (f < 0.5) w.set(x, y, p.z - 1, f < 0.38 ? creamShade : redDark); // kapal sa itaas
     }
   }
   for (const side of [-1, 1]) {
-    const p = m.pivot(side * 4, 12, -1);
+    const p = m.pivot(side * 3, 15, -1);
     p.scale.x = side;
     p.userData.flapAxis = 'z';
-    p.userData.flapAmp = 0.25;
+    p.userData.flapAmp = 0.3;
     m.part('wing', w, p);
     m.wings.push(p);
   }

@@ -61,6 +61,7 @@ Base: Bahay Kubo (may HP) sa harap ng camera. Papalapit ang halimaw mula sa mala
 - Voxel (pixel 3D) ang mga karakter: game/src/render/voxModels.ts (pixel data) + voxel.ts (mesher).
   Binti/braso na may pivot (`Model.limbs`, `limb`/`limbPair`) ay umuugoy habang naglalakad (`FX.legSwing`/`armSwing`).
   Buntot ng Bakunawa: `Model.segments` na umaalon (`userData.sway` = lakas ng alon kada segment).
+  Pakpak (`Model.wings`, `userData.flapAxis`/`flapAmp`): ang naka-mirror (scale.x = -1) ay sabay na pumapagaspas.
 
 ## Mga command
 Mula sa root ng repo (~/laban-baryo):
