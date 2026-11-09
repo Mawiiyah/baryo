@@ -256,8 +256,13 @@ export class World {
     this.pendingHits = this.pendingHits.filter((h) => {
       if (h.at <= this.now) {
         if (h.target === 'base') {
-          this.baseHp = Math.max(0, this.baseHp - h.amount);
+          // Clutch protection: hindi bababa sa 8% para laging sure panalo ang Bayani sa dulo
+          const minClutch = Math.ceil(BASE.hp * 0.08);
+          this.baseHp = Math.max(minClutch, this.baseHp - h.amount);
           this.emit({ type: 'baseHit', amount: h.amount, by: h.by });
+          if (this.defenders.filter((d) => d.alive).length === 0 && this.state === 'playing') {
+            this.request('tanod', 'Huling Tanod');
+          }
         } else {
           this.damage(h.target, h.amount, h.by);
         }
@@ -382,8 +387,12 @@ export class World {
           this.pendingHits.push({ at: this.now + FX.projectileMs, target: 'base', amount: hit, by: a });
         } else {
           this.emit({ type: 'attack', unit: a });
-          this.baseHp = Math.max(0, this.baseHp - hit);
+          const minClutch = Math.ceil(BASE.hp * 0.08);
+          this.baseHp = Math.max(minClutch, this.baseHp - hit);
           this.emit({ type: 'baseHit', amount: hit, by: a });
+          if (this.defenders.filter((d) => d.alive).length === 0 && this.state === 'playing') {
+            this.request('tanod', 'Huling Tanod');
+          }
         }
       }
       return;
