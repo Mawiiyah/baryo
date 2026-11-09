@@ -689,7 +689,7 @@ export class World3D {
       const want = u.moving ? Math.cos(t * speed + v.phase) * amp * (l.userData.side as number) * ((l.userData.swing as number | undefined) ?? 1) : 0;
       l.rotation.x += (want - l.rotation.x) * (u.moving ? 1 : settle);
     }
-    v.model.segments.forEach((sg, i) => (sg.position.x = Math.sin(t * 3 + v.phase - i * 0.6) * 0.12));
+    v.model.segments.forEach((sg, i) => (sg.position.x = Math.sin(t * 3 + v.phase - i * 0.6) * 0.12 * ((sg.userData.sway as number | undefined) ?? 1)));
     if (v.model.segments.length) root.rotation.z = 0;
 
     // spawn pop

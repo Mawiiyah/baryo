@@ -564,28 +564,127 @@ function mangkukulam(_tint: number) {
   return m.done();
 }
 
-function bakunawa(body: number) {
-  const m = new VoxModel('bakunawa', 1 / 12);
-  const head = new Vox();
-  head.box(-2, 4, 0, 2, 7, 5, body);
-  head.box(-1, 4, 6, 1, 6, 7, body); // nguso
-  head.box(-2, 2, 1, 2, 2, 7, 0x0f4555); // panga
-  head.box(-1, 3, 3, 1, 3, 7, 0xff4a10, true); // apoy sa bibig
-  head.boxSym(2, 7, 4, 2, 7, 4, 0xffd000, true); // mata
-  head.boxSym(1, 8, 1, 1, 9, 0, C.bone); // sungay
-  head.boxSym(1, 10, -1, 1, 10, -1, C.bone);
-  head.boxSym(3, 6, 1, 4, 6, 2, 0x2fb5a0); // palikpik
-  m.part('head', head);
-  // katawan: mga segment na umaalon
-  const n = 9;
-  for (let i = 0; i < n; i++) {
-    const r = 2.6 - i * 0.18;
-    const seg = new Vox();
-    seg.ellipsoid(0, 0, 0, r, r, r, (x, y) => ((x + y) % 2 === 0 ? body : 0x2a9aa8));
-    seg.box(0, Math.ceil(r), 0, 0, Math.ceil(r) + 1, 0, 0x2fb5a0); // palikpik sa likod
-    const p = m.pivot(0, 3.2 - i * 0.12, -2 - i * 3.6);
-    m.part(`seg${i}`, seg, p);
-    m.segments.push(p);
+// Batay sa assets/reference/bakunawa.png: dragong-ahas na may apat na paa. Maitim na
+// asul-berdeng kaliskis, kremang tiyan na may kumikinang na cyan na guhit sa dibdib,
+// pakurbang leeg (S) at ulong nakataas, dalawang pares ng sungay na pabalik, palikpik
+// sa pisngi, tinik sa buong likod, mahabang buntot na pakulot pataas na may palumpong na
+// palikpik sa dulo. Paa: may pivot (pahilis na lakad); buntot: mga segment na umaalon.
+function bakunawa(_tint: number) {
+  const m = new VoxModel('bakunawa', 1 / 28);
+  const v = new Vox();
+  const scales = [0x1c3442, 0x203c4c, 0x1a2f3d, 0x23415a];
+  const scaleLit = 0x3a6a7a;
+  const dorsal = 0x14252f;
+  const belly = 0xb5a47e;
+  const bellyDark = 0x8f7f5e;
+  const cyan = 0x3fe0d0;
+  const spike = 0x1b2c3a;
+  const spikeTip = 0x4a8a98;
+  const horn = 0x857b68;
+  const hornTip = 0xcfc4a6;
+  const claw = 0xd8ccb0;
+  const hash = (x: number, y: number, z: number) => ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) >>> 0;
+  const scale = (x: number, y: number, z: number) => ((x + 2 * y + 3 * z) % 6 === 0 ? scaleLit : scales[hash(x, y, z) % scales.length]!);
+  /** Kahon na may kaliskis. */
+  const scaleBox = (t: Vox, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) => {
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) t.set(x, y, z, scale(x, y, z));
+  };
+  /** Kulay ng katawan: likod (n = palabas), kaliskis sa gilid, krema sa tiyan. */
+  const skin = (cy: number, cz: number, r: number, ny: number, nz: number) => (x: number, y: number, z: number) => {
+    const d = (y - cy) * ny + (z - cz) * nz;
+    if (d < -0.4 * r) return (y + z) % 3 === 0 ? bellyDark : belly;
+    if (d > 0.8 * r && Math.abs(x) <= 1) return dorsal;
+    return scale(x, y, z);
+  };
+  /**
+   * Kurba sa y-z (x=0): bawat punto ay may posisyon, radius at palabas na normal (likod).
+   * `bend` = 1 kung pasulong (+z) ang kurba, -1 kung paatras.
+   */
+  const path = (pts: readonly (readonly [number, number])[], radii: readonly number[], count: number, bend: number) => {
+    const curve = new THREE.CatmullRomCurve3(pts.map(([y, z]) => new THREE.Vector3(0, y, z)));
+    return Array.from({ length: count }, (_, i) => {
+      const t = i / (count - 1);
+      const p = curve.getPoint(t);
+      const tan = curve.getTangent(t);
+      const k = t * (radii.length - 1);
+      const j = Math.min(radii.length - 2, Math.floor(k));
+      const r = radii[j]! + (radii[j + 1]! - radii[j]!) * (k - j);
+      return { y: p.y, z: p.z, r, ny: bend * tan.z, nz: -tan.y };
+    });
+  };
+  // ---- katawan at leeg: mula balakang → dibdib → pakurbang leeg → ulo ----
+  const spine = path([[11, -14], [11.5, -8], [12, -2], [12.5, 3], [15, 7], [19, 9], [22.5, 11]], [4.2, 4.6, 5, 4.6, 3.6, 3.2, 3], 40, 1);
+  for (const s of spine) v.ellipsoid(0, s.y, s.z, s.r * 0.9, s.r, s.r, skin(s.y, s.z, s.r, s.ny, s.nz));
+  // kumikinang na cyan na chevron sa dibdib at leeg
+  for (let y = 8; y <= 21; y++) for (let x = -3; x <= 3; x++) {
+    if ((Math.abs(x) + y) % 4 !== 0) continue;
+    for (let z = 20; z >= 0; z--) if (v.has(x, y, z)) { v.set(x, y, z, cyan, true); break; }
   }
+  // ---- ulo ----
+  v.ellipsoid(0, 24.5, 12.5, 3.2, 2.8, 3.5, scale);
+  for (let z = 15; z <= 20; z++) {
+    const w = z <= 17 ? 2 : 1;
+    scaleBox(v, -w, 23, z, w, z <= 18 ? 25 : 24, z); // itaas na panga / nguso
+    v.box(-w, 21, z - 1, w, 21, z - 1, z % 2 ? bellyDark : belly); // ibabang panga (bukas)
+  }
+  v.box(-1, 22, 14, 1, 22, 17, 0xff4a10, true); // apoy sa bibig
+  for (const z of [16, 18]) v.boxSym(2, 22, z, 2, 22, z, C.white).boxSym(1, 22, z + 1, 1, 22, z + 1, C.white); // ngipin
+  v.boxSym(1, 25, 20, 1, 25, 20, C.black); // butas ng ilong
+  v.box(-3, 26, 14, 3, 26, 15, dorsal); // kilay
+  v.boxSym(2, 25, 15, 2, 25, 15, 0xffc040, true); // mata
+  // dalawang pares ng sungay (pabalik) at palikpik sa pisngi
+  for (const s of [-1, 1]) {
+    v.line([[s * 2, 26, 12], [s * 3, 29, 10], [s * 3, 31, 7]], horn);
+    v.line([[s * 3, 31, 7], [s * 2, 32, 5]], hornTip);
+    v.line([[s * 3, 25, 11], [s * 5, 26, 9], [s * 6, 27, 7]], horn);
+    v.set(s * 6, 28, 6, hornTip);
+    v.line([[s * 3, 23, 11], [s * 5, 22, 9], [s * 6, 21, 7]], spike);
+    v.line([[s * 3, 24, 10], [s * 5, 24, 8], [s * 7, 24, 6]], spikeTip);
+  }
+  // tinik sa likod: mula batok hanggang balakang (nakahilig pabalik)
+  for (let i = 0; i < spine.length; i += 3) {
+    const s = spine[i]!;
+    const top = [s.y + s.ny * s.r, s.z + s.nz * s.r] as const;
+    const h = i > 28 ? 3 : 2;
+    for (let k = 1; k <= h; k++) v.set(0, top[0] + s.ny * k + 0.3 * k * s.nz, top[1] + s.nz * k - 0.3 * k * s.ny, k === h ? spikeTip : spike);
+  }
+  m.part('body', v);
+  // ---- apat na paa: pahilis na lakad (harap-kaliwa kasabay ng likod-kanan) ----
+  const front = new Vox();
+  front.ellipsoid(1, -1, 0, 2.2, 2.6, 2.5, scale); // balikat
+  scaleBox(front, 1, -8, 0, 2, -3, 1);
+  front.ellipsoid(1.5, -8.5, 1, 1.5, 1.3, 1.5, scale); // pulso
+  const hind = new Vox();
+  hind.ellipsoid(1, -1, -0.5, 2.6, 3, 3, scale); // hita
+  scaleBox(hind, 1, -5, -2, 2, -3, -1); // tuhod
+  scaleBox(hind, 1, -9, -1, 2, -5, 0);
+  for (const leg of [front, hind]) {
+    scaleBox(leg, 0, -11, -1, 3, -10, 3); // paa
+    for (const x of [0, 2, 3]) leg.set(x, -11, 4, claw); // kuko
+    leg.set(1, -11, -2, claw);
+  }
+  for (const side of [-1, 1]) {
+    m.limb('legF', front, 'leg', side * 4, 11, 3, side).scale.x = side;
+    m.limb('legH', hind, 'leg', side * 4, 11, -12, -side).scale.x = side;
+  }
+  // ---- buntot: mga segment na pakulot pataas, palumpong na palikpik sa dulo ----
+  const tail = path([[11, -15], [10, -20], [10, -25], [11, -29], [13, -33], [16, -36], [20, -37.5], [23.5, -36.5]], [3.9, 3.4, 3, 2.6, 2.3, 2, 1.8, 1.6], 13, -1);
+  tail.forEach((s, i) => {
+    const seg = new Vox();
+    seg.ellipsoid(0, 0, 0, s.r * 0.9, s.r, s.r, skin(0, 0, s.r, s.ny, s.nz));
+    for (let k = 1; k <= 2; k++) seg.set(0, s.ny * (s.r + k) + 0.3 * k * s.nz, s.nz * (s.r + k) - 0.3 * k * s.ny, k === 2 ? spikeTip : spike);
+    if (i === tail.length - 1) {
+      for (let a = -2; a <= 2; a++) {
+        const ang = Math.atan2(-s.nz, -s.ny) + a * 0.45; // pabukas na palumpong, sunod sa buntot
+        const y = Math.sin(ang) * 6;
+        const z = Math.cos(ang) * 6;
+        seg.line([[0, 0, 0], [0, y * 0.5 - 0.5, z * 0.5], [0, y, z]], a % 2 ? spikeTip : spike);
+      }
+    }
+    const p = m.pivot(0, s.y, s.z);
+    p.userData.sway = 0.15 + (0.85 * i) / (tail.length - 1);
+    m.part(`tail${i}`, seg, p);
+    m.segments.push(p);
+  });
   return m.done();
 }
