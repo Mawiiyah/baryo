@@ -341,75 +341,92 @@ function tikbalang(body: number) {
 }
 
 // Batay sa assets/reference/kapre.png: mabalahibong higante (maitim na kayumanggi),
-// mahabang buhok hanggang likod, maputlang kumikinang na mata, tabako sa kaliwang
-// gilid ng bibig, palda ng dahon na may lubid, mahahabang braso at malalaking paa.
+// malapad na balikat at dibdib, bahagyang nakayuko ang ulo na parang gorilya,
+// mahabang buhok mula ulo hanggang likod, maputlang kumikinang na mata, tabako sa
+// kaliwang gilid ng bibig, palda ng dahon na may lubid, mahahabang braso hanggang
+// tuhod na may malalaking kamao, makakapal na binti at malalapad na paa.
 function kapre(_tint: number) {
-  const m = new VoxModel('kapre', 1 / 24);
+  const m = new VoxModel('kapre', 1 / 32);
   const v = new Vox();
-  const furs = [0x3a281c, 0x332318, 0x45301f, 0x2b1d14];
-  const furDark = 0x24180f;
-  const face = 0x2e2017;
-  const mane = 0x281a11;
+  const furs = [0x3a281c, 0x342319, 0x412c1e, 0x2e2017];
+  const furLit = 0x4a3424;
+  const furDark = 0x22170f;
+  const skin = 0x3a281d;
+  const muzzle = 0x4a3426;
+  const mane = 0x241810;
+  const maneLit = 0x30211a;
   const rope = 0x7a5a3a;
-  const leaf = 0x2e4a2a;
-  const leafDark = 0x1f3620;
+  const leafs = [0x2e4a2a, 0x3a5a32, 0x24401f];
   const eye = 0xfff0b0;
-  // balahibo: halo-halong kulay para may tekstura
-  const fur = (x: number, y: number, z: number) => furs[(((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) >>> 0) % furs.length]!;
-  const furBox = (x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) => {
-    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) v.set(x, y, z, fur(x, y, z));
+  const hash = (x: number, y: number, z: number) => ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) >>> 0;
+  // balahibo: halo-halong kulay; mas maliwanag sa harap para may hugis ang kalamnan
+  const fur = (x: number, y: number, z: number) => (z >= 3 && hash(x, y, z) % 3 === 0 ? furLit : furs[hash(x, y, z) % furs.length]!);
+  const blob = (cx: number, cy: number, cz: number, rx: number, ry: number, rz: number) => v.ellipsoid(cx, cy, cz, rx, ry, rz, fur);
+  const blobSym = (cx: number, cy: number, cz: number, rx: number, ry: number, rz: number) => {
+    blob(cx, cy, cz, rx, ry, rz);
+    blob(-cx, cy, cz, rx, ry, rz);
   };
-  const furSym = (x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) => {
-    furBox(x0, y0, z0, x1, y1, z1);
-    furBox(-x1, y0, z0, -x0, y1, z1);
-  };
-  // malalaking paa at binti
-  v.boxSym(1, 0, -1, 3, 1, 3, furDark);
-  furSym(1, 2, -2, 3, 8, 1);
-  // balakang, katawan at tiyan
-  furBox(-4, 9, -2, 4, 10, 2);
-  furBox(-4, 11, -3, 4, 13, 2);
-  furBox(-3, 11, 3, 3, 13, 3);
-  furBox(-5, 14, -3, 5, 17, 2); // malapad na dibdib
-  furBox(-4, 15, 3, 4, 17, 3); // dibdib (pecs)
-  furBox(-4, 18, -3, 4, 18, 2); // balikat
-  // lubid na sinturon
-  v.box(-4, 11, -3, 4, 11, 3, rope);
-  v.box(-1, 8, 3, -1, 10, 3, rope); // nakalawit na tali
-  // palda ng dahon (harap/likod at gilid)
-  for (const z of [-4, 3]) {
-    for (let x = -4; x <= 4; x++) {
-      const p = (x + 6) % 3;
-      const bottom = 6 + (p === 1 ? 0 : 1) + ((x + 6) % 2);
-      v.box(x, bottom, z, x, 10, z, p === 1 ? leafDark : leaf);
-    }
+  // malalapad na paa (may daliri sa harap)
+  v.boxSym(2, 0, -2, 5, 1, 3, furDark);
+  for (const x of [2, 3, 4, 5]) v.boxSym(x, 0, 4, x, 0, 4, x % 2 ? skin : furDark);
+  // makakapal na binti: binti, tuhod at hita
+  blobSym(3.5, 4.5, 0.5, 2.3, 3.5, 2.3);
+  blobSym(3.5, 9, 0.5, 2.6, 2.5, 2.6);
+  blobSym(3.3, 12, 0.3, 3, 2.5, 3);
+  // balakang at tiyan
+  blob(0, 14.5, 0.3, 5.5, 3, 3.6);
+  blob(0, 16, 1, 5, 2.5, 3.8);
+  // malapad na dibdib (pecs) at likod
+  blob(0, 20, 0, 7, 4.2, 4.2);
+  blobSym(2.6, 20.5, 2.2, 2.8, 2.2, 2.2);
+  // trapezius at balikat
+  blob(0, 23.5, -0.8, 5.5, 2.2, 3);
+  blobSym(7.2, 21.8, -0.2, 2.8, 2.6, 2.8);
+  // lubid na sinturon at nakalawit na tali
+  for (let x = -6; x <= 6; x++) for (let z = -4; z <= 5; z++) {
+    if ((x / 5.6) ** 2 + ((z - 0.5) / 4.3) ** 2 <= 1 && (x / 4.6) ** 2 + ((z - 0.5) / 3.3) ** 2 > 1) v.set(x, 13, z, rope);
   }
-  for (const x of [-5, 5]) {
-    for (let z = -3; z <= 2; z++) {
-      const p = (z + 6) % 3;
-      v.box(x, 7 + (p === 1 ? 0 : 1), z, x, 10, z, p === 1 ? leafDark : leaf);
-    }
+  v.box(-2, 9, 5, -2, 12, 5, rope);
+  v.set(-1, 9, 5, rope);
+  // palda ng dahon: patulis na dahon na nakalawit mula sa sinturon
+  for (let a = 0; a < 22; a++) {
+    const t = (a / 22) * Math.PI * 2;
+    const x = Math.round(Math.sin(t) * 5.9);
+    const z = Math.round(0.5 + Math.cos(t) * 4.6);
+    const len = 4 + (a % 2) + (Math.abs(Math.cos(t)) > 0.7 ? 1 : 0);
+    const c = leafs[a % leafs.length]!;
+    for (let k = 0; k < len; k++) v.set(x, 12 - k, z, c);
   }
-  // mahahabang braso at malalaking kamay
-  furSym(6, 14, -2, 7, 18, 1);
-  furSym(6, 9, -1, 7, 13, 1);
-  v.boxSym(6, 6, -1, 7, 8, 2, furDark);
-  // ulo
-  v.box(-2, 19, -1, 2, 23, 2, face);
-  v.box(-2, 22, 3, 2, 22, 3, mane); // kilay
-  v.boxSym(1, 21, 3, 1, 21, 3, eye, true); // mata
-  v.box(-1, 19, 3, 1, 20, 3, face); // nguso
-  v.set(0, 19, 4, furDark); // bibig
-  // tabako sa kaliwang gilid, may baga
-  v.box(1, 19, 4, 2, 19, 4, 0x7a4a2a);
-  v.set(3, 19, 5, 0x7a4a2a);
-  v.set(4, 19, 5, 0xff6a00, true);
-  // mahabang buhok: bumabalot sa ulo, hanggang likod
-  v.box(-3, 24, -3, 3, 24, 1, mane);
-  v.boxSym(3, 18, -3, 3, 23, 1, mane);
-  v.box(-3, 19, -3, 3, 23, -2, mane);
-  v.box(-4, 12, -4, 4, 20, -4, mane);
-  v.box(-2, 23, 3, 2, 23, 3, mane); // bangs
+  // mahahabang braso: balikat → siko → pulso, malalaking kamao sa tuhod
+  blobSym(8.6, 18.5, 0, 2.2, 3, 2.3);
+  blobSym(9, 14, 0.5, 2, 2.6, 2.1);
+  blobSym(9.2, 10.8, 0.8, 1.8, 1.6, 1.9);
+  for (const s of [-1, 1]) {
+    v.ellipsoid(s * 9.3, 8, 1, 2.2, 2.2, 2.2, furDark);
+    v.box(s * 9, 6, 2, s * 10, 7, 3, skin); // mga daliri
+  }
+  // ulo: nakayuko pasulong, may noo, nguso at panga na parang gorilya
+  v.ellipsoid(0, 26.5, 1.6, 3.3, 3.3, 3.2, skin);
+  v.box(-3, 27, 4, 3, 28, 4, furDark); // makapal na noo / kilay
+  v.box(-2, 27, 5, 2, 27, 5, furDark);
+  v.boxSym(1, 26, 4, 2, 26, 4, skin);
+  v.boxSym(1, 26, 4, 1, 26, 4, eye, true); // maputlang mata
+  v.box(-2, 23, 3, 2, 25, 5, muzzle); // nguso
+  v.box(-1, 25, 6, 1, 25, 6, furDark); // ilong
+  v.box(-1, 24, 6, 1, 24, 6, muzzle);
+  v.box(-1, 23, 6, 1, 23, 6, furDark); // bibig
+  // tabako sa kaliwang gilid ng bibig, may baga at usok
+  v.line([[1, 23, 6], [3, 23, 7], [5, 24, 7]], 0x7a4a2a);
+  v.set(6, 24, 7, 0xff6a00, true);
+  v.set(6, 26, 7, 0x8a8a8a).set(7, 28, 7, 0xaaaaaa);
+  // mahabang buhok: bumabalot sa tuktok at gilid ng ulo, hanggang gitna ng likod
+  v.ellipsoid(0, 27.5, 0.6, 3.8, 3.4, 3.4, (x, y, z) => (z >= 3 && y <= 28 ? null : (x + y) % 3 === 0 ? maneLit : mane));
+  for (let x = -6; x <= 6; x++) {
+    const bottom = 12 + Math.abs(x) + (x % 2 === 0 ? 0 : 1);
+    v.box(x, bottom, -4 - (Math.abs(x) <= 3 ? 1 : 0), x, 26, -4, Math.abs(x) % 3 === 1 ? maneLit : mane);
+  }
+  v.boxSym(4, 21, -3, 4, 27, 1, mane); // buhok na nakalawit sa gilid ng mukha
+  v.boxSym(5, 19, -3, 5, 23, -1, mane);
   m.part('body', v);
   return m.done();
 }
