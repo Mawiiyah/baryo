@@ -395,23 +395,26 @@
 .debug-panel a { color: #9fd3ff; font: 700 11px "Silkscreen", monospace; text-decoration: none; padding: 4px 2px; }
 .debug-panel a:hover { text-decoration: underline; }
 
-/* ---------- Transparent Chat Helper Banner (Nasa itaas ng bottom panels para walang matakpan) ---------- */
+/* ---------- Transparent Chat Helper Banner (Pantay na pantay sa bottom boxes para kita ang Kubo) ---------- */
 .chat-helper-banner {
   position: absolute;
-  bottom: calc(var(--safe-bottom) + 128px);
+  bottom: var(--safe-bottom);
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(14, 8, 4, 0.82);
-  backdrop-filter: blur(6px);
+  width: 680px;
+  height: 112px;
+  background: rgba(16, 9, 4, 0.82);
+  backdrop-filter: blur(5px);
   border: 3px solid var(--wood-hi);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.75), inset 0 0 10px rgba(255, 210, 90, 0.15);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(255, 210, 90, 0.12);
   border-radius: 8px;
-  padding: 8px 18px;
+  padding: 10px 18px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 6px;
-  z-index: 5;
+  gap: 8px;
+  z-index: 2;
   pointer-events: none;
 }
 .helper-header {
