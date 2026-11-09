@@ -160,7 +160,7 @@ export const GIFTS: Record<string, GiftValue<DefenderKind>> = {
   TikTok: { unit: 'tanod', perGift: 3, coins: 1 },
   'Ice Cream Cone': { unit: 'albularyo', perGift: 1, coins: 1 },
   'Finger Heart': { unit: 'anito', perGift: 1, coins: 5 },
-  Gamepad: { unit: 'sarimanok', perGift: 1, coins: 10 },
+  Dolphin: { unit: 'sarimanok', perGift: 1, coins: 10 },
 };
 
 /**
@@ -186,8 +186,8 @@ export const VILLAIN_GIFTS: Record<string, GiftValue<AttackerKind>> = {
   GG: { unit: 'aswang', perGift: 2, coins: 1 },
   'Heart Me': { unit: 'manananggal', perGift: 1, coins: 1 },
   Panda: { unit: 'tikbalang', perGift: 2, coins: 5 },
-  Cap: { unit: 'mangkukulam', perGift: 1, coins: 10 },
-  'Hand Hearts': { unit: 'kapre', perGift: 1, coins: 10 },
+  Rosa: { unit: 'mangkukulam', perGift: 1, coins: 10 },
+  'Gold Boxing Gloves': { unit: 'kapre', perGift: 1, coins: 10 },
 };
 /** Chat commands para sa halimaw (parehong cooldown ng CHAT). */
 export const VILLAIN_CHAT: Record<string, AttackerKind> = { '!aswang': 'aswang' };
@@ -483,12 +483,12 @@ export const ICONS = {
     TikTok: '🎵',
     'Ice Cream Cone': '🍦',
     'Finger Heart': '🫰',
-    Gamepad: '🕹️',
+    Dolphin: '🐬',
     GG: '🎮',
     'Heart Me': '💗',
     Panda: '🐼',
-    Cap: '🧢',
-    'Hand Hearts': '🫶',
+    Rosa: '🌺',
+    'Gold Boxing Gloves': '🥊',
   } as Record<string, string>,
 } as const;
 
@@ -505,15 +505,15 @@ export const DEBUG_KEYS = {
   R: { type: 'gift', user: '', gift: 'Rose', count: 1 },
   I: { type: 'gift', user: '', gift: 'Ice Cream Cone', count: 1 },
   A: { type: 'gift', user: '', gift: 'Finger Heart', count: 1 },
-  D: { type: 'gift', user: '', gift: 'Gamepad', count: 1 },
+  D: { type: 'gift', user: '', gift: 'Dolphin', count: 1 },
   F: { type: 'follow', user: '' },
   T: { type: 'chat', user: '', msg: '!tanod' },
   // HALIMAW (versus, 1-10 coins)
   G: { type: 'gift', user: '', gift: 'GG', count: 1 },
   H: { type: 'gift', user: '', gift: 'Heart Me', count: 1 },
   P: { type: 'gift', user: '', gift: 'Panda', count: 1 },
-  C: { type: 'gift', user: '', gift: 'Cap', count: 1 },
-  K: { type: 'gift', user: '', gift: 'Hand Hearts', count: 1 },
+  C: { type: 'gift', user: '', gift: 'Rosa', count: 1 },
+  K: { type: 'gift', user: '', gift: 'Gold Boxing Gloves', count: 1 },
   X: { type: 'chat', user: '', msg: '!aswang' },
 } as const;
 
@@ -529,7 +529,7 @@ export const DEBUG_PANEL = {
     { label: '🎵 TikTok (1c) → 3 Tanod', event: { type: 'gift', gift: 'TikTok', count: 1 } },
     { label: '🍦 Ice Cream (1c) → Albularyo', event: { type: 'gift', gift: 'Ice Cream Cone', count: 1 } },
     { label: '🫰 Finger Heart (5c) → Anito', event: { type: 'gift', gift: 'Finger Heart', count: 1 } },
-    { label: '🕹️ Gamepad (10c) → Sarimanok', event: { type: 'gift', gift: 'Gamepad', count: 1 } },
+    { label: '🐬 Dolphin (10c) → Sarimanok', event: { type: 'gift', gift: 'Dolphin', count: 1 } },
     { label: '➕ Follow → Albularyo', event: { type: 'follow' } },
     { label: '💬 !tanod', event: { type: 'chat', msg: '!tanod' } },
   ],
@@ -538,8 +538,8 @@ export const DEBUG_PANEL = {
     { label: '[G] 🎮 GG (1c) → 2 Aswang', event: { type: 'gift', gift: 'GG', count: 1 } },
     { label: '[H] 💗 Heart Me (1c) → Manananggal', event: { type: 'gift', gift: 'Heart Me', count: 1 } },
     { label: '[P] 🐼 Panda (5c) → 2 Tikbalang', event: { type: 'gift', gift: 'Panda', count: 1 } },
-    { label: '[C] 🧢 Cap (10c) → Mangkukulam', event: { type: 'gift', gift: 'Cap', count: 1 } },
-    { label: '[K] 🫶 Hand Hearts (10c) → Kapre', event: { type: 'gift', gift: 'Hand Hearts', count: 1 } },
+    { label: '[C] 🌺 Rosa (10c) → Mangkukulam', event: { type: 'gift', gift: 'Rosa', count: 1 } },
+    { label: '[K] 🥊 Gold Boxing Gloves (10c) → Kapre', event: { type: 'gift', gift: 'Gold Boxing Gloves', count: 1 } },
     { label: '[X] 💬 !aswang', event: { type: 'chat', msg: '!aswang' } },
   ],
 } as const;

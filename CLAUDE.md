@@ -107,11 +107,11 @@ O sa loob mismo ng game/ o bridge/: npm run dev
 
 ## Debug keys (game)
 BAYANI: 1 = Tanod (fake like event na sapat para sa isang Tanod), L = 10 likes, R = Rose (1c), I = Ice Cream (1c, Albularyo),
-A = Finger Heart (5c, Anito), D = Gamepad (10c, Sarimanok), F = follow, T = chat `!tanod`
+A = Finger Heart (5c, Anito), D = Dolphin (10c, Sarimanok), F = follow, T = chat `!tanod`
 HALIMAW: G = GG (1c, Aswang), H = Heart Me (1c, Manananggal), P = Panda (5c, Tikbalang),
-C = Cap (10c, Mangkukulam), K = Hand Hearts (10c, Kapre), X = chat `!aswang`
+C = Rosa (10c, Mangkukulam), K = Gold Boxing Gloves (10c, Kapre), X = chat `!aswang`
 M = mute/unmute ng tunog (hindi game event)
-Lahat ng gifts ay 1 hanggang 10 TikTok coins para sa beginner LIVE stream.
+Lahat ng gifts ay 100% tugma sa opisyal na presyo ng TikTok LIVE gifts (1 hanggang 10 coins).
 Labels sa ibabaw ng ulo: laging ipinapakita ang pangalan ng Hero/Karakter (hindi "debug").
 Clickable test buttons (bayani at halimaw): http://localhost:5173/?debug (naka-config sa `DEBUG_PANEL`; wala sa OBS kapag walang `?debug`).
 Maikling round: `?debug&round=30` (segundo; gumagana lang kasama ang `?debug`).
