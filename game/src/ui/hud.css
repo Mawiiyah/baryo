@@ -176,6 +176,14 @@
 .caption.value span:last-child { flex: none; }
 .caption { font-size: 15px; line-height: 1; margin-top: 4px; max-width: var(--col-w); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
 
+/* Anti-ban Clean HUD cards (Zero OCR flags for TikTok) */
+.clean-card { margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; }
+.clean-card .pic { width: 76px; height: 66px; }
+.clean-card .pic > img { transform: scale(1.15); filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5)); }
+.clean-name { font-size: 15px; line-height: 1.1; margin-top: 2px; text-align: center; max-width: var(--col-w); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; --o: 2px; }
+.heroes .clean-name { color: #8dff4a; }
+.villains .clean-name { color: #ff8585; }
+
 /* ---------- Ibaba ---------- */
 .bottom-left, .bottom-right {
   position: absolute;

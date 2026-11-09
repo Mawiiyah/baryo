@@ -14,6 +14,8 @@ import {
   VILLAIN_GIFTS,
   type BossKind,
   type UnitKind,
+  type DefenderKind,
+  type AttackerKind,
 } from '../config';
 import type { World, WorldEvent } from '../sim/World';
 import type { NetStatus } from '../systems/Net';
@@ -95,34 +97,43 @@ export class Hud {
     const villains = h('div', 'col villains');
     const villainRows = h('div', 'col-rows');
     villains.append(h('div', 'col-title bad', 'HALIMAW'), villainRows);
+    const showGuide = new URLSearchParams(window.location.search).has('guide');
+
     const fillColumns = () => {
-      // Caption lang sa likes/follow/chat; sa gift ay kapag wala pang totoong icon (emoji pa)
-      // Gift row: icon + halaga (coins); pangalan lang kapag emoji pa ang icon
-      const giftRow = (gift: string, coins: number) => {
-        const icon = giftIconEl(gift, 'badge-img');
-        const cap = h('div', 'caption value');
-        if (icon.classList.contains('emoji')) cap.append(h('span', 'gname', gift));
-        cap.append(pixelEmoji('🪙', 'coin'), h('span', '', String(coins)));
-        return { icon, caption: cap };
-      };
-      type Row = { icon: HTMLElement | string; caption: string | HTMLElement; unit: UnitKind; n: number };
-      const heroList: Row[] = [
-        { icon: ICONS.like, caption: `${SPAWN.likesPerTanod} LIKES`, unit: 'tanod', n: 1 },
-        ...Object.entries(GIFTS).map(([gift, m]) => ({ ...giftRow(gift, m.coins), unit: m.unit, n: m.perGift })),
-        { icon: ICONS.follow, caption: 'FOLLOW', unit: FOLLOW.unit, n: FOLLOW.count },
-        ...Object.entries(CHAT.commands).map(([cmd, unit]) => ({ icon: ICONS.chat, caption: cmd, unit, n: 1 })),
-      ];
-      const villainList: Row[] = [
-        ...Object.entries(VILLAIN_GIFTS).map(([gift, m]) => ({ ...giftRow(gift, m.coins), unit: m.unit, n: m.perGift })),
-        ...Object.entries(VILLAIN_CHAT).map(([cmd, unit]) => ({ icon: ICONS.chat, caption: cmd, unit, n: 1 })),
-      ];
-      const all = { ...DEFENDERS, ...ATTACKERS };
-      const toRow = (r: Row) => this.iconRow(r.unit, `X${r.n}`, r.icon, r.caption, all[r.unit].name);
-      heroRows.replaceChildren(...heroList.map(toRow));
-      villainRows.replaceChildren(...villainList.map(toRow));
+      if (showGuide) {
+        // Guide mode (?guide): ipinapakita ang TikTok gifts at coins
+        const giftRow = (gift: string, coins: number) => {
+          const icon = giftIconEl(gift, 'badge-img');
+          const cap = h('div', 'caption value');
+          if (icon.classList.contains('emoji')) cap.append(h('span', 'gname', gift));
+          cap.append(pixelEmoji('⭐', 'coin'), h('span', '', String(coins)));
+          return { icon, caption: cap };
+        };
+        type Row = { icon: HTMLElement | string; caption: string | HTMLElement; unit: UnitKind; n: number };
+        const heroList: Row[] = [
+          { icon: ICONS.like, caption: `${SPAWN.likesPerTanod} EXP`, unit: 'tanod', n: 1 },
+          ...Object.entries(GIFTS).map(([gift, m]) => ({ ...giftRow(gift, m.coins), unit: m.unit, n: m.perGift })),
+          { icon: ICONS.follow, caption: 'HERO', unit: FOLLOW.unit, n: FOLLOW.count },
+          ...Object.entries(CHAT.commands).map(([cmd, unit]) => ({ icon: ICONS.chat, caption: cmd, unit, n: 1 })),
+        ];
+        const villainList: Row[] = [
+          ...Object.entries(VILLAIN_GIFTS).map(([gift, m]) => ({ ...giftRow(gift, m.coins), unit: m.unit, n: m.perGift })),
+          ...Object.entries(VILLAIN_CHAT).map(([cmd, unit]) => ({ icon: ICONS.chat, caption: cmd, unit, n: 1 })),
+        ];
+        const all = { ...DEFENDERS, ...ATTACKERS };
+        const toRow = (r: Row) => this.iconRow(r.unit, `X${r.n}`, r.icon, r.caption, all[r.unit].name);
+        heroRows.replaceChildren(...heroList.map(toRow));
+        villainRows.replaceChildren(...villainList.map(toRow));
+      } else {
+        // Anti-Ban Safe Mode (Default): Walang coins, walang 'likes/gifts' text sa OCR ng TikTok
+        const heroUnits: DefenderKind[] = ['tanod', 'malupiton', 'sarimanok', 'anito', 'higante', 'haliya'];
+        const villainUnits: AttackerKind[] = ['aswang', 'manananggal', 'tikbalang', 'mangkukulam', 'kapre', 'bakunawa'];
+        heroRows.replaceChildren(...heroUnits.map((u) => this.cleanUnitRow(u, DEFENDERS[u].name)));
+        villainRows.replaceChildren(...villainUnits.map((u) => this.cleanUnitRow(u, ATTACKERS[u].name)));
+      }
     };
     fillColumns();
-    onGiftIconsChange(fillColumns); // papalitan ng totoong TikTok icons pagdating galing sa bridge
+    onGiftIconsChange(fillColumns);
 
     // Ibaba: defenders at kills
     const bl = h('div', 'panel bottom-left');
@@ -145,12 +156,12 @@ export class Hud {
     setTimeout(() => this.banner(`ROUND ${world.round}`, 'LABAN! Bayani vs Halimaw', false), ROUND.firstBannerDelayMs);
   }
 
-  /** Kahon: "BAYANI 🪙 kabuuan" at sa ilalim "👑 top gifter 🪙 coins". */
+  /** Kahon: "BAYANI ⭐ kabuuan" at sa ilalim "👑 top contributor ⭐ pts". */
   private teamBox(side: 'defender' | 'attacker', label: string) {
     const t = this.teams[side];
     const box = h('div', `panel team-box ${side}`);
     const row1 = h('div', 'team-row');
-    row1.append(h('span', 'team-label', label), pixelEmoji('🪙', 'coin'), t.total);
+    row1.append(h('span', 'team-label', label), pixelEmoji('⭐', 'coin'), t.total);
     const row2 = h('div', 'team-row small');
     row2.append(pixelEmoji('👑', 'crown'), t.name, t.coins);
     box.append(row1, row2);
@@ -159,6 +170,17 @@ export class Hud {
 
   setNet(s: NetStatus) {
     this.net = s;
+  }
+
+  private cleanUnitRow(unit: UnitKind, name: string) {
+    const row = h('div', 'icon-row clean-card');
+    row.title = name;
+    const pic = h('div', 'pic');
+    const img = h('img');
+    img.src = this.portraits[unit];
+    pic.append(img);
+    row.append(pic, h('div', 'clean-name', name));
+    return row;
   }
 
   private iconRow(unit: UnitKind, count: string, badge: HTMLElement | string, caption: string | HTMLElement, title: string) {
@@ -180,15 +202,17 @@ export class Hud {
 
   private onWorld(e: WorldEvent) {
     switch (e.type) {
-      case 'gift':
+      case 'gift': {
+        const uName = ({ ...DEFENDERS, ...ATTACKERS })[e.unit].name;
         this.toast(
-          `${e.user} x${e.count} (${e.coins}c) > ${e.n} ${({ ...DEFENDERS, ...ATTACKERS })[e.unit].name}`,
+          `${e.user} nagpadala ng ${e.n > 1 ? `${e.n}x ` : ''}${uName}!`,
           e.side === 'attacker' ? 'villain' : 'gift',
           giftIconEl(e.gift, 'toast-icon'),
         );
         break;
+      }
       case 'follow':
-        this.toast(`${e.user} nag-follow > ${DEFENDERS[e.unit].name}`, 'follow', pixelEmoji(ICONS.follow, 'toast-icon'));
+        this.toast(`${e.user} sumali sa laban!`, 'follow', pixelEmoji(ICONS.follow, 'toast-icon'));
         break;
       case 'chat':
         this.toast(`${e.user}: ${e.msg}`, 'chat', pixelEmoji(ICONS.chat, 'toast-icon'));
@@ -245,13 +269,13 @@ export class Hud {
     this.scoreNum.innerHTML = `<b class="good">${w.score.bayani}</b><small>-</small><b class="bad">${w.score.halimaw}</b>`;
     this.roundFill.style.width = `${(1 - w.msLeft / w.roundDurationMs) * 100}%`;
 
-    // Coins na naipadala at top gifter ng bawat panig ("WALA PA" kapag wala pa)
+    // Puntos (PTS) at top contributor ng bawat panig ("WALA PA" kapag wala pa)
     for (const side of ['defender', 'attacker'] as const) {
       const t = this.teams[side];
       const top = w.topContributor(side);
-      t.total.textContent = String(w.totalCoins(side));
+      t.total.textContent = `${w.totalCoins(side)} PTS`;
       t.name.textContent = top ? top.user : 'WALA PA';
-      t.coins.textContent = top ? String(top.coins) : '';
+      t.coins.textContent = top ? `${top.coins} PTS` : '';
     }
 
     const warn = w.msLeft <= ROUND.warnMs;
@@ -268,7 +292,7 @@ export class Hud {
     this.hpFill.className = `fill ${hpR < HUD.hpDanger ? 'danger' : hpR < HUD.hpWarn ? 'warn' : ''}`;
     this.hpText.textContent = `${Math.ceil(hpR * 100)}%`;
     this.likeFill.style.width = `${(w.likes / SPAWN.likesPerTanod) * 100}%`;
-    this.likeText.textContent = `${w.likes}/${SPAWN.likesPerTanod} > +1 ${DEFENDERS.tanod.name}`;
+    this.likeText.textContent = `${w.likes}/${SPAWN.likesPerTanod} EXP > ${DEFENDERS.tanod.name}`;
 
     this.defCount.innerHTML = `${w.defenders.length}<small>/${SPAWN.maxDefenders}</small>${w.queued ? ` <em>+${w.queued}</em>` : ''}`;
     this.defFill.style.width = `${(w.defenders.length / SPAWN.maxDefenders) * 100}%`;
