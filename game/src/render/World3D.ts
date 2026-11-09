@@ -639,7 +639,7 @@ export class World3D {
       strikePos = at.clone().addScaledVector(forward, 0.9 * size);
     }
 
-    const count = kind === 'aswang' ? 3 : kind === 'manananggal' || kind === 'tikbalang' ? 2 : 1;
+    const count = kind === 'aswang' ? 3 : kind === 'manananggal' || kind === 'tikbalang' || kind === 'malupiton' ? 2 : 1;
     const slashGroup = new THREE.Group();
     slashGroup.position.copy(strikePos);
 

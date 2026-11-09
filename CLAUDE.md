@@ -28,7 +28,7 @@ kubo pagkaubos ng oras, HALIMAW kapag nawasak ito. May score kada round.
   at kills/natitirang halimaw. Layers: labels (z1) < HUD (z2) < panalo/talo overlay.
 
 ## Mga karakter
-Defenders: Barangay Tanod (basic, canHitAir), Anito (tank, canHitAir), Albularyo (healer),
+Defenders: Barangay Tanod (basic, canHitAir), Anito (tank, canHitAir), Malupiton (Aka Lapu) (dual-blade warrior, canHitAir),
 Sarimanok (malakas, ranged, canHitAir).
 Attackers: Aswang (basic), Manananggal (lumilipad, umaatake sa bayani), Tikbalang (mabilis).
 Bosses (abilities sa `BOSSES`, pinapadala ng viewers via `VILLAIN_GIFTS`): Kapre (slam),
@@ -106,7 +106,7 @@ O sa loob mismo ng game/ o bridge/: npm run dev
 - bridge/src/events.ts — kopya ng `GameEvent`; panatilihing kapareho ng game/src/events.ts
 
 ## Debug keys (game)
-BAYANI: 1 = Tanod (fake like event na sapat para sa isang Tanod), L = 10 likes, R = Rose (1c), I = Ice Cream (1c, Albularyo),
+BAYANI: 1 = Tanod (fake like event na sapat para sa isang Tanod), L = 10 likes, R = Rose (1c), I = Ice Cream (1c, Malupiton),
 A = Finger Heart (5c, Anito), D = Dolphin (10c, Sarimanok), F = follow, T = chat `!tanod`
 HALIMAW: G = GG (1c, Aswang), H = Heart Me (1c, Manananggal), P = Panda (5c, Tikbalang),
 C = Rosa (10c, Mangkukulam), K = Gold Boxing Gloves (10c, Kapre), X = chat `!aswang`

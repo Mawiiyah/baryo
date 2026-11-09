@@ -6,7 +6,7 @@
 //   lat = kaliwa/kanan sa lane (0 = gitna)
 //   alt = taas (para sa lumilipad)
 
-export type DefenderKind = 'tanod' | 'anito' | 'albularyo' | 'sarimanok';
+export type DefenderKind = 'tanod' | 'anito' | 'malupiton' | 'sarimanok';
 export type MinionKind = 'aswang' | 'manananggal' | 'tikbalang';
 export type BossKind = 'kapre' | 'mangkukulam' | 'bakunawa';
 export type AttackerKind = MinionKind | BossKind;
@@ -72,9 +72,9 @@ export const DEFENDERS: Record<DefenderKind, UnitStats> = {
     name: 'Anito', hp: 600, damage: 15, range: 1.8, cooldownMs: 700, speed: 2.0,
     size: 2.2, color: 0x8b5a2b, flying: false, canHitAir: true, heal: 0, ranged: false,
   },
-  albularyo: {
-    name: 'Albularyo', hp: 100, damage: 0, range: 8, cooldownMs: 1200, speed: 2.0,
-    size: 1.5, color: 0x3fae4a, flying: false, canHitAir: false, heal: 25, ranged: true,
+  malupiton: {
+    name: 'Malupiton (Aka Lapu)', hp: 160, damage: 18, range: 1.5, cooldownMs: 500, speed: 2.8,
+    size: 1.6, color: 0xc41c1c, flying: false, canHitAir: true, heal: 0, ranged: false,
   },
   sarimanok: {
     name: 'Sarimanok', hp: 220, damage: 45, range: 12, cooldownMs: 1000, speed: 2.2,
@@ -158,7 +158,7 @@ export interface GiftValue<K> {
 export const GIFTS: Record<string, GiftValue<DefenderKind>> = {
   Rose: { unit: 'tanod', perGift: 2, coins: 1 },
   TikTok: { unit: 'tanod', perGift: 3, coins: 1 },
-  'Ice Cream Cone': { unit: 'albularyo', perGift: 1, coins: 1 },
+  'Ice Cream Cone': { unit: 'malupiton', perGift: 1, coins: 1 },
   'Finger Heart': { unit: 'anito', perGift: 1, coins: 5 },
   Dolphin: { unit: 'sarimanok', perGift: 1, coins: 10 },
 };
@@ -170,13 +170,13 @@ export const GIFTS: Record<string, GiftValue<DefenderKind>> = {
 export const GIFT_TIERS: { min: number; unit: DefenderKind; perGift: number }[] = [
   { min: 10, unit: 'sarimanok', perGift: 1 },
   { min: 5, unit: 'anito', perGift: 1 },
-  { min: 2, unit: 'albularyo', perGift: 1 },
+  { min: 2, unit: 'malupiton', perGift: 1 },
   { min: 1, unit: 'tanod', perGift: 2 },
   { min: 0, unit: 'tanod', perGift: 1 },
 ];
 export const GIFT_MAX_SPAWNS_PER_EVENT = 10; // cap kahit malaking streak
 
-export const FOLLOW = { unit: 'albularyo' as DefenderKind, count: 1 };
+export const FOLLOW = { unit: 'malupiton' as DefenderKind, count: 1 };
 
 /**
  * VERSUS: mga gift na nagpapalabas ng HALIMAW (laban sa baryo), para maglaban ang viewers.
@@ -415,7 +415,7 @@ export const FX = {
     tanod: 0x64b5f6, // asul/puting swing ng batuta
     anito: 0xffb74d, // ginintuang bagsak ng anito
     sarimanok: 0xffd54f, // engkantadong kislap
-    albularyo: 0x81c784, // halamang orasyon
+    malupiton: 0xff3232, // pulang kumpas ng kambal na talim
     aswang: 0xff2a2a, // pulang kaskas ng kuko
     manananggal: 0xd05ce3, // purpurang kuko at pakpak
     tikbalang: 0xffa726, // mabibilis na sipa at hampas
@@ -527,10 +527,10 @@ export const DEBUG_PANEL = {
     { label: '❤️ 30 likes → Tanod', event: { type: 'like', count: SPAWN.likesPerTanod } },
     { label: '🌹 Rose (1c) → 2 Tanod', event: { type: 'gift', gift: 'Rose', count: 1 } },
     { label: '🎵 TikTok (1c) → 3 Tanod', event: { type: 'gift', gift: 'TikTok', count: 1 } },
-    { label: '🍦 Ice Cream (1c) → Albularyo', event: { type: 'gift', gift: 'Ice Cream Cone', count: 1 } },
+    { label: '🍦 Ice Cream (1c) → Malupiton', event: { type: 'gift', gift: 'Ice Cream Cone', count: 1 } },
     { label: '🫰 Finger Heart (5c) → Anito', event: { type: 'gift', gift: 'Finger Heart', count: 1 } },
     { label: '🐬 Dolphin (10c) → Sarimanok', event: { type: 'gift', gift: 'Dolphin', count: 1 } },
-    { label: '➕ Follow → Albularyo', event: { type: 'follow' } },
+    { label: '➕ Follow → Malupiton', event: { type: 'follow' } },
     { label: '💬 !tanod', event: { type: 'chat', msg: '!tanod' } },
   ],
   // Panig ng HALIMAW (versus, 1-10 coins)
@@ -572,7 +572,7 @@ export const SOUND = {
     // BAYANI: maliwanag, paakyat
     tanod: { wave: 'square', notes: [523, 784], noteMs: 70, gain: 0.18, slide: 1, noise: 0 },
     anito: { wave: 'triangle', notes: [196, 262, 392], noteMs: 110, gain: 0.35, slide: 1, noise: 0 },
-    albularyo: { wave: 'sine', notes: [659, 880, 1047], noteMs: 80, gain: 0.3, slide: 1, noise: 0 },
+    malupiton: { wave: 'sawtooth', notes: [440, 554, 659], noteMs: 70, gain: 0.28, slide: 1.1, noise: 0.08 },
     sarimanok: { wave: 'square', notes: [784, 988, 1175, 1568], noteMs: 70, gain: 0.18, slide: 1.06, noise: 0 },
     // HALIMAW: madilim, pababa
     aswang: { wave: 'sawtooth', notes: [220, 165], noteMs: 90, gain: 0.16, slide: 0.85, noise: 0.15 },

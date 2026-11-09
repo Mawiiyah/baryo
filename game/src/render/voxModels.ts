@@ -84,7 +84,7 @@ export function buildVoxelModel(kind: UnitKind, color: number): Model {
   switch (kind) {
     case 'tanod': return tanod(color);
     case 'anito': return anito(color);
-    case 'albularyo': return albularyo(color);
+    case 'malupiton': return malupiton(color);
     case 'sarimanok': return sarimanok(color);
     case 'aswang': return aswang(color);
     case 'manananggal': return manananggal(color);
@@ -182,24 +182,138 @@ function anito(wood: number) {
   return m.done();
 }
 
-function albularyo(robe: number) {
-  const m = new VoxModel('albularyo', 1 / 18);
+// Batay sa assets/reference/malupiton.png: magiting na mandirigmang may kambal na kampilan/talim.
+// Salakot na may habi, pulang putong (headband) sa noo, kayumangging katawan na may
+// krus na leather harness at gintong medalyon sa dibdib, pulang bahag na may gintong palawit,
+// at dalawang makintab na bakal na espada (twin blades) sa magkabilang kamay.
+function malupiton(_tint: number) {
+  const m = new VoxModel('malupiton', 1 / 24);
   const v = new Vox();
-  v.box(-4, 0, -3, 4, 3, 3, robe);
-  v.box(-3, 4, -2, 3, 6, 2, robe);
-  v.box(-2, 7, -2, 2, 9, 2, robe);
-  v.box(-1, 4, 3, 1, 8, 3, 0x2a6e2e); // panyo
-  v.box(-2, 10, -2, 2, 13, 2, C.skin); // ulo
-  v.boxSym(1, 12, 2, 1, 12, 2, C.black);
-  v.box(-1, 10, 3, 1, 10, 3, 0xe0e0e0); // balbas
-  // salakot (sumbrerong pabilog)
-  for (let x = -5; x <= 5; x++) for (let z = -5; z <= 5; z++) if (x * x + z * z <= 26) v.set(x, 14, z, 0xd8b46a);
-  for (let x = -3; x <= 3; x++) for (let z = -3; z <= 3; z++) if (x * x + z * z <= 9) v.set(x, 15, z, 0xc9a35a);
-  v.set(0, 16, 0, 0xb08a48);
-  v.box(5, 0, 1, 5, 13, 1, 0x6a4a2a); // tungkod
-  v.box(5, 14, 1, 5, 15, 1, 0x9cff57, true); // dahon na kumikinang
-  v.boxSym(4, 7, 0, 4, 8, 0, C.skin);
+  const skin = 0xb67b4e;
+  const skinDark = 0x945f3b;
+  const red = 0xc41c1c;
+  const redDark = 0x8e1212;
+  const gold = 0xf5c242;
+  const leather = 0x4a2a14;
+  const straw = 0xd8b46a;
+  const strawDark = 0xb8924e;
+  const hair = 0x1a1410;
+
+  // ---- Katawan & Balakang (Bahag & Dibdib) ----
+  // Pulang bahag / sinturon
+  v.box(-3, 8, -2, 3, 9, 2, red);
+  v.box(-3, 8, -2, 3, 8, -2, redDark);
+  // Gintong palawit sa harap ng bahag
+  v.box(-1, 5, 2, 1, 8, 2, red);
+  v.set(0, 5, 3, gold);
+  v.set(0, 7, 3, gold);
+
+  // Kayumangging dibdib at likod
+  v.box(-3, 10, -2, 3, 14, 2, skin);
+  v.boxSym(3, 10, -2, 3, 14, -2, skinDark);
+
+  // Krus na leather harness (X straps sa dibdib)
+  v.set(-2, 14, 2, leather);
+  v.set(-1, 13, 2, leather);
+  v.set(0, 12, 2, gold); // Gintong medalyon / buckle sa gitna ng dibdib
+  v.set(1, 11, 2, leather);
+  v.set(2, 10, 2, leather);
+
+  v.set(2, 14, 2, leather);
+  v.set(1, 13, 2, leather);
+  v.set(-1, 11, 2, leather);
+  v.set(-2, 10, 2, leather);
+
+  // X straps sa likod
+  v.set(-2, 14, -2, leather);
+  v.set(-1, 13, -2, leather);
+  v.set(0, 12, -2, leather);
+  v.set(1, 11, -2, leather);
+  v.set(2, 10, -2, leather);
+  v.set(2, 14, -2, leather);
+  v.set(1, 13, -2, leather);
+  v.set(-1, 11, -2, leather);
+  v.set(-2, 10, -2, leather);
+
+  // Leeg at mukha
+  v.box(-1, 15, -1, 1, 15, 0, skin);
+  v.box(-2, 16, -2, 2, 19, 2, skin);
+  v.boxSym(3, 17, 0, 3, 17, 0, skinDark); // tainga
+  v.boxSym(1, 17, 2, 1, 17, 2, hair); // matatalim na mata / kilay
+  v.set(0, 16, 3, skinDark); // ilong
+  v.set(0, 15, 2, 0x6e2c1c); // bibig
+  // Itim na buhok sa likod at gilid
+  v.box(-2, 16, -2, 2, 19, -2, hair);
+  v.boxSym(2, 16, -1, 2, 18, 0, hair);
+
+  // Pulang putong (mandirigmang headband) sa noo
+  v.box(-2, 18, 2, 2, 18, 2, red);
+  v.boxSym(2, 18, -2, 2, 18, 1, red);
+  v.box(-2, 18, -2, 2, 18, -2, redDark);
+  v.box(-1, 16, -3, -1, 17, -3, red); // tali ng putong na nakalawit sa likod
+
+  // Salakot (conical woven straw hat)
+  const weave = (x: number, z: number) => (((x + z) & 1) === 0 ? straw : strawDark);
+  for (let x = -6; x <= 6; x++) {
+    for (let z = -6; z <= 6; z++) {
+      const r2 = x * x + z * z;
+      if (r2 <= 32) v.set(x, 20, z, r2 > 24 ? strawDark : weave(x, z));
+      if (r2 <= 16) v.set(x, 21, z, weave(x, z));
+      if (r2 <= 6) v.set(x, 22, z, weave(x, z));
+    }
+  }
+  v.set(0, 23, 0, 0x8a5a22); // dulo ng salakot
+
   m.part('body', v);
+
+  // ---- Binti (legs) may pivot sa balakang ----
+  const hip = [2.2, 8, 0] as const;
+  const leg = new Vox();
+  // Pulang pantalon/bahag sa hita
+  leg.box(-1, -4, -1, 1, 0, 1, red);
+  leg.box(-1, -4, -1, 1, -1, -1, redDark);
+  // Kayumangging binti at paa
+  leg.box(-1, -7, -1, 1, -5, 1, skin);
+  leg.box(-1, -8, -1, 1, -8, 2, skinDark); // paa
+  m.limbPair('leg', leg, 'leg', ...hip);
+
+  // ---- Braso at Kambal na Espada (Twin Kampilan / Swords) ----
+  // Pivot sa balikat (x=4, y=13, z=0)
+  const sh = [4.2, 13, 0] as const;
+  const arm = new Vox();
+  const steel = 0xd8dfe8;
+  const steelDark = 0x788494;
+  const steelEdge = 0xffffff;
+  const wood = 0x3d2314;
+
+  // Balikat at braso
+  arm.box(-1, -3, -1, 1, 0, 1, skin);
+  // Gintong balangkas / armband sa bicep
+  arm.box(-1, -2, -1, 1, -2, 1, gold);
+  // Bisig at kamao
+  arm.box(-1, -6, 0, 1, -4, 1, skin);
+  arm.box(-1, -6, 1, 1, -5, 2, skinDark); // kamao na humahawak sa espada
+
+  // Espada / Kampilan: hawakan sa kamao
+  arm.box(0, -6, -1, 0, -6, 2, wood); // hawakan
+  arm.set(0, -6, -2, gold); // pommel / dulo ng hawakan
+  arm.set(0, -6, 2, gold); // crossguard
+
+  // Talim ng espada: nakatutok paharap at bahagyang pataas
+  for (let z = 3; z <= 9; z++) {
+    const yOff = Math.floor((z - 3) * 0.35); // bahagyang kurba pataas
+    const yBlade = -6 + yOff;
+    arm.set(0, yBlade, z, steel);
+    arm.set(0, yBlade - 1, z, steelEdge); // matalas na talim sa ibaba
+    arm.set(0, yBlade + 1, z, steelDark); // likod ng espada
+  }
+  // Lumalapad na dulo ng kampilan (flared tip) sa dulo (z=9, 10)
+  arm.set(0, -4, 10, steelEdge);
+  arm.set(0, -3, 10, steel);
+  arm.set(0, -2, 9, steelDark);
+
+  m.limbPair('arm', arm, 'arm', ...sh);
+
   return m.done();
 }
 
