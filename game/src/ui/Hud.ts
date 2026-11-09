@@ -160,21 +160,22 @@ export class Hud {
     br.append(pixelEmoji('💀', 'skull'), this.killCount, pixelEmoji('👹', 'skull'), this.remainCount);
 
 
-    // Libreng Chat Command helper banner sa ibaba (Team Bayani vs Team Aswang)
+    // Libreng Chat Command helper banner sa itaas ng bottom UI (Team Bayani vs Team Aswang)
     const chatBanner = h('div', 'chat-helper-banner');
-    const badge = h('div', 'helper-badge', 'LIBRE');
+    const header = h('div', 'helper-header');
+    header.append(h('span', 'helper-badge', 'LIBRE'), h('span', 'helper-title', 'SUMALI SA LABAN:'));
     const teamsWrap = h('div', 'helper-teams');
 
     const heroTeam = h('div', 'helper-team hero');
-    heroTeam.append(h('span', 'team-name', '🛡️ TEAM BAYANI'), h('span', 'cmd-pill', 'chat !tanod'));
+    heroTeam.append(h('span', 'team-name', '🛡️ BAYANI'), h('span', 'cmd-pill', '!tanod'));
 
     const vs = h('span', 'helper-vs', 'VS');
 
     const villainTeam = h('div', 'helper-team villain');
-    villainTeam.append(h('span', 'team-name', '👹 TEAM ASWANG'), h('span', 'cmd-pill', 'chat !aswang'));
+    villainTeam.append(h('span', 'team-name', '👹 ASWANG'), h('span', 'cmd-pill', '!aswang'));
 
     teamsWrap.append(heroTeam, vs, villainTeam);
-    chatBanner.append(badge, teamsWrap);
+    chatBanner.append(header, teamsWrap);
 
     const banner = h('div', 'banner-layer');
     this.overlay.append(this.overTitle, this.overSub, this.overCount);

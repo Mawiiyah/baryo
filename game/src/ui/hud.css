@@ -395,47 +395,58 @@
 .debug-panel a { color: #9fd3ff; font: 700 11px "Silkscreen", monospace; text-decoration: none; padding: 4px 2px; }
 .debug-panel a:hover { text-decoration: underline; }
 
-/* ---------- Transparent Chat Helper Banner (Libreng Chat Commands) ---------- */
+/* ---------- Transparent Chat Helper Banner (Nasa itaas ng bottom panels para walang matakpan) ---------- */
 .chat-helper-banner {
   position: absolute;
-  bottom: calc(var(--safe-bottom) + 14px);
+  bottom: calc(var(--safe-bottom) + 128px);
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(14, 8, 4, 0.78);
-  backdrop-filter: blur(4px);
+  background: rgba(14, 8, 4, 0.82);
+  backdrop-filter: blur(6px);
   border: 3px solid var(--wood-hi);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(255, 210, 90, 0.15);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.75), inset 0 0 10px rgba(255, 210, 90, 0.15);
   border-radius: 8px;
-  padding: 8px 20px;
+  padding: 8px 18px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 6px;
   z-index: 5;
   pointer-events: none;
+}
+.helper-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .helper-badge {
   background: var(--gold);
   color: #1a0d04;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 2px 8px;
   border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
   letter-spacing: 0.5px;
   --o: 0px;
+}
+.helper-title {
+  font-size: 15px;
+  color: #ffd25a;
+  letter-spacing: 0.5px;
+  --o: 2px;
 }
 .helper-teams {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
 }
 .helper-team {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 .helper-team .team-name {
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 700;
   white-space: nowrap;
   --o: 3px;
@@ -443,8 +454,8 @@
 .helper-team.hero .team-name { color: #8dff4a; }
 .helper-team.villain .team-name { color: #ff6554; }
 .cmd-pill {
-  background: rgba(0, 0, 0, 0.7);
-  padding: 4px 12px;
+  background: rgba(0, 0, 0, 0.75);
+  padding: 3px 10px;
   border-radius: 5px;
   font-size: 18px;
   font-weight: 700;
@@ -454,14 +465,14 @@
 }
 .helper-team.hero .cmd-pill {
   border: 2px solid #8dff4a;
-  box-shadow: 0 0 8px rgba(141, 255, 74, 0.35);
+  box-shadow: 0 0 8px rgba(141, 255, 74, 0.4);
 }
 .helper-team.villain .cmd-pill {
   border: 2px solid #ff6554;
-  box-shadow: 0 0 8px rgba(255, 101, 84, 0.35);
+  box-shadow: 0 0 8px rgba(255, 101, 84, 0.4);
 }
 .helper-vs {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--gold);
   --o: 3px;
