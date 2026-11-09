@@ -86,6 +86,8 @@ export function buildVoxelModel(kind: UnitKind, color: number): Model {
     case 'anito': return anito(color);
     case 'malupiton': return malupiton(color);
     case 'sarimanok': return sarimanok(color);
+    case 'higante': return higante(color);
+    case 'haliya': return haliya(color);
     case 'aswang': return aswang(color);
     case 'manananggal': return manananggal(color);
     case 'tikbalang': return tikbalang(color);
@@ -438,6 +440,235 @@ function sarimanok(_tint: number) {
     m.part('wing', w, p);
     m.wings.push(p);
   }
+  return m.done();
+}
+
+// Batay sa assets/reference/higante.png: Mabait na Higante (The Gentle Giant).
+// Dambuhalang kayumangging mandirigma, may kuwintas ng dahon/bulaklak, berdeng bahag,
+// makapal na buhok at balbas, at buhat-buhat ang dambuhalang troso (tree trunk log) sa balikat.
+function higante(_tint: number) {
+  const m = new VoxModel('higante', 1 / 34);
+  const v = new Vox();
+  const skin = 0xb67b4e;
+  const skinDark = 0x8a5a3a;
+  const hair = 0x422614;
+  const hairLit = 0x5a381f;
+  const moss = 0x385e2b;
+  const mossDark = 0x27431e;
+  const vine = 0x43a047;
+  const flower = 0xff7043;
+  const bark = 0x5c3a1e;
+  const barkDark = 0x3d2412;
+  const woodCore = 0xc49a68;
+  const woodRing = 0x8a5e32;
+
+  // ---- Katawan (Torso ng Higante) ----
+  // Balakang at tiyan
+  v.box(-4, 10, -2, 4, 14, 2, skin);
+  // Berdeng lumot na bahag / kilt
+  v.box(-5, 9, -3, 5, 12, 3, moss);
+  for (let x = -5; x <= 5; x++) {
+    const bottom = 7 + (Math.abs(x) % 2);
+    v.box(x, bottom, -3, x, 9, -3, mossDark);
+    v.box(x, bottom, 3, x, 9, 3, mossDark);
+  }
+  // Malapad na dibdib at kalamnan
+  v.box(-5, 15, -2, 5, 20, 2, skin);
+  v.box(-4, 16, 3, 4, 19, 3, skin); // pecs
+  v.boxSym(5, 15, -2, 5, 20, 0, skinDark);
+  v.box(-4, 15, -3, 4, 20, -3, skinDark); // likod
+
+  // Kuwintas ng mga baging at bulaklak sa leeg
+  for (let x = -3; x <= 3; x++) {
+    v.set(x, 20, 3, x % 2 === 0 ? vine : flower);
+    v.set(x, 21, -3, vine);
+  }
+  v.boxSym(4, 20, 0, 4, 21, 2, vine);
+
+  // Leeg at ulo
+  v.box(-2, 21, -1, 2, 22, 1, skin);
+  v.box(-3, 23, -2, 3, 27, 2, skin);
+  // Balbas at bigote
+  v.box(-3, 22, 0, 3, 24, 3, hair);
+  v.box(-2, 24, 3, 2, 24, 3, hairLit);
+  v.set(0, 24, 2, 0x6e2c1c); // bibig
+  v.set(0, 25, 3, skinDark); // malaking ilong
+  v.boxSym(2, 26, 3, 2, 26, 3, 0x1a120c); // matang palakaibigan
+  v.boxSym(1, 27, 3, 3, 27, 3, hairLit); // makakapal na kilay
+
+  // Makapal na buhok
+  v.box(-4, 24, -3, 4, 28, -2, hair);
+  v.box(-3, 28, -2, 3, 29, 2, hairLit);
+  v.boxSym(4, 23, -2, 4, 26, 0, hair);
+
+  // ---- Dambuhalang Troso (Tree Trunk Log) sa kanang balikat ----
+  for (let z = -12; z <= 10; z++) {
+    for (let x = 5; x <= 8; x++) {
+      for (let y = 21; y <= 24; y++) {
+        v.set(x, y, z, (x === 5 || x === 8 || y === 21 || y === 24) ? bark : barkDark);
+      }
+    }
+    if (z === 2 || z === -4) {
+      v.set(6, 25, z, vine);
+      v.set(7, 25, z + 1, vine);
+    }
+  }
+  // Harapang hiwa ng troso (z = 10): concentric wood rings
+  v.box(5, 21, 11, 8, 24, 11, woodCore);
+  v.box(6, 22, 11, 7, 23, 11, woodRing);
+
+  // Likurang hiwa ng troso (z = -12)
+  v.box(5, 21, -13, 8, 24, -13, woodCore);
+  v.box(6, 22, -13, 7, 23, -13, woodRing);
+
+  m.part('body', v);
+
+  // ---- Binti ng Higante (legs) ----
+  const hip = [2.8, 9, 0] as const;
+  const leg = new Vox();
+  leg.box(-2, -6, -2, 2, 0, 2, skin);
+  leg.box(-2, -6, -2, 2, -1, -2, skinDark);
+  leg.box(-2, -8, -2, 2, -7, 1, skin);
+  leg.box(-2, -9, -3, 2, -9, 3, skinDark); // malalapad na talampakan
+  for (const x of [-2, -1, 0, 1, 2]) leg.set(x, -9, 4, skin); // daliri sa paa
+  m.limbPair('leg', leg, 'leg', ...hip);
+
+  // ---- Mga Braso ----
+  // Kaliwang braso (malayang kumakaway)
+  const shL = [6.2, 19, 0] as const;
+  const armL = new Vox();
+  armL.box(-1, -4, -1, 1, 0, 1, skin);
+  armL.box(-1, -8, -1, 1, -5, 1, skin);
+  armL.box(-2, -10, -1, 1, -9, 2, skinDark); // malaking kamao
+  m.limb('armL', armL, 'arm', ...shL, 1);
+
+  // Kanang braso (nakahawak at sumusuporta sa troso)
+  const shR = [-6.2, 19, 0] as const;
+  const armR = new Vox();
+  armR.box(-1, -4, -1, 1, 0, 1, skin);
+  armR.box(-1, -7, 0, 1, -5, 2, skin);
+  armR.box(-2, -8, 1, 1, -7, 3, skinDark); // nakakuyom sa troso
+  m.limb('armR', armR, 'arm', ...shR, -1);
+
+  return m.done();
+}
+
+// Batay sa assets/reference/haliya.png: Haliya (The Giant Moon Goddess).
+// Dambuhalang diyosa ng buwan na may gintong maskara, mahabang hating-gabing buhok,
+// gintong baluti at pauldrons, madilim-asul na kapa at bistida, at nagliliwanag na
+// gintong moon sword (talim ng buwan).
+function haliya(_tint: number) {
+  const m = new VoxModel('haliya', 1 / 30);
+  const v = new Vox();
+  const gold = 0xf5c242;
+  const goldShade = 0xb8881e;
+  const goldLight = 0xffe680;
+  const blue = 0x1a3372;
+  const blueDark = 0x101e44;
+  const red = 0xc41c1c;
+  const hair = 0x141a29;
+  const hairLit = 0x222e47;
+  const skin = 0xc99a70;
+  const skinDark = 0x9e7048;
+  const moonWhite = 0xffffff;
+
+  // ---- Katawan & Bistida ----
+  // Balakang at asul na palda / dress
+  v.box(-3, 8, -2, 3, 12, 2, blue);
+  v.box(-4, 4, -3, 4, 8, 3, blue);
+  v.box(-4, 4, -3, 4, 4, 3, gold); // gintong laylayan sa ilalim
+  // Pulang ceremonial sash sa harap na may gintong disenyo
+  v.box(-1, 4, 3, 1, 12, 3, red);
+  v.set(0, 5, 4, gold);
+  v.set(0, 8, 4, gold);
+  v.set(0, 11, 4, gold);
+
+  // Gintong sinturon
+  v.box(-3, 12, -2, 3, 13, 2, gold);
+
+  // Gintong Baluti (Chestplate / Cuirass)
+  v.box(-3, 14, -2, 3, 18, 2, gold);
+  v.box(-2, 15, 3, 2, 18, 3, goldLight); // kinang sa harap
+  v.boxSym(3, 14, -2, 3, 18, -2, goldShade);
+
+  // Gintong Pauldrons (balikat)
+  v.boxSym(4, 17, -2, 5, 19, 1, gold);
+  v.boxSym(4, 19, -1, 5, 20, 0, goldLight);
+
+  // Madilim na asul na Kapa sa likod (flowing royal cape)
+  for (let y = 3; y <= 18; y++) {
+    const w = y <= 8 ? 5 : y <= 13 ? 4 : 3;
+    v.box(-w, y, -3, w, y, -3, blue);
+    v.box(-w, y, -4, w, y, -4, blueDark);
+  }
+
+  // Leeg
+  v.box(-1, 19, -1, 1, 19, 1, skin);
+
+  // ---- Ulo at Gintong Maskara ng Buwan ----
+  v.box(-2, 20, -2, 2, 23, 2, skin);
+  // Gintong Maskara (tumakip sa buong mukha sa harap)
+  v.box(-2, 20, 3, 2, 23, 3, gold);
+  v.set(0, 24, 3, goldLight); // korona ng buwan sa noo
+  v.set(-1, 24, 3, gold);
+  v.set(1, 24, 3, gold);
+  // Singkit na misteryosong mata ng maskara
+  v.set(-1, 21, 4, 0x120c06);
+  v.set(1, 21, 4, 0x120c06);
+
+  // Mahabang buhok na hatinggabi (flowing midnight hair sa likod at gilid)
+  v.box(-3, 20, -3, 3, 25, -2, hair);
+  v.box(-2, 24, -2, 2, 25, 2, hairLit);
+  for (let y = 14; y <= 20; y++) {
+    v.box(-3, y, -3, 3, y, -2, hair);
+  }
+  v.boxSym(3, 20, -2, 3, 23, 1, hair);
+
+  m.part('body', v);
+
+  // ---- Mga Binti (nakabalot na may gintong pulseras) ----
+  const hip = [2.2, 8, 0] as const;
+  const leg = new Vox();
+  leg.box(-1, -5, -1, 1, 0, 1, blue);
+  leg.box(-1, -7, -1, 1, -6, 1, skin);
+  leg.box(-1, -6, -1, 1, -6, 1, gold); // gintong anklet
+  leg.box(-1, -8, -1, 1, -8, 2, skinDark); // paa
+  m.limbPair('leg', leg, 'leg', ...hip);
+
+  // ---- Kaliwang Braso (may gintong bracer) ----
+  const shL = [4.5, 17, 0] as const;
+  const armL = new Vox();
+  armL.box(-1, -3, -1, 1, 0, 1, skin);
+  armL.box(-1, -6, -1, 1, -4, 1, gold); // gintong bracer
+  armL.box(-1, -7, 0, 1, -6, 1, skin);
+  armL.set(0, -6, 2, moonWhite, true);
+  armL.set(1, -5, 2, 0x80e5ff, true);
+  m.limb('armL', armL, 'arm', ...shL, 1);
+
+  // ---- Kanang Braso na may Gintong Moon Sword ----
+  const shR = [-4.5, 17, 0] as const;
+  const armR = new Vox();
+  armR.box(-1, -3, -1, 1, 0, 1, skin);
+  armR.box(-1, -6, -1, 1, -4, 1, gold); // gintong bracer
+  armR.box(-1, -7, 0, 1, -6, 1, skinDark); // kamao
+
+  // Gintong Espada ng Buwan (Golden Moon Blade)
+  armR.box(0, -7, -1, 0, -7, 2, 0x4a2a14); // hawakan
+  armR.set(0, -7, -2, gold); // pommel
+  armR.box(-1, -7, 2, 1, -7, 2, goldLight); // crescent crossguard
+
+  // Mahaba at makintab na talim ng buwan (z mula 3 hanggang 12)
+  for (let z = 3; z <= 12; z++) {
+    const yOff = Math.floor((z - 3) * 0.4);
+    const yBlade = -7 + yOff;
+    armR.set(0, yBlade, z, goldLight, true); // kumikinang na ginto
+    armR.set(0, yBlade - 1, z, moonWhite, true); // matalas na puting talim ng buwan
+    armR.set(0, yBlade + 1, z, goldShade);
+  }
+  armR.set(0, -3, 13, moonWhite, true);
+
+  m.limb('armR', armR, 'arm', ...shR, -1);
+
   return m.done();
 }
 

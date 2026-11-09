@@ -29,7 +29,8 @@ kubo pagkaubos ng oras, HALIMAW kapag nawasak ito. May score kada round.
 
 ## Mga karakter
 Defenders: Barangay Tanod (basic, canHitAir), Anito (tank, canHitAir), Malupiton (Aka Lapu) (dual-blade warrior, canHitAir),
-Sarimanok (malakas, ranged, canHitAir).
+Sarimanok (malakas, ranged, canHitAir), Mabait na Higante (counter kay Kapre, 10c, canHitAir),
+Haliya (Moon Goddess, counter kay Bakunawa, 30c, canHitAir).
 Attackers: Aswang (basic), Manananggal (lumilipad, umaatake sa bayani), Tikbalang (mabilis).
 Bosses (abilities sa `BOSSES`, pinapadala ng viewers via `VILLAIN_GIFTS`): Kapre (slam),
 Mangkukulam (sumpa mula sa malayo + nagpapatawag ng Aswang), Bakunawa (apoy; nagiging

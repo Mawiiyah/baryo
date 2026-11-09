@@ -745,6 +745,11 @@ export class World3D {
 
     if (kind === 'anito') {
       this.ring(strikePos, 1.8, 0xffb74d);
+    } else if (kind === 'higante') {
+      this.ring(strikePos, 3.4, 0x8d6e63); // Hampas-Lupa ground slam
+      this.spawnSparks(strikePos, 8, 0xffb74d);
+    } else if (kind === 'haliya') {
+      this.ring(strikePos, 3.0, 0x80e5ff); // Celestial moon ring
     }
   }
 

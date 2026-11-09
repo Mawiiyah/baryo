@@ -6,7 +6,7 @@
 //   lat = kaliwa/kanan sa lane (0 = gitna)
 //   alt = taas (para sa lumilipad)
 
-export type DefenderKind = 'tanod' | 'anito' | 'malupiton' | 'sarimanok';
+export type DefenderKind = 'tanod' | 'anito' | 'malupiton' | 'sarimanok' | 'higante' | 'haliya';
 export type MinionKind = 'aswang' | 'manananggal' | 'tikbalang';
 export type BossKind = 'kapre' | 'mangkukulam' | 'bakunawa';
 export type AttackerKind = MinionKind | BossKind;
@@ -80,6 +80,14 @@ export const DEFENDERS: Record<DefenderKind, UnitStats> = {
     name: 'Sarimanok', hp: 220, damage: 45, range: 12, cooldownMs: 1000, speed: 2.2,
     size: 1.9, color: 0x2440b8, flying: false, canHitAir: true, heal: 0, ranged: true,
   },
+  higante: {
+    name: 'Mabait na Higante', hp: 1600, damage: 52, range: 2.6, cooldownMs: 900, speed: 1.5,
+    size: 4.2, color: 0x5b3e2b, flying: false, canHitAir: true, heal: 0, ranged: false, boss: true,
+  },
+  haliya: {
+    name: 'Haliya', hp: 4400, damage: 65, range: 3.2, cooldownMs: 1100, speed: 2.2,
+    size: 3.6, color: 0xe6c25e, flying: false, canHitAir: true, heal: 0, ranged: false, boss: true,
+  },
 };
 
 export const ATTACKERS: Record<AttackerKind, UnitStats> = {
@@ -126,7 +134,7 @@ export const BALANCE = {
    * Dagdag na "halaga" ng karakter na hindi nasusukat ng HP Ã— damage (abilities, AoE, summon).
    * > 1 = mas mahina ang ibibigay kada coin; < 1 = mas malakas. Na-calibrate sa equal-coin na laban.
    */
-  valueFactor: { mangkukulam: 2.5, bakunawa: 2, kapre: 0.5 } as Partial<Record<UnitKind, number>>,
+  valueFactor: { mangkukulam: 2.5, bakunawa: 2, kapre: 0.5, higante: 0.5, haliya: 2 } as Partial<Record<UnitKind, number>>,
   minMultiplier: 0.05,
   maxMultiplier: 1e6,
   sizeExp: 0.08, // mas malakas = bahagyang mas malaki (k^ito)
@@ -154,21 +162,25 @@ export interface GiftValue<K> {
   coins: number;
 }
 
-/** Gift name (gaya ng galing sa TikTok) → anong BAYANI, ilan kada gift, at halaga (1-10 coins para sa beginner). */
+/** Gift name (gaya ng galing sa TikTok) → anong BAYANI, ilan kada gift, at halaga (1-30 coins). */
 export const GIFTS: Record<string, GiftValue<DefenderKind>> = {
   Rose: { unit: 'tanod', perGift: 2, coins: 1 },
   TikTok: { unit: 'tanod', perGift: 3, coins: 1 },
   'Ice Cream Cone': { unit: 'malupiton', perGift: 1, coins: 1 },
   'Finger Heart': { unit: 'anito', perGift: 1, coins: 5 },
   Dolphin: { unit: 'sarimanok', perGift: 1, coins: 10 },
+  'Bravo!': { unit: 'higante', perGift: 1, coins: 10 },
+  Doughnut: { unit: 'haliya', perGift: 1, coins: 30 },
 };
 
 /**
  * Gift na wala sa GIFTS/VILLAIN_GIFTS → BAYANI ayon sa halaga (unang tier na `coins >= min`).
- * Mas mahal na gift = mas malakas o mas maraming bayani (1-10 coins).
+ * Mas mahal na gift = mas malakas o mas maraming bayani (1-30 coins).
  */
 export const GIFT_TIERS: { min: number; unit: DefenderKind; perGift: number }[] = [
-  { min: 10, unit: 'sarimanok', perGift: 1 },
+  { min: 30, unit: 'haliya', perGift: 1 },
+  { min: 10, unit: 'higante', perGift: 1 },
+  { min: 8, unit: 'sarimanok', perGift: 1 },
   { min: 5, unit: 'anito', perGift: 1 },
   { min: 2, unit: 'malupiton', perGift: 1 },
   { min: 1, unit: 'tanod', perGift: 2 },
@@ -180,7 +192,7 @@ export const FOLLOW = { unit: 'malupiton' as DefenderKind, count: 1 };
 
 /**
  * VERSUS: mga gift na nagpapalabas ng HALIMAW (laban sa baryo), para maglaban ang viewers.
- * Uunahin ito bago ang GIFTS. Lahat ay 1 hanggang 10 coins (para sa beginner stream).
+ * Uunahin ito bago ang GIFTS. 1 hanggang 30 coins.
  */
 export const VILLAIN_GIFTS: Record<string, GiftValue<AttackerKind>> = {
   GG: { unit: 'aswang', perGift: 2, coins: 1 },
@@ -188,6 +200,7 @@ export const VILLAIN_GIFTS: Record<string, GiftValue<AttackerKind>> = {
   Panda: { unit: 'tikbalang', perGift: 2, coins: 5 },
   Rosa: { unit: 'mangkukulam', perGift: 1, coins: 10 },
   'Gold Boxing Gloves': { unit: 'kapre', perGift: 1, coins: 10 },
+  Capybara: { unit: 'bakunawa', perGift: 1, coins: 30 },
 };
 /** Chat commands para sa halimaw (parehong cooldown ng CHAT). */
 export const VILLAIN_CHAT: Record<string, AttackerKind> = { '!aswang': 'aswang' };
@@ -416,6 +429,8 @@ export const FX = {
     anito: 0xffb74d, // ginintuang bagsak ng anito
     sarimanok: 0xffd54f, // engkantadong kislap
     malupiton: 0xff3232, // pulang kumpas ng kambal na talim
+    higante: 0xffb74d, // malakas na bagsak ng higante / troso
+    haliya: 0xd8f8ff, // nagliliwanag na crescent moonlight slash
     aswang: 0xff2a2a, // pulang kaskas ng kuko
     manananggal: 0xd05ce3, // purpurang kuko at pakpak
     tikbalang: 0xffa726, // mabibilis na sipa at hampas
@@ -484,11 +499,14 @@ export const ICONS = {
     'Ice Cream Cone': '🍦',
     'Finger Heart': '🫰',
     Dolphin: '🐬',
+    'Bravo!': '👏',
+    Doughnut: '🍩',
     GG: '🎮',
     'Heart Me': '💗',
     Panda: '🐼',
     Rosa: '🌺',
     'Gold Boxing Gloves': '🥊',
+    Capybara: '🦫',
   } as Record<string, string>,
 } as const;
 
@@ -497,7 +515,7 @@ export const NET = {
   reconnectMaxMs: 10000,
 } as const;
 
-/** Debug keys â†’ event (dumadaan pa rin sa handleEvent). */
+/** Debug keys → event (dumadaan pa rin sa handleEvent). */
 export const DEBUG_KEYS = {
   // '1' = sapat na likes para sa isang Tanod
   '1': { type: 'like', user: '', count: SPAWN.likesPerTanod },
@@ -506,14 +524,17 @@ export const DEBUG_KEYS = {
   I: { type: 'gift', user: '', gift: 'Ice Cream Cone', count: 1 },
   A: { type: 'gift', user: '', gift: 'Finger Heart', count: 1 },
   D: { type: 'gift', user: '', gift: 'Dolphin', count: 1 },
+  J: { type: 'gift', user: '', gift: 'Bravo!', count: 1 },
+  Y: { type: 'gift', user: '', gift: 'Doughnut', count: 1 },
   F: { type: 'follow', user: '' },
   T: { type: 'chat', user: '', msg: '!tanod' },
-  // HALIMAW (versus, 1-10 coins)
+  // HALIMAW (versus, 1-30 coins)
   G: { type: 'gift', user: '', gift: 'GG', count: 1 },
   H: { type: 'gift', user: '', gift: 'Heart Me', count: 1 },
   P: { type: 'gift', user: '', gift: 'Panda', count: 1 },
   C: { type: 'gift', user: '', gift: 'Rosa', count: 1 },
   K: { type: 'gift', user: '', gift: 'Gold Boxing Gloves', count: 1 },
+  B: { type: 'gift', user: '', gift: 'Capybara', count: 1 },
   X: { type: 'chat', user: '', msg: '!aswang' },
 } as const;
 
@@ -530,16 +551,19 @@ export const DEBUG_PANEL = {
     { label: '🍦 Ice Cream (1c) → Malupiton', event: { type: 'gift', gift: 'Ice Cream Cone', count: 1 } },
     { label: '🫰 Finger Heart (5c) → Anito', event: { type: 'gift', gift: 'Finger Heart', count: 1 } },
     { label: '🐬 Dolphin (10c) → Sarimanok', event: { type: 'gift', gift: 'Dolphin', count: 1 } },
+    { label: '👏 Bravo (10c) → Higante', event: { type: 'gift', gift: 'Bravo!', count: 1 } },
+    { label: '🍩 Doughnut (30c) → Haliya', event: { type: 'gift', gift: 'Doughnut', count: 1 } },
     { label: '➕ Follow → Malupiton', event: { type: 'follow' } },
     { label: '💬 !tanod', event: { type: 'chat', msg: '!tanod' } },
   ],
-  // Panig ng HALIMAW (versus, 1-10 coins)
+  // Panig ng HALIMAW (versus, 1-30 coins)
   villainButtons: [
     { label: '[G] 🎮 GG (1c) → 2 Aswang', event: { type: 'gift', gift: 'GG', count: 1 } },
     { label: '[H] 💗 Heart Me (1c) → Manananggal', event: { type: 'gift', gift: 'Heart Me', count: 1 } },
     { label: '[P] 🐼 Panda (5c) → 2 Tikbalang', event: { type: 'gift', gift: 'Panda', count: 1 } },
     { label: '[C] 🌺 Rosa (10c) → Mangkukulam', event: { type: 'gift', gift: 'Rosa', count: 1 } },
     { label: '[K] 🥊 Gold Boxing Gloves (10c) → Kapre', event: { type: 'gift', gift: 'Gold Boxing Gloves', count: 1 } },
+    { label: '[B] 🦫 Capybara (30c) → Bakunawa', event: { type: 'gift', gift: 'Capybara', count: 1 } },
     { label: '[X] 💬 !aswang', event: { type: 'chat', msg: '!aswang' } },
   ],
 } as const;
@@ -574,6 +598,8 @@ export const SOUND = {
     anito: { wave: 'triangle', notes: [196, 262, 392], noteMs: 110, gain: 0.35, slide: 1, noise: 0 },
     malupiton: { wave: 'sawtooth', notes: [440, 554, 659], noteMs: 70, gain: 0.28, slide: 1.1, noise: 0.08 },
     sarimanok: { wave: 'square', notes: [784, 988, 1175, 1568], noteMs: 70, gain: 0.18, slide: 1.06, noise: 0 },
+    higante: { wave: 'triangle', notes: [130, 98, 165], noteMs: 160, gain: 0.35, slide: 1, noise: 0.2 },
+    haliya: { wave: 'sine', notes: [523, 659, 784, 1047], noteMs: 100, gain: 0.32, slide: 1.05, noise: 0 },
     // HALIMAW: madilim, pababa
     aswang: { wave: 'sawtooth', notes: [220, 165], noteMs: 90, gain: 0.16, slide: 0.85, noise: 0.15 },
     manananggal: { wave: 'sawtooth', notes: [880, 587], noteMs: 110, gain: 0.12, slide: 0.7, noise: 0.1 },
