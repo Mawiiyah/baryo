@@ -29,7 +29,6 @@ export const GAME = {
   background: 0x1d2b1f,
   groundTop: 1150,
   groundBottom: 1650,
-  groundColor: 0x3b5d2e,
   flyHeight: 260, // gaano kataas lumilipad sa ibabaw ng ground
   spawnX: 1150, // kanan, labas ng screen
   defenderSpawnX: 220,
@@ -106,6 +105,7 @@ export const SPAWN = {
   burst: 6,
   queueMax: 30, // sobra dito ay itinatapon
   laneJitter: 1, // 0..1 bahagi ng ground band na ginagamit para sa random y
+  idleJitterX: 140, // random na ±px sa front line para hindi magpatong-patong ang defenders
 } as const;
 
 /** Gift name (gaya ng galing sa TikTok) → anong defender at ilan kada gift. */
@@ -142,28 +142,198 @@ export const WAVES = {
   hpScalePerWave: 0.08, // +8% HP kada wave
 } as const;
 
-export const HUD = {
-  feedLines: 8,
-  padding: 32,
-  likeColor: 0xff4081,
-  font: 'monospace',
-  fontSize: 36,
-  smallFontSize: 22,
-  lineGap: 12,
-  barWidth: 640,
-  barHeight: 32,
-  unitBarHeight: 8,
-  unitBarGap: 12, // agwat ng HP bar sa itaas ng unit
-  unitLabelGap: 20, // agwat ng label sa itaas ng HP bar
-  strokeWidth: 3,
-  textColor: '#ffffff',
-  goodColor: 0x4caf50,
-  badColor: 0xe53935,
+/** Kulay at font ng buong UI. */
+export const THEME = {
+  font: '"Trebuchet MS", "Arial Rounded MT Bold", Verdana, sans-serif',
+  text: '#ffffff',
+  textDim: '#c3cbbd',
+  stroke: '#0b0f0a',
+  panel: 0x0a1210,
+  panelAlpha: 0.66,
+  panelBorder: 0xffffff,
+  panelBorderAlpha: 0.14,
+  accent: 0xffc84a, // ginto
+  accentCss: '#ffc84a',
+  good: 0x5cc85f,
+  warn: 0xffb300,
+  danger: 0xe53935,
+  dangerCss: '#ff6157',
+  like: 0xff4081,
+  likeCss: '#ff8ab3',
+  heal: 0x76ff03,
+  healCss: '#a6ff5c',
+  projectile: 0xffd54f,
+  outline: 0x000000,
   barBg: 0x000000,
-  flashMs: 120,
-  projectileMs: 150,
-  healColor: 0x76ff03,
-  projectileColor: 0xffeb3b,
+  barBgAlpha: 0.55,
+  netColors: { connecting: 0xffb300, connected: 0x5cc85f, disconnected: 0xe53935 },
+} as const;
+
+export const HUD = {
+  padding: 32,
+  panelPad: 24,
+  panelRadius: 24,
+  titleSize: 38,
+  fontSize: 32,
+  smallFontSize: 24,
+  textStroke: 6,
+  barHeight: 34,
+  likeBarHeight: 22,
+  barRadius: 11,
+  gap: 14,
+  hpWarn: 0.5, // < 50% → dilaw
+  hpDanger: 0.25, // < 25% → pula
+  netDotR: 9,
+  // Unit overlays
+  unitBarHeight: 8,
+  unitBarGap: 14, // agwat ng HP bar sa itaas ng unit
+  unitLabelGap: 22, // agwat ng label sa itaas ng HP bar
+  unitFontSize: 22,
+  strokeWidth: 3,
+  // Legend ("Paano tumulong")
+  legendY: 330,
+  legendWidth: 470,
+  legendRowH: 46,
+  legendIconSize: 30,
+  legendFontSize: 25,
+  // Toasts (alerts sa kanan)
+  toastBottomY: 1060,
+  toastRowH: 54,
+  toastFontSize: 25,
+  toastMax: 5,
+  toastMs: 6000,
+  toastFadeMs: 500,
+  toastSlidePx: 60,
+  // Wave banner
+  bannerY: 930,
+  bannerFontSize: 112,
+  bannerSubSize: 40,
+  bannerMs: 1800,
+  // Game over
+  overlayAlpha: 0.65,
+  overFontSize: 92,
+} as const;
+
+/** Emoji sa legend at toasts. Walang emoji = '🎁'. */
+export const ICONS = {
+  like: '❤️',
+  follow: '➕',
+  chat: '💬',
+  gift: '🎁',
+  gifts: {
+    Rose: '🌹',
+    TikTok: '🎵',
+    'Ice Cream Cone': '🍦',
+    'Finger Heart': '🫰',
+    Doughnut: '🍩',
+  } as Record<string, string>,
+} as const;
+
+/** Background: gabi sa baryo. */
+export const SCENERY = {
+  skyTop: 0x060a22,
+  skyBottom: 0x2d2852,
+  starCount: 80,
+  starMinR: 1.2,
+  starMaxR: 3.4,
+  starMaxY: 1000,
+  starTwinkleMinMs: 900,
+  starTwinkleMaxMs: 2800,
+  moonX: 880,
+  moonY: 470,
+  moonR: 80,
+  moonColor: 0xfff1c9,
+  moonCrater: 0xe8d9a8,
+  moonGlow: 0xffe08a,
+  moonGlowRings: 5,
+  moonGlowStep: 34,
+  moonGlowAlpha: 0.05,
+  hills: [
+    { color: 0x1a1f40, height: 210, freq: 0.006, phase: 0.4 },
+    { color: 0x111a24, height: 120, freq: 0.011, phase: 2.1 },
+  ],
+  palms: [
+    { x: 330, h: 300, lean: 40 },
+    { x: 610, h: 380, lean: -30 },
+    { x: 760, h: 260, lean: 25 },
+    { x: 980, h: 340, lean: -45 },
+  ],
+  palmColor: 0x070d0c,
+  palmTrunkWidth: 12,
+  palmLeaf: 120,
+  palmLeaves: 7,
+  groundTopColor: 0x4b7537,
+  groundBottomColor: 0x253f1d,
+  groundEdge: 0x7fae54,
+  groundEdgeWidth: 6,
+  soilTop: 0x1d170f,
+  soilBottom: 0x090705,
+  grassCount: 110,
+  grassColor: 0x6a9b48,
+  grassDark: 0x30521f,
+  grassMinH: 10,
+  grassMaxH: 26,
+  fogColor: 0xcdd6ff,
+  fogAlpha: 0.07,
+  fogY: 1130,
+  fogH: 120,
+  fogDriftPx: 140,
+  fogDriftMs: 15000,
+  darknessWidth: 280, // dilim sa kanan, kung saan galing ang halimaw
+  darknessAlpha: 0.8,
+  gradientSteps: 48,
+} as const;
+
+/** Detalye ng drawing ng Bahay Kubo (sukat ay nasa BASE). */
+export const KUBO = {
+  stiltHeight: 34,
+  stiltWidth: 12,
+  stiltColor: 0x5b4325,
+  floorHeight: 12,
+  floorColor: 0x6e5230,
+  wallLines: 9,
+  wallLineColor: 0xa9854d,
+  windowW: 54,
+  windowH: 44,
+  windowColor: 0xffcf6b,
+  windowGlowR: 70,
+  windowGlowAlpha: 0.08,
+  doorW: 40,
+  doorH: 78,
+  doorColor: 0x5b4325,
+  thatchLines: 6,
+  thatchColor: 0x6f5630,
+  shakePx: 6,
+  shakeMs: 50,
+  shakeCooldownMs: 350,
+} as const;
+
+/** Animasyon at effects. */
+export const FX = {
+  spawnPopMs: 260,
+  deathMs: 320,
+  deathRise: 36,
+  bobPx: 4,
+  bobFlyPx: 14,
+  bobMinMs: 550,
+  bobMaxMs: 900,
+  hitFlashMs: 90,
+  hitFlashColor: 0xffffff,
+  dmgTextMs: 700,
+  dmgTextRise: 56,
+  dmgFontSize: 26,
+  projectileMs: 180,
+  projectileR: 9,
+  beamWidth: 6,
+  beamMs: 180,
+  shadowAlpha: 0.35,
+  shadowHeight: 0.22, // bahagi ng lapad ng unit
+  eyeR: 0.1, // bahagi ng lapad ng unit
+  eyeY: { rect: 0.28, circle: 0.38, triangle: 0.66, star: 0.45 } as Record<Shape, number>, // mula sa itaas, bahagi ng taas
+  eyeGap: 0.22, // agwat ng mata, bahagi ng lapad
+  defenderEye: 0xffffff,
+  attackerEye: 0xff3b30,
+  pupil: 0x111111,
 } as const;
 
 export const NET = {

@@ -49,7 +49,9 @@ O sa loob mismo ng game/ o bridge/: npm run dev
 - game/src/config.ts — lahat ng numbers, gift mapping, debug keys
 - game/src/scenes/GameScene.ts — game loop, combat, waves, HUD
 - game/src/systems/ — `SpawnQueue` (token bucket), `Waves`, `Net` (WS + reconnect)
-- game/src/units/Unit.ts — placeholder-shape unit
+- game/src/units/Unit.ts — placeholder-shape unit (anino, mata, bob, hit flash, damage numbers)
+- game/src/ui/Hud.ts — HUD panel, "Paano tumulong" legend (galing sa config), toasts, wave banner, lose screen
+- game/src/ui/Scenery.ts — background (gabi sa baryo) at `Kubo` (base, umuuga kapag tinamaan)
 - bridge/src/tiktok.ts — TikTok → `GameEvent` (proto v3 fields: `count`,
   `gift.name`, `content`, `user.displayId`; iba sa README ng library)
 - bridge/src/events.ts — kopya ng `GameEvent`; panatilihing kapareho ng game/src/events.ts

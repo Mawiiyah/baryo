@@ -9,8 +9,10 @@ import {
   GIFTS,
   GIFT_DEFAULT,
   GIFT_MAX_SPAWNS_PER_EVENT,
-  HUD,
+  FX,
+  ICONS,
   SPAWN,
+  THEME,
   WAVES,
   type AttackerKind,
   type DefenderKind,
@@ -19,6 +21,8 @@ import { setEventTarget, type GameEvent } from '../events';
 import { SpawnQueue } from '../systems/SpawnQueue';
 import { composeWave, hpScaleFor } from '../systems/Waves';
 import type { NetStatus } from '../systems/Net';
+import { Hud } from '../ui/Hud';
+import { Kubo, drawScenery } from '../ui/Scenery';
 import { Unit } from '../units/Unit';
 
 type State = 'playing' | 'over';
@@ -33,15 +37,10 @@ export class GameScene extends Phaser.Scene {
   private nextWaveAt = 0;
   private state: State = 'playing';
   private chatCooldowns = new Map<string, number>();
-  private feed: string[] = [];
   private netStatus: NetStatus = 'connecting';
 
-  private baseBar!: Phaser.GameObjects.Rectangle;
-  private likeBar!: Phaser.GameObjects.Rectangle;
-  private waveText!: Phaser.GameObjects.Text;
-  private statusText!: Phaser.GameObjects.Text;
-  private feedText!: Phaser.GameObjects.Text;
-  private fx!: Phaser.GameObjects.Graphics;
+  private hud!: Hud;
+  private kubo!: Kubo;
 
   constructor() {
     super('game');
@@ -58,12 +57,9 @@ export class GameScene extends Phaser.Scene {
     this.nextWaveAt = this.time.now + WAVES.firstDelayMs;
 
     this.cameras.main.setBackgroundColor(GAME.background);
-    this.add
-      .rectangle(0, GAME.groundTop, GAME.width, GAME.groundBottom - GAME.groundTop, GAME.groundColor)
-      .setOrigin(0);
-    this.drawBase();
-    this.fx = this.add.graphics().setDepth(GAME.height);
-    this.createHud();
+    drawScenery(this);
+    this.kubo = new Kubo(this);
+    this.hud = new Hud(this);
 
     setEventTarget((e) => this.onEvent(e));
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setEventTarget(null));
@@ -86,17 +82,18 @@ export class GameScene extends Phaser.Scene {
       case 'gift': {
         const map = GIFTS[event.gift] ?? GIFT_DEFAULT;
         const n = Math.min(map.perGift * event.count, GIFT_MAX_SPAWNS_PER_EVENT);
-        this.log(`${event.user} → ${event.gift} x${event.count} = ${n} ${DEFENDERS[map.unit].name}`);
+        const icon = ICONS.gifts[event.gift] ?? ICONS.gift;
+        this.hud.toast(`${icon} ${event.user}: ${event.gift} ×${event.count} → ${n} ${DEFENDERS[map.unit].name}`, THEME.accentCss);
         for (let i = 0; i < n; i++) this.request(map.unit, event.user);
         break;
       }
       case 'follow':
-        this.log(`${event.user} nag-follow → ${DEFENDERS[FOLLOW.unit].name}`);
+        this.hud.toast(`${ICONS.follow} ${event.user} nag-follow → ${DEFENDERS[FOLLOW.unit].name}`, THEME.likeCss);
         for (let i = 0; i < FOLLOW.count; i++) this.request(FOLLOW.unit, event.user);
         break;
       case 'chat': {
         const msg = event.msg.trim().slice(0, CHAT.maxMsgLength);
-        this.log(`${event.user}: ${msg}`);
+        this.hud.toast(`${ICONS.chat} ${event.user}: ${msg}`);
         const kind = CHAT.commands[msg.toLowerCase()];
         const last = this.chatCooldowns.get(event.user) ?? -Infinity;
         if (kind && this.time.now - last >= CHAT.userCooldownMs) {
@@ -119,7 +116,6 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- Game loop ----------
   update(time: number, delta: number) {
-    this.fx.clear();
     if (this.state === 'playing') {
       this.queue.update(
         delta,
@@ -146,9 +142,9 @@ export class GameScene extends Phaser.Scene {
       if (ally && time - d.lastActionAt >= s.cooldownMs) {
         d.lastActionAt = time;
         ally.healBy(s.heal);
-        this.beam(d, ally, HUD.healColor);
+        this.beam(d, ally, THEME.heal);
       }
-      this.moveToward(d, GAME.frontLineX - GAME.healerBackOffset, dt);
+      this.moveToward(d, GAME.frontLineX - GAME.healerBackOffset + d.idleOffset / 2, dt);
       return;
     }
 
@@ -156,13 +152,13 @@ export class GameScene extends Phaser.Scene {
     if (target && Math.abs(target.x - d.x) <= s.range) {
       if (time - d.lastActionAt >= s.cooldownMs) {
         d.lastActionAt = time;
-        target.damage(s.damage, this);
-        if (s.ranged) this.beam(d, target, HUD.projectileColor);
+        if (s.ranged) this.shoot(d, target, s.damage);
+        else target.damage(s.damage);
       }
     } else if (target) {
       this.moveToward(d, Math.min(target.x, GAME.width - s.width), dt);
     } else {
-      this.moveToward(d, GAME.frontLineX, dt);
+      this.moveToward(d, GAME.frontLineX + d.idleOffset, dt);
     }
   }
 
@@ -175,8 +171,11 @@ export class GameScene extends Phaser.Scene {
     if (blocker || atBase) {
       if (time - a.lastActionAt >= s.cooldownMs) {
         a.lastActionAt = time;
-        if (blocker) blocker.damage(s.damage, this);
-        else this.baseHp = Math.max(0, this.baseHp - s.damage);
+        if (blocker) blocker.damage(s.damage);
+        else {
+          this.baseHp = Math.max(0, this.baseHp - s.damage);
+          this.kubo.hit();
+        }
       }
       return;
     }
@@ -211,8 +210,27 @@ export class GameScene extends Phaser.Scene {
   }
 
   private beam(from: Unit, to: Unit, color: number) {
-    const line = this.add.line(0, 0, from.x, from.y, to.x, to.y, color).setOrigin(0).setDepth(GAME.height);
-    this.tweens.add({ targets: line, alpha: 0, duration: HUD.projectileMs, onComplete: () => line.destroy() });
+    const g = this.add.graphics().setDepth(GAME.height);
+    g.lineStyle(FX.beamWidth * 2, color, 0.3).lineBetween(from.x, from.y, to.x, to.y);
+    g.lineStyle(FX.beamWidth / 2, color, 1).lineBetween(from.x, from.y, to.x, to.y);
+    this.tweens.add({ targets: g, alpha: 0, duration: FX.beamMs, onComplete: () => g.destroy() });
+  }
+
+  /** Bolang apoy mula sa ranged defender; tatama pagdating. */
+  private shoot(from: Unit, to: Unit, dmg: number) {
+    const orb = this.add.circle(from.x, from.y, FX.projectileR, THEME.projectile).setDepth(GAME.height);
+    const glow = this.add.circle(from.x, from.y, FX.projectileR * 2, THEME.projectile, 0.3).setDepth(GAME.height);
+    this.tweens.add({
+      targets: [orb, glow],
+      x: to.x,
+      y: to.y,
+      duration: FX.projectileMs,
+      onComplete: () => {
+        orb.destroy();
+        glow.destroy();
+        if (to.alive) to.damage(dmg);
+      },
+    });
   }
 
   // ---------- Spawning ----------
@@ -239,75 +257,33 @@ export class GameScene extends Phaser.Scene {
     this.wave += 1;
     this.nextWaveAt = this.time.now + WAVES.intervalMs;
     const list = composeWave(this.wave);
-    this.log(`— Wave ${this.wave}: ${list.length} halimaw${list.includes('kapre') ? ' + KAPRE!' : ''} —`);
+    const boss = list.includes('kapre');
+    this.hud.banner(
+      boss ? 'KAPRE!' : `WAVE ${this.wave}`,
+      `${list.length} halimaw ang parating${boss ? ` • Wave ${this.wave}` : ''}`,
+      boss ? THEME.dangerCss : THEME.accentCss,
+    );
     list.forEach((kind, i) => this.time.delayedCall(i * WAVES.spawnSpacingMs, () => this.spawnAttacker(kind)));
   }
 
   private gameOver() {
     this.state = 'over';
     this.queue.clear();
-    this.add
-      .text(GAME.width / 2, GAME.height / 2, `Nasakop ang Baryo!\nUmabot sa Wave ${this.wave}`, {
-        fontFamily: HUD.font,
-        fontSize: `${HUD.fontSize * 3}px`,
-        color: HUD.textColor,
-        align: 'center',
-        stroke: '#000',
-        strokeThickness: HUD.strokeWidth * 2,
-      })
-      .setOrigin(0.5)
-      .setDepth(GAME.height + 1);
+    this.hud.gameOver(this.wave, GAME.restartDelayMs);
     this.time.delayedCall(GAME.restartDelayMs, () => this.scene.restart());
   }
 
-  // ---------- Visuals ----------
-  private drawBase() {
-    const bottom = GAME.groundBottom - (GAME.groundBottom - GAME.groundTop) / 2;
-    const x = BASE.x;
-    this.add.rectangle(x, bottom, BASE.width, BASE.height, BASE.wallColor).setOrigin(0.5, 1).setStrokeStyle(HUD.strokeWidth, HUD.barBg);
-    const top = bottom - BASE.height;
-    this.add
-      .triangle(x, top, -BASE.width / 2 - BASE.roofOverhang, 0, 0, -BASE.roofHeight, BASE.width / 2 + BASE.roofOverhang, 0, BASE.roofColor)
-      .setOrigin(0, 0)
-      .setStrokeStyle(HUD.strokeWidth, HUD.barBg);
-  }
-
-  private createHud() {
-    const style = { fontFamily: HUD.font, fontSize: `${HUD.fontSize}px`, color: HUD.textColor };
-    const small = { ...style, fontSize: `${HUD.smallFontSize}px` };
-    const pad = HUD.padding;
-    const gap = HUD.lineGap;
-    const d = GAME.height + 2;
-
-    this.add.text(pad, pad, BASE.name, style).setDepth(d);
-    const barY = pad + HUD.fontSize + gap;
-    this.add.rectangle(pad, barY, HUD.barWidth, HUD.barHeight, HUD.barBg).setOrigin(0).setDepth(d);
-    this.baseBar = this.add.rectangle(pad, barY, HUD.barWidth, HUD.barHeight, HUD.goodColor).setOrigin(0).setDepth(d);
-
-    const likeY = barY + HUD.barHeight + gap;
-    this.add.rectangle(pad, likeY, HUD.barWidth, HUD.barHeight / 2, HUD.barBg).setOrigin(0).setDepth(d);
-    this.likeBar = this.add.rectangle(pad, likeY, 0, HUD.barHeight / 2, HUD.likeColor).setOrigin(0).setDepth(d);
-
-    const waveY = likeY + HUD.barHeight / 2 + gap * 2;
-    this.waveText = this.add.text(pad, waveY, '', style).setDepth(d);
-    this.statusText = this.add.text(pad, waveY + HUD.fontSize + gap, '', small).setDepth(d);
-    this.feedText = this.add.text(pad, GAME.groundBottom + pad, '', small).setDepth(d);
-  }
-
+  // ---------- HUD ----------
   private updateHud(time: number) {
-    this.baseBar.width = HUD.barWidth * (this.baseHp / BASE.hp);
-    this.likeBar.width = HUD.barWidth * (this.likeCounter / SPAWN.likesPerTanod);
-    const secs = Math.max(0, Math.ceil((this.nextWaveAt - time) / 1000));
-    this.waveText.setText(`Wave ${this.wave}  •  susunod sa ${secs}s`);
-    this.statusText.setText(
-      `tagapagtanggol ${this.defenders.length}/${SPAWN.maxDefenders}  pila ${this.queue.size}  ` +
-        `halimaw ${this.attackers.length}\nbridge: ${this.netStatus}`,
-    );
-  }
-
-  private log(line: string) {
-    this.feed.push(line);
-    if (this.feed.length > HUD.feedLines) this.feed.shift();
-    this.feedText?.setText(this.feed.join('\n'));
+    this.hud.update({
+      baseHp: this.baseHp,
+      likes: this.likeCounter,
+      wave: this.wave,
+      secsToWave: Math.max(0, Math.ceil((this.nextWaveAt - time) / 1000)),
+      defenders: this.defenders.length,
+      queued: this.queue.size,
+      attackers: this.attackers.length,
+      net: this.netStatus,
+    });
   }
 }
