@@ -4,7 +4,7 @@ import { FX, GAME, LANE, SCENE3D as S } from '../config';
 import type { SimUnit, World, WorldEvent } from '../sim/World';
 import { randFloat } from '../sim/rand';
 import { buildKubo, buildModel, type Model } from './models';
-import { glowTexture, palm, torchFlame, type Torch } from './scenery';
+import { fogTexture, glowTexture, palm, torchFlame, type Torch } from './scenery';
 import { buildTemplo } from './templo';
 
 interface UnitView {
@@ -55,10 +55,15 @@ export class World3D {
   private kubo!: THREE.Group;
   private kuboShakeAt = -Infinity;
   private spawnGlow!: THREE.PointLight;
+  private moonLight!: THREE.DirectionalLight;
   private moonMat!: THREE.MeshBasicMaterial;
   private moonGlow!: THREE.Sprite;
   private hemi!: THREE.HemisphereLight;
   private fog!: THREE.Fog;
+  private currentFogNear: number = S.fogNear;
+  private darkenPulse = 0;
+  private spawnGlowSurge = 0;
+  private ambientMist: THREE.Sprite[] = [];
   private shakeUntil = 0;
   private shakeAmount = 0;
   private sparks = 0;
@@ -100,16 +105,16 @@ export class World3D {
 
     this.hemi = new THREE.HemisphereLight(S.hemiSky, S.hemiGround, S.hemiIntensity);
     sc.add(this.hemi);
-    const moon = new THREE.DirectionalLight(S.moonLight, S.moonIntensity);
-    moon.position.set(V.moonLightPos.x, V.moonLightPos.y, V.moonLightPos.z);
-    moon.target.position.set(0, 0, LANE.frontLinePos);
-    moon.castShadow = true;
-    moon.shadow.mapSize.set(S.shadowMapSize, S.shadowMapSize);
-    const c = moon.shadow.camera;
+    this.moonLight = new THREE.DirectionalLight(S.moonLight, S.moonIntensity);
+    this.moonLight.position.set(V.moonLightPos.x, V.moonLightPos.y, V.moonLightPos.z);
+    this.moonLight.target.position.set(0, 0, LANE.frontLinePos);
+    this.moonLight.castShadow = true;
+    this.moonLight.shadow.mapSize.set(S.shadowMapSize, S.shadowMapSize);
+    const c = this.moonLight.shadow.camera;
     c.left = c.bottom = -S.shadowArea;
     c.right = c.top = S.shadowArea;
     c.far = 100;
-    sc.add(moon, moon.target);
+    sc.add(this.moonLight, this.moonLight.target);
 
     // Buwan + glow + bituin (hindi apektado ng hamog)
     const moonMesh = new THREE.Mesh(
@@ -142,9 +147,28 @@ export class World3D {
     } else {
       this.buildBaryo();
     }
-    this.spawnGlow = new THREE.PointLight(0xa040ff, 20, 16, 2);
+    this.spawnGlow = new THREE.PointLight(0x7a18b8, 22, 18, 2);
     this.spawnGlow.position.set(0, 2, LANE.spawnPos - 2);
     sc.add(this.spawnGlow);
+
+    // Eerie gumagapang na hamog sa paligid ng pinto kung saan lumalabas ang halimaw
+    for (let i = 0; i < S.ambientMistCount; i++) {
+      const mat = new THREE.SpriteMaterial({
+        map: fogTexture(),
+        color: S.ambientMistColor,
+        transparent: true,
+        opacity: S.ambientMistOpacity,
+        depthWrite: false,
+      });
+      const sp = new THREE.Sprite(mat);
+      const rz = randFloat(LANE.spawnPos - 8, LANE.spawnPos + 4);
+      const rx = randFloat(-LANE.halfWidth * 1.3, LANE.halfWidth * 1.3);
+      sp.position.set(rx, randFloat(0.25, 0.75), rz);
+      const sc2 = randFloat(4.5, 7.5);
+      sp.scale.set(sc2, sc2 * 0.45, 1);
+      sc.add(sp);
+      this.ambientMist.push(sp);
+    }
 
     // Bahay Kubo (ang base)
     this.kubo = buildKubo();
@@ -283,6 +307,10 @@ export class World3D {
     switch (e.type) {
       case 'spawn':
         this.addView(e.unit);
+        if (e.unit.side === 'attacker') {
+          this.spawnEnemyFog(e.unit);
+          this.triggerDarkScaryPulse(!!e.unit.stats.boss);
+        }
         if (e.unit.stats.boss) this.shake(FX.shakeBoss);
         break;
       case 'death': {
@@ -591,6 +619,82 @@ export class World3D {
     });
   }
 
+  /** Katakut-takot na usok/hamog kapag lumabas ang halimaw sa pinto/spawn. */
+  private spawnEnemyFog(u: SimUnit) {
+    const isBoss = !!u.stats.boss;
+    const at = toVec(u).setY(0.08);
+    const count = isBoss ? FX.bossSpawnFogCount : FX.enemySpawnFogCount;
+    const baseSize = isBoss ? FX.bossSpawnFogSize : FX.enemySpawnFogSize;
+    const ringRadius = isBoss ? FX.bossSpawnRingRadius : LANE.meleeReach * 2;
+
+    // Maitim na shockwave ring sa lupa
+    this.ring(at, ringRadius, isBoss ? FX.curseColor : FX.enemySpawnRingColor);
+
+    // Maitim at makapal na usok/hamog na bumubugso
+    const group = new THREE.Group();
+    group.position.copy(at);
+
+    const particles: { sprite: THREE.Sprite; mat: THREE.SpriteMaterial; vel: THREE.Vector3; rotSpeed: number; maxOpacity: number; scale: number }[] = [];
+    for (let i = 0; i < count; i++) {
+      const mat = new THREE.SpriteMaterial({
+        map: fogTexture(),
+        color: FX.enemySpawnFogColor,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+      });
+      const sp = new THREE.Sprite(mat);
+      const spread = isBoss ? 2.2 : 1.2;
+      sp.position.set(randFloat(-spread, spread), randFloat(0.1, 0.5), randFloat(-spread, spread));
+      const vel = new THREE.Vector3(
+        randFloat(-0.9, 0.9),
+        randFloat(0.3, 1.4),
+        randFloat(-1.8, 0.4),
+      );
+      const scale = baseSize * randFloat(0.75, 1.4);
+      sp.scale.setScalar(0.1);
+      group.add(sp);
+      particles.push({
+        sprite: sp,
+        mat,
+        vel,
+        rotSpeed: randFloat(-1.2, 1.2),
+        maxOpacity: randFloat(0.65, 0.9),
+        scale,
+      });
+    }
+
+    this.scene.add(group);
+    this.fx.push({
+      obj: group,
+      start: this.time,
+      dur: FX.enemySpawnFogMs,
+      shared: false,
+      tick: (p) => {
+        const opacityP = p < 0.18 ? p / 0.18 : (1 - p) / 0.82;
+        const dtSec = this.dt / 1000;
+        for (const pt of particles) {
+          pt.sprite.position.addScaledVector(pt.vel, dtSec);
+          pt.mat.rotation += pt.rotSpeed * dtSec;
+          pt.mat.opacity = pt.maxOpacity * Math.max(0, opacityP);
+          const sc = pt.scale * (0.35 + 0.85 * Math.sqrt(p));
+          pt.sprite.scale.set(sc, sc * 0.7, 1);
+        }
+        if (p >= 1) {
+          for (const pt of particles) pt.mat.dispose();
+        }
+      },
+    });
+  }
+
+  /** Pagdilim at biglang pagbugso ng hamog sa battlefield kapag may sumulpot na halimaw. */
+  private triggerDarkScaryPulse(isBoss: boolean) {
+    this.currentFogNear = Math.min(this.currentFogNear, isBoss ? FX.fogPulseBossNear : FX.fogPulseMinNear);
+    const intensity = isBoss ? FX.darkenPulseBossIntensity : FX.darkenPulseIntensity;
+    this.darkenPulse = Math.max(this.darkenPulse, intensity);
+    this.spawnGlowSurge = Math.max(this.spawnGlowSurge, isBoss ? 45 : 22);
+  }
+
   // ---------- Frame ----------
   update(deltaMs: number) {
     this.time += deltaMs;
@@ -614,12 +718,18 @@ export class World3D {
       return true;
     });
 
+    this.ambientMist.forEach((sp, i) => {
+      sp.material.rotation += (i % 2 === 0 ? 0.04 : -0.04) * (deltaMs / 1000);
+      sp.position.x += Math.sin(t * 0.8 + i) * 0.003;
+    });
+
     for (const tch of this.torches) {
       const f = 1 + Math.sin(t * 13 + tch.phase) * S.torchFlicker * 0.6 + Math.sin(t * 7.3 + tch.phase * 2) * S.torchFlicker * 0.4;
       tch.light.intensity = S.torchIntensity * f;
       tch.flame.scale.set(f, f, f);
     }
-    this.spawnGlow.intensity = 16 + Math.sin(t * 2) * 6;
+    this.spawnGlow.intensity = 14 + Math.sin(t * 2) * 5 + this.spawnGlowSurge;
+    this.spawnGlowSurge = Math.max(0, this.spawnGlowSurge - (deltaMs / 1000) * 18);
     this.envTick?.(t);
 
     const shakeP = (this.time - this.kuboShakeAt) / S.kuboShakeMs;
@@ -641,6 +751,14 @@ export class World3D {
     this.moonGlow.material.color.lerp(blood ? target : new THREE.Color(S.moonGlowColor), k);
     this.fog.color.lerp(new THREE.Color(blood ? S.bloodFog : S.fogColor), k);
     this.hemi.color.lerp(new THREE.Color(blood ? S.bloodSky : S.hemiSky), k);
+
+    // Hamog at pagdilim kapag nag-spawn ang halimaw
+    this.currentFogNear = THREE.MathUtils.lerp(this.currentFogNear, S.fogNear, Math.min(1, (FX.fogPulseRecoverSpeed * deltaMs) / 1000));
+    this.fog.near = this.currentFogNear;
+    this.darkenPulse = Math.max(0, this.darkenPulse - deltaMs / FX.darkenPulseMs);
+    const baseHemi = blood ? S.hemiIntensity * 1.1 : S.hemiIntensity;
+    this.hemi.intensity = baseHemi * (1 - this.darkenPulse);
+    this.moonLight.intensity = S.moonIntensity * (1 - this.darkenPulse * 0.5);
 
     this.renderer.render(this.scene, this.camera);
     this.labels.render(this.scene, this.camera);

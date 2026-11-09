@@ -81,10 +81,10 @@ O sa loob mismo ng game/ o bridge/: npm run dev
 - game/src/sim/World.ts — game logic: combat, rounds (timer + score), base HP, likes, kills,
   top contributor, villain queue; naglalabas ng `WorldEvent`
 - game/src/sim/ — `SpawnQueue` (token bucket, para sa bayani at halimaw), `balance` (coins → lakas), `rand`
-- game/src/render/World3D.ts — Three.js na eksena (langit, ilaw, buwan, kubo; 'baryo' na battlefield),
-  unit views, effects, CSS2D labels (pangalan, HP, damage numbers)
+- game/src/render/World3D.ts — Three.js na eksena (langit, ilaw, buwan, kubo; 'baryo'/'templo' na battlefield,
+  katakut-takot na hamog at pagdilim kapag nag-spawn ang halimaw), unit views, effects, CSS2D labels
 - game/src/render/templo.ts — 'templo' na battlefield (assets/reference/battlefield.png)
-- game/src/render/scenery.ts — pinagsasaluhan: glow texture, sulo (`torchFlame`), niyog, `voxGroup`
+- game/src/render/scenery.ts — pinagsasaluhan: glow texture, fog texture, sulo (`torchFlame`), niyog, `voxGroup`
 - game/src/render/models.ts — `Model` type at Bahay Kubo; ang mga karakter ay voxel (voxModels.ts)
 - game/src/render/voxel.ts — `Vox` builder → iisang mesh kada part (naka-cache ang geometry)
 - game/src/render/portraits.ts — nire-render ang models → PNG para sa HUD icons

@@ -256,87 +256,90 @@ export const SCENE3D = {
     camera: { fov: 46, cameraPos: { x: 0, y: 17.5, z: -11 }, cameraLookAt: { x: 0, y: 0, z: 12 } },
     island: { rx: 15.5, rz: 26, cz: 13, depth: 2.4, roundness: 2.6 }, // superellipse na hugis ng isla (metro)
     waterLevel: 1.9, // gaano kababa ang tubig sa ilalim ng damo
-    waterColor: 0x1d6aa0,
-    waterGlow: 0x0b2c4a,
-    foamColor: 0x9fe6ff,
-    sandColor: 0xd9c08a,
-    grassColors: ['#3f7d34', '#478b38', '#36702e', '#4f963d'],
-    cliffColors: [0x5a5e66, 0x6a6e76, 0x4c5058],
-    laneStones: ['#8f8577', '#9a8f80', '#857a6c', '#a1968a', '#7d7366'],
-    laneGrout: '#5a5248',
-    laneLine: '#e0a83a', // dilaw na guhit, dash sa gitna at korona
+    waterColor: 0x091b2c, // madilim at malalim na tubig
+    waterGlow: 0x030b14,
+    foamColor: 0x4a6a7c, // maputlang bula sa dalampasigan
+    sandColor: 0x756852, // basang buhangin
+    grassColors: ['#1d381c', '#244222', '#183017', '#2a4c26'], // madilim na damo
+    cliffColors: [0x3a3c42, 0x484a52, 0x303238], // madilim na bangin
+    laneStones: ['#565048', '#5e574f', '#4e4840', '#645d54', '#464038'], // lumang batong daanan
+    laneGrout: '#2e2a24',
+    laneLine: '#9c7328', // kupas na gintong guhit
     lanePxPerM: 12, // resolution ng texture ng daan
     emblemPos: 15, // pos ng korona sa gitna ng daan
     gatePos: 30, // pos ng templo; nasa likod nito (LANE.spawnPos) lumalabas ang halimaw
     brazierPos: [5, 13.5, 25], // pos ng mga sulong bato (magkabilang gilid)
     bannerPos: 19.5,
-    bayaniBanner: 0x2a4fc8, // asul (kaliwa ng screen)
-    halimawBanner: 0xc82a2a, // pula (kanan ng screen)
+    bayaniBanner: 0x223fa8, // madilim na asul
+    halimawBanner: 0x981818, // dugong pula
     gazebos: [[11, 20], [12.5, 6.5]] as [number, number][], // [|x|, pos] ng mga pahingahan (magkabila)
     palmCount: 16,
-    palmColor: 0x2f6a2a,
-    trunkColor: 0x6a4e34,
+    palmColor: 0x182c16,
+    trunkColor: 0x3e2c1e,
     bushCount: 70,
-    bushColors: [0x2e6a2a, 0x3a7a30, 0x285a24, 0x447f34],
+    bushColors: [0x162c14, 0x1e3618, 0x122410, 0x243e1c],
     grassTufts: 500,
-    grassColor: 0x5a9a3c,
+    grassColor: 0x28461e,
     bannerSway: 0.08, // rad
-    flameColor: 0xffb040,
+    flameColor: 0xff9030,
   },
   unitScale: 1.0, // visual na laki ng units (hindi apektado ang gameplay)
   pixelScale: 3, // ire-render ang 3D sa (1920/3)x(1080/3) tapos palalakihin nang pixelated; mas malaki = mas blocky
-  skyTop: '#0a0b2a',
-  skyMid: '#3a2c5e',
-  skyHorizon: '#c0607a',
-  fogColor: 0x2c2448,
-  fogNear: 32,
-  fogFar: 80,
-  hemiSky: 0x8a8fd8,
-  hemiGround: 0x2a3a20,
-  hemiIntensity: 1.7,
-  exposure: 1.25,
-  moonLight: 0xc8d4ff,
-  moonIntensity: 2.2,
+  skyTop: '#03030b', // madilim na langit ng hatinggabi
+  skyMid: '#0e0b1c', // katakut-takot na purpura/itim
+  skyHorizon: '#241226', // malabong mapanganib na abot-tanaw
+  fogColor: 0x0d0916, // maitim at nakakatakot na hamog
+  fogNear: 16, // mas malapit para may misteryosong hamog sa daan
+  fogFar: 55, // nababalot sa hamog ang sinaunang templo at gubat
+  hemiSky: 0x4b5278, // malamig na liwanag mula sa langit
+  hemiGround: 0x10140c,
+  hemiIntensity: 0.95, // mas madilim at nakakatakot
+  exposure: 1.05,
+  moonLight: 0x8ea0c8, // maputlang liwanag ng buwan
+  moonIntensity: 1.5,
   shadowMapSize: 2048,
   shadowArea: 24, // kalahating lapad ng shadow camera
   moonRadius: 3.2,
-  moonColor: 0xfff1c9,
-  moonGlowColor: 0xffd79a,
+  moonColor: 0xeae0cc, // maputlang buwan
+  moonGlowColor: 0x908cac,
   moonGlowScale: 16,
   bloodMoonColor: 0xff3a24, // kulay ng buwan habang buhay ang Bakunawa
   bloodMoonLerp: 1.5, // bilis ng pagpalit ng kulay (kada segundo)
-  bloodFog: 0x4a1424, // hamog habang buhay ang Bakunawa
-  bloodSky: 0xff6a50, // ilaw mula sa langit habang buhay ang Bakunawa
+  bloodFog: 0x360b18, // hamog habang buhay ang Bakunawa
+  bloodSky: 0xd9442e, // ilaw mula sa langit habang buhay ang Bakunawa
   starCount: 500,
   starRadius: 80,
   starSize: 0.35,
-  groundColor: 0x355a2a,
-  grassColor: 0x4f8a35,
-  pathColor: 0x7a5c3a,
-  pathEdgeColor: 0x5e4630,
+  groundColor: 0x182414,
+  grassColor: 0x243e1c,
+  pathColor: 0x3c2c1c,
+  pathEdgeColor: 0x2c1e12,
   grassTufts: 700,
   grassArea: 28, // kalahating lapad ng damuhan
-  fenceColor: 0xc7a35c,
+  fenceColor: 0x6a5430,
   fenceSpacing: 2.2,
   fenceOffset: 0.6, // layo ng bakod sa gilid ng daan
   torchSpacing: 9,
-  torchColor: 0xffa040,
-  torchIntensity: 9,
-  torchDistance: 10,
-  torchFlicker: 0.25,
+  torchColor: 0xff9030,
+  torchIntensity: 7.5,
+  torchDistance: 9,
+  torchFlicker: 0.3,
   palmCount: 14,
-  palmColor: 0x1d2c18,
-  trunkColor: 0x4a3626,
-  hutColor: 0xc8a165,
-  roofColor: 0x7d5f34,
-  forestColor: 0x0d1410,
+  palmColor: 0x121c10,
+  trunkColor: 0x322418,
+  hutColor: 0x8a6a42,
+  roofColor: 0x543e22,
+  forestColor: 0x040705,
   kuboPos: 0, // pos ng Bahay Kubo
-  kuboWindowColor: 0xffc860,
-  kuboLight: 0xffb050,
-  kuboLightIntensity: 14,
+  kuboWindowColor: 0xffa040,
+  kuboLight: 0xff9a38,
+  kuboLightIntensity: 16, // mainit na liwanag na pugad sa gitna ng kadiliman
   kuboShakeMs: 220,
   kuboShakeAmount: 0.12,
   kuboShakeCooldownMs: 350,
+  ambientMistCount: 8,
+  ambientMistColor: 0x140e22,
+  ambientMistOpacity: 0.28,
 } as const;
 
 /** Animasyon at effects (3D). */
@@ -391,6 +394,21 @@ export const FX = {
   shakeSlam: 0.35,
   shakeBoss: 0.25,
   shakeBreath: 0.2,
+  // Eerie enemy spawn fog at battlefield darkness effects
+  enemySpawnFogMs: 1500,
+  enemySpawnFogCount: 14,
+  enemySpawnFogSize: 2.2,
+  enemySpawnFogColor: 0x160f24,
+  enemySpawnRingColor: 0x221038,
+  bossSpawnFogCount: 32,
+  bossSpawnFogSize: 3.8,
+  bossSpawnRingRadius: 6.0,
+  fogPulseMinNear: 6, // pansamantalang bababa ang fogNear kapag may lumabas na halimaw
+  fogPulseBossNear: 2.5, // mas malapit kapag boss ang lumabas
+  fogPulseRecoverSpeed: 7, // metro kada segundo na pagbalik ng hamog
+  darkenPulseIntensity: 0.35, // bawas sa liwanag habang lumalabas ang halimaw
+  darkenPulseBossIntensity: 0.65, // matinding pagdilim kapag boss
+  darkenPulseMs: 1200,
 } as const;
 
 /** HUD (HTML/CSS overlay). Mga pixel ay sa 1080x1920 logical. */

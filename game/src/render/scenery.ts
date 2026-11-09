@@ -27,6 +27,23 @@ export function glowTexture() {
   return glowTex;
 }
 
+let fogTex: THREE.Texture | null = null;
+export function fogTexture() {
+  if (fogTex) return fogTex;
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d')!;
+  const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grad.addColorStop(0, 'rgba(255,255,255,0.85)');
+  grad.addColorStop(0.35, 'rgba(235,230,245,0.45)');
+  grad.addColorStop(0.7, 'rgba(190,180,210,0.15)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 128, 128);
+  fogTex = new THREE.CanvasTexture(c);
+  return fogTex;
+}
+
 /** Apoy (cone + halo) na may kumukutitap na ilaw; ang `size` ay laki ng apoy. */
 export function torchFlame(sc: THREE.Scene, x: number, y: number, z: number, color: number, size = 1): Torch {
   const flame = new THREE.Mesh(new THREE.ConeGeometry(0.14 * size, 0.4 * size, 8), new THREE.MeshBasicMaterial({ color }));
