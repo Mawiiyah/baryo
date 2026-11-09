@@ -36,8 +36,7 @@ Base: Bahay Kubo (may HP) sa kaliwa. Umaatake ang halimaw mula sa kanan.
 - Placeholder shapes muna bago ang tunay na sprites.
 
 ## Mga command
-Mula sa laban-baryo/ (root package.json, para hindi tumakbo ang Next.js
-app sa parent folder na tiktoklive/):
+Mula sa root ng repo (~/laban-baryo):
 - npm run dev → game (http://localhost:5173)
 - npm run build → build ng game
 - npm run bridge → bridge
