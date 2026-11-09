@@ -62,8 +62,8 @@ export type WorldEvent =
   | { type: 'hit'; unit: SimUnit; amount: number; by?: SimUnit }
   | { type: 'heal'; from: SimUnit; to: SimUnit; amount: number }
   | { type: 'attack'; unit: SimUnit; target?: SimUnit }
-  | { type: 'shot'; from: SimUnit; to: SimUnit; flightMs: number }
-  | { type: 'baseHit'; amount: number }
+  | { type: 'shot'; from: SimUnit; to?: SimUnit; toBase?: boolean; flightMs: number }
+  | { type: 'baseHit'; amount: number; by?: SimUnit }
   | { type: 'round'; round: number }
   | { type: 'slam'; unit: SimUnit; radius: number }
   | { type: 'summon'; unit: SimUnit }
@@ -95,7 +95,7 @@ export class World {
   private queue = new SpawnQueue<DefenderKind>();
   /** Halimaw na pinadala ng viewers (versus), may sariling rate limit. */
   private villainQueue = new SpawnQueue<AttackerKind>();
-  private pendingHits: { at: number; target: SimUnit; amount: number; by?: SimUnit }[] = [];
+  private pendingHits: { at: number; target: SimUnit | 'base'; amount: number; by?: SimUnit }[] = [];
   private chatCooldowns = new Map<string, number>();
   /** Kabuuang coins na naibigay ng bawat viewer sa round na ito. */
   private contributions: Record<Side, Map<string, number>> = { defender: new Map(), attacker: new Map() };
@@ -252,7 +252,18 @@ export class World {
       () => this.attackers.length < SPAWN.maxAttackers,
       (r) => this.spawnAttacker(r.kind, LANE.spawnPos, r.user, r.coins),
     );
-    this.pendingHits = this.pendingHits.filter((h) => (h.at <= this.now ? (this.damage(h.target, h.amount, h.by), false) : true));
+    this.pendingHits = this.pendingHits.filter((h) => {
+      if (h.at <= this.now) {
+        if (h.target === 'base') {
+          this.baseHp = Math.max(0, this.baseHp - h.amount);
+          this.emit({ type: 'baseHit', amount: h.amount, by: h.by });
+        } else {
+          this.damage(h.target, h.amount, h.by);
+        }
+        return false;
+      }
+      return true;
+    });
 
     for (const d of this.defenders) if (d.alive) this.updateDefender(d, dt);
     for (const a of this.attackers) if (a.alive) this.updateAttacker(a, dt);
@@ -354,24 +365,31 @@ export class World {
       }
     }
 
-    // Ubos na ang bayani (o walang bayani): dito lang pwedeng lumapit at tirahin ang kubo!
-    const atBase = a.pos <= LANE.baseHitPos + (s.ranged ? s.range - LANE.meleeReach : 0);
+    // Ubos na ang bayani (o walang bayani): dito lang pwedeng lumapit at tirahin ang mismong kubo!
+    const kuboTargetLat = Math.sign(a.homeLat) * Math.min(Math.abs(a.homeLat), 1.6);
+    const attackReach = s.ranged ? s.range : LANE.baseHitPos;
+    const atBase = a.pos <= attackReach && Math.abs(a.lat - kuboTargetLat) <= 0.8;
+
     if (atBase) {
-      a.facePos = -1; // nakaharap sa kubo
-      a.faceLat = 0;
+      a.facePos = -a.pos; // humarap nang diretso sa mismong Bahay Kubo
+      a.faceLat = -a.lat;
       if (this.now - a.lastActionAt >= s.cooldownMs) {
         a.lastActionAt = this.now;
-        this.emit({ type: 'attack', unit: a });
-        // Mas mahina ang tama sa kubo kaysa sa bayani (para makunat ang kubo)
         const hit = Math.round(ATTACKERS[a.kind as AttackerKind].damage * a.power ** BASE.damagePowerExp);
-        this.baseHp = Math.max(0, this.baseHp - hit);
-        this.emit({ type: 'baseHit', amount: hit });
+        if (s.ranged) {
+          this.emit({ type: 'shot', from: a, toBase: true, flightMs: FX.projectileMs });
+          this.pendingHits.push({ at: this.now + FX.projectileMs, target: 'base', amount: hit, by: a });
+        } else {
+          this.emit({ type: 'attack', unit: a });
+          this.baseHp = Math.max(0, this.baseHp - hit);
+          this.emit({ type: 'baseHit', amount: hit, by: a });
+        }
       }
       return;
     }
 
-    // Magmartsa papunta sa kubo dahil walang bayaning humaharang
-    this.moveTo(a, Math.min(a.pos, LANE.baseHitPos) - 1, a.lat, dt);
+    // Magmartsa papunta sa mismong Bahay Kubo: lumalapit sa harap ng kubo (pos at lat)
+    this.moveTo(a, LANE.baseHitPos - 0.2, kuboTargetLat, dt);
   }
 
   /** Itinutulak palayo ang magkakapatong na units (parehong panig at magkalaban). */

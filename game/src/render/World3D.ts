@@ -441,16 +441,26 @@ export class World3D {
       }
       case 'shot': {
         const from = this.views.get(e.from.id);
-        const to = this.views.get(e.to.id);
-        if (from && to) this.projectile(from, to, e.flightMs);
+        if (!from) break;
+        if (e.toBase) {
+          const kuboPos = new THREE.Vector3(0, 1.8, S.kuboPos + 1.2);
+          this.projectileToPoint(from, kuboPos, e.flightMs);
+        } else if (e.to) {
+          const to = this.views.get(e.to.id);
+          if (to) this.projectile(from, to, e.flightMs);
+        }
         break;
       }
-      case 'baseHit':
+      case 'baseHit': {
+        const kuboPos = new THREE.Vector3(0, 3.4, S.kuboPos + 1.2);
+        this.floatTextAt(kuboPos, `-${e.amount}`, 'dmg-bad');
+        this.spawnSparks(new THREE.Vector3(randFloat(-1.0, 1.0), randFloat(1.2, 2.2), S.kuboPos + 1.4), 10, 0xffa726);
         if (this.time - this.kuboShakeAt > S.kuboShakeCooldownMs) {
           this.kuboShakeAt = this.time;
           this.shake(FX.shakeBaseHit);
         }
         break;
+      }
       case 'slam': {
         const v = this.views.get(e.unit.id);
         if (v) {
@@ -553,16 +563,15 @@ export class World3D {
   }
 
   // ---------- Effects ----------
-  private floatText(v: UnitView, text: string, cls: string) {
+  private floatTextAt(pos: THREE.Vector3, text: string, cls: string) {
     const el = document.createElement('div');
     const inner = document.createElement('div');
     inner.className = `float ${cls}`;
     inner.textContent = text;
     el.appendChild(inner);
     const obj = new CSS2DObject(el);
-    toVec(v.unit, obj.position);
-    obj.position.y += vsz(v.unit) * 1.1;
-    obj.position.x += randFloat(-0.3, 0.3);
+    obj.position.copy(pos);
+    obj.position.x += randFloat(-0.35, 0.35);
     this.scene.add(obj);
     this.fx.push({
       obj,
@@ -570,6 +579,33 @@ export class World3D {
       dur: FX.dmgFloatMs,
       tick: (p) => {
         if (p >= 1) el.remove();
+      },
+    });
+  }
+
+  private floatText(v: UnitView, text: string, cls: string) {
+    const pos = toVec(v.unit, new THREE.Vector3());
+    pos.y += vsz(v.unit) * 1.1;
+    this.floatTextAt(pos, text, cls);
+  }
+
+  private projectileToPoint(from: UnitView, targetPos: THREE.Vector3, ms: number) {
+    const color = from.unit.side === 'attacker' ? FX.curseColor : FX.projectileColor;
+    const orb = new THREE.Mesh(new THREE.SphereGeometry(FX.projectileRadius, 10, 8), new THREE.MeshBasicMaterial({ color }));
+    const halo = new THREE.Sprite(
+      new THREE.SpriteMaterial({ map: glowTexture(), color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }),
+    );
+    halo.scale.setScalar(FX.projectileRadius * 8);
+    orb.add(halo);
+    const a = toVec(from.unit).setY(from.unit.alt + vsz(from.unit) * 0.7);
+    this.scene.add(orb);
+    this.fx.push({
+      obj: orb,
+      start: this.time,
+      dur: ms,
+      tick: (p) => {
+        orb.position.lerpVectors(a, targetPos, p);
+        orb.position.y += Math.sin(p * Math.PI) * FX.projectileArc;
       },
     });
   }
@@ -636,7 +672,10 @@ export class World3D {
       targetDir = targetPos.clone().sub(at).normalize();
       isHittingAir = target.unit.stats.flying && !u.stats.flying;
     } else {
-      strikePos = at.clone().addScaledVector(forward, 0.9 * size);
+      // Umaatake sa mismong Bahay Kubo!
+      const kuboTarget = new THREE.Vector3(0, 1.4, S.kuboPos + 1.2);
+      targetDir = kuboTarget.clone().sub(at).normalize();
+      strikePos = at.clone().addScaledVector(targetDir, Math.min(1.2 * size, at.distanceTo(kuboTarget) * 0.75));
     }
 
     const count = kind === 'aswang' ? 3 : kind === 'manananggal' || kind === 'tikbalang' || kind === 'malupiton' ? 2 : 1;
@@ -709,6 +748,39 @@ export class World3D {
     }
   }
 
+  /** Lumikha ng lumilipad na sparks sa punto ng impact. */
+  private spawnSparks(at: THREE.Vector3, count: number, sparkColor: number) {
+    const sparkMat = new THREE.MeshBasicMaterial({ color: sparkColor });
+    for (let i = 0; i < count && this.sparks < FX.maxSparks; i++) {
+      const m = new THREE.Mesh(SPARK_GEO, sparkMat);
+      m.scale.setScalar(FX.sparkSize * 1.3);
+      const start = at.clone();
+      const vel = new THREE.Vector3(
+        randFloat(-1.8, 1.8),
+        randFloat(0.5, 2.2),
+        randFloat(-1.8, 1.8),
+      ).multiplyScalar(FX.sparkSpeed * 0.9);
+      const dur = FX.sparkMs / 1000;
+      this.sparks++;
+      this.scene.add(m);
+      this.fx.push({
+        obj: m,
+        start: this.time,
+        dur: FX.sparkMs,
+        shared: true,
+        tick: (p) => {
+          const tt = p * dur;
+          m.position.set(start.x + vel.x * tt, start.y + vel.y * tt - 0.5 * FX.sparkGravity * tt * tt, start.z + vel.z * tt);
+          m.scale.setScalar(FX.sparkSize * 1.3 * (1 - p));
+          if (p >= 1) {
+            this.sparks--;
+            if (i === 0) sparkMat.dispose();
+          }
+        },
+      });
+    }
+  }
+
   /** Malakas na clash impact, starburst flash, at sparks sa punto ng pagtama. */
   private clashImpact(victim: UnitView, byView?: UnitView) {
     const u = victim.unit;
@@ -749,37 +821,7 @@ export class World3D {
 
     // High energy clash sparks
     const sparkColor = byView && byView.unit.side === 'defender' ? 0xffee88 : 0xff5533;
-    const sparkMat = new THREE.MeshBasicMaterial({ color: sparkColor });
-    const count = FX.clashSparks;
-
-    for (let i = 0; i < count && this.sparks < FX.maxSparks; i++) {
-      const m = new THREE.Mesh(SPARK_GEO, sparkMat);
-      m.scale.setScalar(FX.sparkSize * 1.3);
-      const start = at.clone();
-      const vel = new THREE.Vector3(
-        randFloat(-1.8, 1.8),
-        randFloat(0.5, 2.2),
-        randFloat(-1.8, 1.8),
-      ).multiplyScalar(FX.sparkSpeed * 0.9);
-      const dur = FX.sparkMs / 1000;
-      this.sparks++;
-      this.scene.add(m);
-      this.fx.push({
-        obj: m,
-        start: this.time,
-        dur: FX.sparkMs,
-        shared: true,
-        tick: (p) => {
-          const tt = p * dur;
-          m.position.set(start.x + vel.x * tt, start.y + vel.y * tt - 0.5 * FX.sparkGravity * tt * tt, start.z + vel.z * tt);
-          m.scale.setScalar(FX.sparkSize * 1.3 * (1 - p));
-          if (p >= 1) {
-            this.sparks--;
-            if (i === 0) sparkMat.dispose();
-          }
-        },
-      });
-    }
+    this.spawnSparks(at, FX.clashSparks, sparkColor);
 
     // Dust ring sa lupa
     if (!u.stats.flying) {
