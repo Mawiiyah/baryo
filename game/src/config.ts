@@ -154,26 +154,25 @@ export interface GiftValue<K> {
   coins: number;
 }
 
-/** Gift name (gaya ng galing sa TikTok) â†’ anong BAYANI, ilan kada gift, at halaga. */
+/** Gift name (gaya ng galing sa TikTok) → anong BAYANI, ilan kada gift, at halaga (1-10 coins para sa beginner). */
 export const GIFTS: Record<string, GiftValue<DefenderKind>> = {
   Rose: { unit: 'tanod', perGift: 2, coins: 1 },
-  'TikTok': { unit: 'tanod', perGift: 3, coins: 1 },
+  TikTok: { unit: 'tanod', perGift: 3, coins: 1 },
   'Ice Cream Cone': { unit: 'albularyo', perGift: 1, coins: 1 },
   'Finger Heart': { unit: 'anito', perGift: 1, coins: 5 },
-  Doughnut: { unit: 'sarimanok', perGift: 1, coins: 30 },
+  Gamepad: { unit: 'sarimanok', perGift: 1, coins: 10 },
 };
 
 /**
- * Gift na wala sa GIFTS/VILLAIN_GIFTS â†’ BAYANI ayon sa halaga (unang tier na `coins >= min`).
- * Mas mahal na gift = mas malakas o mas maraming bayani.
+ * Gift na wala sa GIFTS/VILLAIN_GIFTS → BAYANI ayon sa halaga (unang tier na `coins >= min`).
+ * Mas mahal na gift = mas malakas o mas maraming bayani (1-10 coins).
  */
 export const GIFT_TIERS: { min: number; unit: DefenderKind; perGift: number }[] = [
-  { min: 500, unit: 'sarimanok', perGift: 5 },
-  { min: 100, unit: 'sarimanok', perGift: 2 },
-  { min: 30, unit: 'anito', perGift: 2 },
-  { min: 10, unit: 'anito', perGift: 1 },
-  { min: 5, unit: 'albularyo', perGift: 1 },
-  { min: 0, unit: 'tanod', perGift: 2 },
+  { min: 10, unit: 'sarimanok', perGift: 1 },
+  { min: 5, unit: 'anito', perGift: 1 },
+  { min: 2, unit: 'albularyo', perGift: 1 },
+  { min: 1, unit: 'tanod', perGift: 2 },
+  { min: 0, unit: 'tanod', perGift: 1 },
 ];
 export const GIFT_MAX_SPAWNS_PER_EVENT = 10; // cap kahit malaking streak
 
@@ -181,15 +180,14 @@ export const FOLLOW = { unit: 'albularyo' as DefenderKind, count: 1 };
 
 /**
  * VERSUS: mga gift na nagpapalabas ng HALIMAW (laban sa baryo), para maglaban ang viewers.
- * Uunahin ito bago ang GIFTS. Palitan ang pangalan ayon sa eksaktong gift name sa TikTok.
+ * Uunahin ito bago ang GIFTS. Lahat ay 1 hanggang 10 coins (para sa beginner stream).
  */
 export const VILLAIN_GIFTS: Record<string, GiftValue<AttackerKind>> = {
-  GG: { unit: 'aswang', perGift: 3, coins: 1 },
-  'Heart Me': { unit: 'manananggal', perGift: 2, coins: 1 },
-  Perfume: { unit: 'tikbalang', perGift: 3, coins: 20 },
-  'Hand Hearts': { unit: 'kapre', perGift: 1, coins: 100 },
-  Cap: { unit: 'mangkukulam', perGift: 1, coins: 99 },
-  Galaxy: { unit: 'bakunawa', perGift: 1, coins: 1000 },
+  GG: { unit: 'aswang', perGift: 2, coins: 1 },
+  'Heart Me': { unit: 'manananggal', perGift: 1, coins: 1 },
+  Panda: { unit: 'tikbalang', perGift: 2, coins: 5 },
+  Cap: { unit: 'mangkukulam', perGift: 1, coins: 10 },
+  'Hand Hearts': { unit: 'kapre', perGift: 1, coins: 10 },
 };
 /** Chat commands para sa halimaw (parehong cooldown ng CHAT). */
 export const VILLAIN_CHAT: Record<string, AttackerKind> = { '!aswang': 'aswang' };
@@ -476,22 +474,21 @@ export const HUD = {
 
 /** Emoji sa HUD. Walang emoji ang gift = ICONS.gift. */
 export const ICONS = {
-  like: 'â¤ï¸',
-  follow: 'âž•',
-  chat: 'ðŸ’¬',
-  gift: 'ðŸŽ',
+  like: '❤️',
+  follow: '➕',
+  chat: '💬',
+  gift: '🎁',
   gifts: {
-    Rose: 'ðŸŒ¹',
-    TikTok: 'ðŸŽµ',
-    'Ice Cream Cone': 'ðŸ¦',
-    'Finger Heart': 'ðŸ«°',
-    Doughnut: 'ðŸ©',
-    GG: 'ðŸŽ®',
-    'Heart Me': 'ðŸ’—',
-    Perfume: 'ðŸ§´',
-    'Hand Hearts': 'ðŸ«¶',
-    Cap: 'ðŸ§¢',
-    Galaxy: 'ðŸŒŒ',
+    Rose: '🌹',
+    TikTok: '🎵',
+    'Ice Cream Cone': '🍦',
+    'Finger Heart': '🫰',
+    Gamepad: '🕹️',
+    GG: '🎮',
+    'Heart Me': '💗',
+    Panda: '🐼',
+    Cap: '🧢',
+    'Hand Hearts': '🫶',
   } as Record<string, string>,
 } as const;
 
@@ -503,53 +500,50 @@ export const NET = {
 /** Debug keys â†’ event (dumadaan pa rin sa handleEvent). */
 export const DEBUG_KEYS = {
   // '1' = sapat na likes para sa isang Tanod
-  '1': { type: 'like', user: 'debug', count: SPAWN.likesPerTanod },
-  L: { type: 'like', user: 'debug', count: 10 },
-  R: { type: 'gift', user: 'debug', gift: 'Rose', count: 1 },
-  D: { type: 'gift', user: 'debug', gift: 'Doughnut', count: 1 },
-  A: { type: 'gift', user: 'debug', gift: 'Finger Heart', count: 1 },
-  F: { type: 'follow', user: 'debug' },
-  T: { type: 'chat', user: 'debug', msg: '!tanod' },
-  // HALIMAW (versus)
-  G: { type: 'gift', user: 'kontra', gift: 'GG', count: 1 },
-  H: { type: 'gift', user: 'kontra', gift: 'Heart Me', count: 1 },
-  P: { type: 'gift', user: 'kontra', gift: 'Perfume', count: 1 },
-  K: { type: 'gift', user: 'kontra', gift: 'Hand Hearts', count: 1 },
-  C: { type: 'gift', user: 'kontra', gift: 'Cap', count: 1 },
-  B: { type: 'gift', user: 'kontra', gift: 'Galaxy', count: 1 },
-  X: { type: 'chat', user: 'kontra', msg: '!aswang' },
+  '1': { type: 'like', user: '', count: SPAWN.likesPerTanod },
+  L: { type: 'like', user: '', count: 10 },
+  R: { type: 'gift', user: '', gift: 'Rose', count: 1 },
+  I: { type: 'gift', user: '', gift: 'Ice Cream Cone', count: 1 },
+  A: { type: 'gift', user: '', gift: 'Finger Heart', count: 1 },
+  D: { type: 'gift', user: '', gift: 'Gamepad', count: 1 },
+  F: { type: 'follow', user: '' },
+  T: { type: 'chat', user: '', msg: '!tanod' },
+  // HALIMAW (versus, 1-10 coins)
+  G: { type: 'gift', user: '', gift: 'GG', count: 1 },
+  H: { type: 'gift', user: '', gift: 'Heart Me', count: 1 },
+  P: { type: 'gift', user: '', gift: 'Panda', count: 1 },
+  C: { type: 'gift', user: '', gift: 'Cap', count: 1 },
+  K: { type: 'gift', user: '', gift: 'Hand Hearts', count: 1 },
+  X: { type: 'chat', user: '', msg: '!aswang' },
 } as const;
 
-/** Para sa testing: ?debug&round=N â†’ N segundo lang ang round. */
+/** Para sa testing: ?debug&round=N → N segundo lang ang round. */
 export const DEBUG_ROUND_LINKS = [30, 60] as const;
 
 /** Clickable test buttons (lalabas lang sa URL na may ?debug). Dumadaan pa rin sa handleEvent. */
 export const DEBUG_PANEL = {
-  users: ['juan', 'maria', 'pedro', 'ana', 'jose', 'liza'], // random na pangalan para iba-iba
+  users: ['Juan', 'Maria', 'Pedro', 'Ana', 'Jose', 'Liza'], // random na pangalan para iba-iba
   buttons: [
-    { label: 'â¤ï¸ 30 likes â†’ Tanod', event: { type: 'like', count: SPAWN.likesPerTanod } },
-    { label: 'â¤ï¸ 300 likes â†’ 10 Tanod', event: { type: 'like', count: SPAWN.likesPerTanod * 10 } },
-    { label: 'ðŸŽ Ibang gift (50 coins) â†’ 2 Anito', event: { type: 'gift', gift: 'Mystery', count: 1, coins: 50 } },
-    { label: 'ðŸŒ¹ Rose â†’ 2 Tanod', event: { type: 'gift', gift: 'Rose', count: 1 } },
-    { label: 'ðŸŽµ TikTok â†’ 3 Tanod', event: { type: 'gift', gift: 'TikTok', count: 1 } },
-    { label: 'ðŸ«° Finger Heart â†’ Anito', event: { type: 'gift', gift: 'Finger Heart', count: 1 } },
-    { label: 'ðŸ© Doughnut â†’ Sarimanok', event: { type: 'gift', gift: 'Doughnut', count: 1 } },
-    { label: 'ðŸ¦ Ice Cream â†’ Albularyo', event: { type: 'gift', gift: 'Ice Cream Cone', count: 1 } },
-    { label: 'ðŸ© Doughnut Ã—5 (streak)', event: { type: 'gift', gift: 'Doughnut', count: 5 } },
-    { label: 'âž• Follow â†’ Albularyo', event: { type: 'follow' } },
-    { label: 'ðŸ’¬ !tanod', event: { type: 'chat', msg: '!tanod' } },
+    { label: '❤️ 30 likes → Tanod', event: { type: 'like', count: SPAWN.likesPerTanod } },
+    { label: '🌹 Rose (1c) → 2 Tanod', event: { type: 'gift', gift: 'Rose', count: 1 } },
+    { label: '🎵 TikTok (1c) → 3 Tanod', event: { type: 'gift', gift: 'TikTok', count: 1 } },
+    { label: '🍦 Ice Cream (1c) → Albularyo', event: { type: 'gift', gift: 'Ice Cream Cone', count: 1 } },
+    { label: '🫰 Finger Heart (5c) → Anito', event: { type: 'gift', gift: 'Finger Heart', count: 1 } },
+    { label: '🕹️ Gamepad (10c) → Sarimanok', event: { type: 'gift', gift: 'Gamepad', count: 1 } },
+    { label: '➕ Follow → Albularyo', event: { type: 'follow' } },
+    { label: '💬 !tanod', event: { type: 'chat', msg: '!tanod' } },
   ],
-  // Panig ng HALIMAW (versus)
+  // Panig ng HALIMAW (versus, 1-10 coins)
   villainButtons: [
-    { label: '[G] ðŸŽ® GG â†’ 3 Aswang', event: { type: 'gift', gift: 'GG', count: 1 } },
-    { label: '[H] ðŸ’— Heart Me â†’ 2 Manananggal', event: { type: 'gift', gift: 'Heart Me', count: 1 } },
-    { label: '[P] ðŸ§´ Perfume â†’ 3 Tikbalang', event: { type: 'gift', gift: 'Perfume', count: 1 } },
-    { label: '[K] ðŸ«¶ Hand Hearts â†’ Kapre', event: { type: 'gift', gift: 'Hand Hearts', count: 1 } },
-    { label: '[C] ðŸ§¢ Cap â†’ Mangkukulam', event: { type: 'gift', gift: 'Cap', count: 1 } },
-    { label: '[B] ðŸŒŒ Galaxy â†’ Bakunawa', event: { type: 'gift', gift: 'Galaxy', count: 1 } },
-    { label: '[X] ðŸ’¬ !aswang', event: { type: 'chat', msg: '!aswang' } },
+    { label: '[G] 🎮 GG (1c) → 2 Aswang', event: { type: 'gift', gift: 'GG', count: 1 } },
+    { label: '[H] 💗 Heart Me (1c) → Manananggal', event: { type: 'gift', gift: 'Heart Me', count: 1 } },
+    { label: '[P] 🐼 Panda (5c) → 2 Tikbalang', event: { type: 'gift', gift: 'Panda', count: 1 } },
+    { label: '[C] 🧢 Cap (10c) → Mangkukulam', event: { type: 'gift', gift: 'Cap', count: 1 } },
+    { label: '[K] 🫶 Hand Hearts (10c) → Kapre', event: { type: 'gift', gift: 'Hand Hearts', count: 1 } },
+    { label: '[X] 💬 !aswang', event: { type: 'chat', msg: '!aswang' } },
   ],
 } as const;
+
 
 /**
  * Tunog (Web Audio, synthesized; walang audio files). Isang maikling "jingle" kada spawn.

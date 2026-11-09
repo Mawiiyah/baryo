@@ -497,20 +497,24 @@ export class World3D {
     const inner = document.createElement('div');
     inner.className = `ulabel ${u.side}${u.stats.boss ? ' boss' : ''}`;
     let hpFill: HTMLDivElement | null = null;
-    // Boss: pangalan ng boss sa ibabaw ng ulo + kung sino ang nagpadala; iba: pangalan ng viewer
-    const name = u.stats.boss ? u.stats.name.toUpperCase() : u.owner;
-    if (name) {
-      const n = document.createElement('div');
-      n.className = 'uname';
-      n.textContent = name;
-      inner.appendChild(n);
-    }
-    if (u.stats.boss && u.owner) {
+
+    // Pangalan ng hero / karakter sa ibabaw ng ulo (hindi na 'debug')
+    const heroName = u.stats.name.toUpperCase();
+    const n = document.createElement('div');
+    n.className = 'uname';
+    n.textContent = heroName;
+    inner.appendChild(n);
+
+    // Viewer / gifter kung may totoong nagpadala (hindi generic/debug)
+    const owner = u.owner?.trim();
+    const isGeneric = !owner || owner.toLowerCase() === 'debug' || owner.toLowerCase() === 'kontra' || owner.toLowerCase() === 'viewer';
+    if (!isGeneric) {
       const o = document.createElement('div');
       o.className = 'uowner';
-      o.textContent = `ni ${u.owner}`;
+      o.textContent = `ni ${owner}`;
       inner.appendChild(o);
     }
+
     const hp = document.createElement('div');
     hp.className = 'uhp';
     hpFill = document.createElement('div');
@@ -1065,8 +1069,7 @@ export class World3D {
       root.rotation.z += Math.sin(stp * Math.PI * 2) * 0.14;
     }
 
-    // Pangalan: ilang segundo lang pagka-spawn (laging nakikita sa boss)
-    v.labelInner.classList.toggle('quiet', !u.stats.boss && this.time - v.bornAt > FX.nameShowMs);
+    // Pangalan ng hero ay laging nakikita sa ibabaw ng ulo ng character
 
     const bob = u.stats.flying ? FX.flyBobAmount : FX.bobAmount * size;
     const speed = u.moving ? FX.bobSpeed * 1.6 : FX.bobSpeed * 0.5;

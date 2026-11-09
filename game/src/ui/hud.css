@@ -271,23 +271,23 @@
 .labels { position: absolute; inset: 0; z-index: 1; /* sariling layer: hindi lalampas sa HUD ang z-index ng labels */ pointer-events: none; font-family: "Silkscreen", monospace; font-weight: 700; color: #fff; --ink: #1a0d04; }
 .ulabel { display: flex; flex-direction: column; align-items: center; gap: 4px; transform-origin: 50% 100%; }
 .uname {
-  font-size: 22px;
-  padding: 4px 10px;
-  background: #142a5a;
+  font-size: 20px;
+  padding: 3px 8px;
+  background: rgba(20, 42, 90, 0.92);
   --c: 3px;
   --o: 2px;
   white-space: nowrap;
   max-width: 240px;
   overflow: hidden;
   text-overflow: ellipsis;
+  border-radius: 2px;
 }
-.ulabel.attacker .uname { background: #5a0a0a; }
-.ulabel.boss .uname { background: #6a0a0a; font-size: 28px; color: #ffd25a; }
-.uowner { font-size: 16px; --o: 2px; color: #ffb0a8; margin-top: -2px; }
+.ulabel.attacker .uname { background: rgba(90, 10, 10, 0.92); }
+.ulabel.boss .uname { background: #6a0a0a; font-size: 26px; color: #ffd25a; }
+.uowner { font-size: 15px; --o: 2px; color: #ffca99; margin-top: -2px; }
 .uhp { width: 90px; height: 14px; padding: 2px; background: #000; overflow: hidden; visibility: hidden; --c: 2px; }
 .ulabel.boss .uhp { width: 180px; height: 18px; }
 .ulabel.damaged .uhp { visibility: visible; }
-.ulabel.quiet .uname { display: none; }
 .uhp div { height: 100%; background: #6fdc5a; }
 .ulabel.attacker .uhp div { background: #ff5048; }
 
