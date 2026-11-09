@@ -69,7 +69,7 @@ export const DEFENDERS: Record<DefenderKind, UnitStats> = {
     size: 1.6, color: 0x2f6fd6, flying: false, canHitAir: true, heal: 0, ranged: false,
   },
   anito: {
-    name: 'Anito', hp: 600, damage: 18, range: 1.6, cooldownMs: 1400, speed: 1.5,
+    name: 'Anito', hp: 600, damage: 15, range: 1.8, cooldownMs: 700, speed: 2.0,
     size: 2.2, color: 0x8b5a2b, flying: false, canHitAir: true, heal: 0, ranged: false,
   },
   albularyo: {
@@ -92,11 +92,11 @@ export const ATTACKERS: Record<AttackerKind, UnitStats> = {
     size: 1.3, color: 0x7b3fa0, flying: true, canHitAir: false, heal: 0, ranged: false,
   },
   tikbalang: {
-    name: 'Tikbalang', hp: 110, damage: 12, range: 1.4, cooldownMs: 700, speed: 3.6,
+    name: 'Tikbalang', hp: 110, damage: 10, range: 1.6, cooldownMs: 420, speed: 3.6,
     size: 2.4, color: 0x6b4a32, flying: false, canHitAir: false, heal: 0, ranged: false,
   },
   kapre: {
-    name: 'Kapre', hp: 1500, damage: 60, range: 2.2, cooldownMs: 1800, speed: 0.9,
+    name: 'Kapre', hp: 1500, damage: 48, range: 2.6, cooldownMs: 900, speed: 1.4,
     size: 4.4, color: 0x2b3a2e, flying: false, canHitAir: false, heal: 0, ranged: false, boss: true,
   },
   mangkukulam: {
@@ -214,7 +214,7 @@ export interface BossAbility {
 }
 
 export const BOSSES: Record<BossKind, BossAbility> = {
-  kapre: { intro: 'Ang higante ng puno ng balete!', slam: { everyMs: 6000, radius: 3.5, damage: 40 } },
+  kapre: { intro: 'Ang higante ng puno ng balete!', slam: { everyMs: 3800, radius: 3.5, damage: 35 } },
   mangkukulam: { intro: 'Mag-ingat sa kanyang sumpa!', summon: { everyMs: 9000, kind: 'aswang', count: 2 } },
   bakunawa: { intro: 'Kinakain na ang buwan!', breath: { everyMs: 7000, length: 7, damage: 35 } },
 };
