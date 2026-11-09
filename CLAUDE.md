@@ -28,13 +28,16 @@ kubo pagkaubos ng oras, HALIMAW kapag nawasak ito. May score kada round.
   at kills/natitirang halimaw. Layers: labels (z1) < HUD (z2) < panalo/talo overlay.
 
 ## Mga karakter
-Defenders: Barangay Tanod (basic), Anito (tank), Albularyo (healer),
-Sarimanok (malakas, ranged).
-Attackers: Aswang (basic), Manananggal (lumilipad), Tikbalang (mabilis).
+Defenders: Barangay Tanod (basic, canHitAir), Anito (tank, canHitAir), Albularyo (healer),
+Sarimanok (malakas, ranged, canHitAir).
+Attackers: Aswang (basic), Manananggal (lumilipad, umaatake sa bayani), Tikbalang (mabilis).
 Bosses (abilities sa `BOSSES`, pinapadala ng viewers via `VILLAIN_GIFTS`): Kapre (slam),
 Mangkukulam (sumpa mula sa malayo + nagpapatawag ng Aswang), Bakunawa (apoy; nagiging
 pula ang eksena).
 Base: Bahay Kubo (may HP) sa harap ng camera. Papalapit ang halimaw mula sa malayo.
+Patakaran sa laban: DAPAT MAUBOS MUNA ANG BAYANI bago makatira sa Bahay Kubo ang halimaw.
+Kaya ding ma-attack ng Tanod at iba pang bayani ang Manananggal. May combat VFX (slash arcs,
+claw swipes, clash sparks, impact flash, flinch/stagger recoil, at Manananggal dive swoop).
 
 ## Mga patakaran
 - Lahat ng numbers (HP, damage, likes kada spawn, cooldowns, camera, ilaw, FX) ay nasa

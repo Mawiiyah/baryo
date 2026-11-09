@@ -75,6 +75,8 @@ export class MonsterFog {
       world.on((e) => {
         if (e.type === 'spawn' && e.unit.side === 'attacker') {
           this.triggerFlare();
+        } else if (e.type === 'attack' && e.unit.side === 'attacker') {
+          this.triggerCombatPulse();
         } else if (e.type === 'breath') {
           this.triggerFlare(3000);
           this.setBloodMoon(true);
@@ -155,6 +157,17 @@ export class MonsterFog {
       for (const e of this.eyes) e.el.classList.remove('mf-flare');
       this.flareTimeout = null;
     }, durationMs);
+  }
+
+  /** Maikling kislap ng mga mata sa hamog kapag may bakbakan/atake ang halimaw */
+  triggerCombatPulse() {
+    if (!this.enabled) return;
+    for (const e of this.eyes) {
+      if (Math.random() < 0.65) {
+        e.el.classList.add('mf-flare');
+        window.setTimeout(() => e.el.classList.remove('mf-flare'), 320);
+      }
+    }
   }
 
   setBloodMoon(isBlood: boolean) {

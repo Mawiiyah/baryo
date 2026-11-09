@@ -18,8 +18,10 @@ interface UnitView {
   bornAt: number;
   diedAt: number | null;
   lungeAt: number;
+  staggerAt: number;
   flashUntil: number;
   phase: number;
+  targetView: UnitView | null;
 }
 
 interface Fx {
@@ -30,9 +32,54 @@ interface Fx {
   shared?: boolean; // shared na geometry/material: huwag i-dispose
 }
 
-// Shared na geometry/material para sa maraming maliliit na particle
+/** Tapered crescent slash geometry para sa mga atake/kuko/suntok. */
+function createSlashGeometry(radius: number, width: number, arcAngle: number, segments = 16): THREE.BufferGeometry {
+  const positions: number[] = [];
+  const uvs: number[] = [];
+  const indices: number[] = [];
+
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const angle = -arcAngle / 2 + t * arcAngle;
+    const w = Math.sin(t * Math.PI) * width;
+    const rIn = Math.max(0.05, radius - w * 0.5);
+    const rOut = radius + w * 0.5;
+
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+
+    positions.push(rIn * cos, rIn * sin, 0);
+    uvs.push(t, 0);
+
+    positions.push(rOut * cos, rOut * sin, 0);
+    uvs.push(t, 1);
+  }
+
+  for (let i = 0; i < segments; i++) {
+    const v0 = i * 2;
+    const v1 = i * 2 + 1;
+    const v2 = (i + 1) * 2;
+    const v3 = (i + 1) * 2 + 1;
+    indices.push(v0, v1, v2);
+    indices.push(v2, v1, v3);
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geo.setIndex(indices);
+  geo.userData.shared = true;
+  return geo;
+}
+
+// Shared na geometry para sa maraming maliliit na particle at slashes
 const SPARK_GEO = new THREE.SphereGeometry(1, 6, 4);
-const SPARK_MAT = new THREE.MeshBasicMaterial({ color: FX.sparkColor });
+SPARK_GEO.userData.shared = true;
+
+const SLASH_GEO_M = createSlashGeometry(0.85, 0.42, Math.PI * 0.65);
+const SLASH_GEO_L = createSlashGeometry(1.6, 0.72, Math.PI * 0.75);
+const CLASH_FLASH_GEO = new THREE.PlaneGeometry(1, 1);
+CLASH_FLASH_GEO.userData.shared = true;
 
 /** posisyon sa mundo: pos → z, lat → x (baligtad para kaliwa sa screen ang -lat). */
 const toVec = (u: SimUnit, out = new THREE.Vector3()) => out.set(-u.lat, u.alt, u.pos);
@@ -364,8 +411,10 @@ export class World3D {
         const v = this.views.get(e.unit.id);
         if (v) {
           if (this.time - v.flashUntil > FX.hitFlashCooldownMs) v.flashUntil = this.time + FX.hitFlashMs;
+          v.staggerAt = this.time;
           this.updateHp(v);
-          this.sparksAt(toVec(e.unit).setY(e.unit.alt + vsz(e.unit) * 0.6));
+          const byView = e.by ? this.views.get(e.by.id) : undefined;
+          this.clashImpact(v, byView);
           this.floatText(v, `-${e.amount}`, e.unit.side === 'defender' ? 'dmg-bad' : 'dmg');
         }
         break;
@@ -382,7 +431,12 @@ export class World3D {
       }
       case 'attack': {
         const v = this.views.get(e.unit.id);
-        if (v) v.lungeAt = this.time;
+        if (v) {
+          v.lungeAt = this.time;
+          const targetView = e.target ? this.views.get(e.target.id) : null;
+          v.targetView = targetView || null;
+          this.slashVfx(v, targetView || null);
+        }
         break;
       }
       case 'shot': {
@@ -472,7 +526,8 @@ export class World3D {
     this.scene.add(group);
     const v: UnitView = {
       unit: u, group, model, label, labelInner: inner, hpFill,
-      bornAt: this.time, diedAt: null, lungeAt: -Infinity, flashUntil: 0, phase: randFloat(0, Math.PI * 2),
+      bornAt: this.time, diedAt: null, lungeAt: -Infinity, staggerAt: -Infinity, flashUntil: 0, phase: randFloat(0, Math.PI * 2),
+      targetView: null,
     };
     this.updateHp(v);
     this.views.set(u.id, v);
@@ -555,13 +610,153 @@ export class World3D {
     this.shakeUntil = this.time + FX.shakeMs;
   }
 
-  /** Maliliit na kislap kapag may tinamaan. */
-  private sparksAt(at: THREE.Vector3) {
-    for (let i = 0; i < FX.sparkCount && this.sparks < FX.maxSparks; i++) {
-      const m = new THREE.Mesh(SPARK_GEO, SPARK_MAT);
-      m.scale.setScalar(FX.sparkSize);
+  /** Special effects ng atake (batuta swing, claw swipe, talon strike, earth smash). */
+  private slashVfx(attacker: UnitView, target: UnitView | null) {
+    const u = attacker.unit;
+    const kind = u.kind;
+    const color = FX.slashColors[kind] ?? (u.side === 'defender' ? 0x64b5f6 : 0xff2a2a);
+    const isLarge = !!u.stats.boss || kind === 'anito';
+    const geo = isLarge ? SLASH_GEO_L : SLASH_GEO_M;
+    const size = vsz(u);
+
+    const at = toVec(u, new THREE.Vector3()).setY(u.alt + size * 0.55);
+    const forward = new THREE.Vector3(Math.sin(attacker.model.root.rotation.y), 0, Math.cos(attacker.model.root.rotation.y));
+
+    let strikePos: THREE.Vector3;
+    let targetDir = forward.clone();
+    let isHittingAir = false;
+
+    if (target) {
+      const targetPos = toVec(target.unit, new THREE.Vector3()).setY(target.unit.alt + vsz(target.unit) * 0.55);
+      strikePos = at.clone().lerp(targetPos, 0.65);
+      targetDir = targetPos.clone().sub(at).normalize();
+      isHittingAir = target.unit.stats.flying && !u.stats.flying;
+    } else {
+      strikePos = at.clone().addScaledVector(forward, 0.9 * size);
+    }
+
+    const count = kind === 'aswang' ? 3 : kind === 'manananggal' || kind === 'tikbalang' ? 2 : 1;
+    const slashGroup = new THREE.Group();
+    slashGroup.position.copy(strikePos);
+
+    const orient = new THREE.Object3D();
+    orient.position.copy(strikePos);
+    orient.lookAt(strikePos.clone().add(targetDir));
+    slashGroup.rotation.copy(orient.rotation);
+
+    const materials: THREE.MeshBasicMaterial[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const mat = new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+      materials.push(mat);
+      const mesh = new THREE.Mesh(geo, mat);
+
+      if (count === 3) {
+        const offset = (i - 1) * 0.22 * size;
+        mesh.position.set(offset, offset * 0.4, 0);
+        mesh.rotation.z = Math.PI * 0.2 + (i - 1) * 0.12;
+      } else if (count === 2) {
+        const offset = (i === 0 ? -1 : 1) * 0.18 * size;
+        mesh.position.set(offset, (i === 0 ? 1 : -1) * 0.12 * size, 0);
+        mesh.rotation.z = (i === 0 ? 0.35 : -0.35) * Math.PI;
+      } else {
+        mesh.rotation.z = (u.side === 'defender' ? -0.2 : 0.2) * Math.PI;
+      }
+
+      if (isHittingAir) {
+        mesh.rotation.x = -Math.PI * 0.28;
+      } else if (u.stats.flying) {
+        mesh.rotation.x = Math.PI * 0.28;
+      }
+
+      slashGroup.add(mesh);
+    }
+
+    this.scene.add(slashGroup);
+
+    const baseScale = size * (isLarge ? 1.0 : 1.25);
+    const startRotZ = slashGroup.rotation.z;
+    const dur = FX.slashMs;
+
+    this.fx.push({
+      obj: slashGroup,
+      start: this.time,
+      dur,
+      tick: (p) => {
+        const scale = baseScale * (0.6 + 0.65 * Math.sqrt(p));
+        slashGroup.scale.set(scale, scale, scale);
+        slashGroup.rotation.z = startRotZ + (p - 0.5) * 0.8;
+        const opacity = Math.sin(p * Math.PI);
+        for (const m of materials) m.opacity = Math.max(0, opacity);
+        if (p >= 1) {
+          for (const m of materials) m.dispose();
+        }
+      },
+    });
+
+    if (kind === 'anito') {
+      this.ring(strikePos, 1.8, 0xffb74d);
+    }
+  }
+
+  /** Malakas na clash impact, starburst flash, at sparks sa punto ng pagtama. */
+  private clashImpact(victim: UnitView, byView?: UnitView) {
+    const u = victim.unit;
+    const size = vsz(u);
+    const at = toVec(u, new THREE.Vector3()).setY(u.alt + size * 0.55);
+
+    if (byView) {
+      const byPos = toVec(byView.unit, new THREE.Vector3()).setY(byView.unit.alt + vsz(byView.unit) * 0.55);
+      at.lerp(byPos, 0.35);
+    }
+
+    // Starburst contact flash
+    const flashMat = new THREE.MeshBasicMaterial({
+      map: glowTexture(),
+      color: byView && byView.unit.side === 'defender' ? 0xffea75 : 0xff3b3b,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const flashMesh = new THREE.Mesh(CLASH_FLASH_GEO, flashMat);
+    flashMesh.position.copy(at);
+    flashMesh.quaternion.copy(this.camera.quaternion);
+    this.scene.add(flashMesh);
+
+    const flashBase = size * 0.95;
+    this.fx.push({
+      obj: flashMesh,
+      start: this.time,
+      dur: 130,
+      tick: (p) => {
+        flashMesh.quaternion.copy(this.camera.quaternion);
+        const sc = flashBase * (0.4 + 1.2 * p);
+        flashMesh.scale.set(sc, sc, 1);
+        flashMat.opacity = Math.max(0, 1 - p);
+        if (p >= 1) flashMat.dispose();
+      },
+    });
+
+    // High energy clash sparks
+    const sparkColor = byView && byView.unit.side === 'defender' ? 0xffee88 : 0xff5533;
+    const sparkMat = new THREE.MeshBasicMaterial({ color: sparkColor });
+    const count = FX.clashSparks;
+
+    for (let i = 0; i < count && this.sparks < FX.maxSparks; i++) {
+      const m = new THREE.Mesh(SPARK_GEO, sparkMat);
+      m.scale.setScalar(FX.sparkSize * 1.3);
       const start = at.clone();
-      const vel = new THREE.Vector3(randFloat(-1, 1), randFloat(0.3, 1.2), randFloat(-1, 1)).multiplyScalar(FX.sparkSpeed);
+      const vel = new THREE.Vector3(
+        randFloat(-1.8, 1.8),
+        randFloat(0.5, 2.2),
+        randFloat(-1.8, 1.8),
+      ).multiplyScalar(FX.sparkSpeed * 0.9);
       const dur = FX.sparkMs / 1000;
       this.sparks++;
       this.scene.add(m);
@@ -573,10 +768,19 @@ export class World3D {
         tick: (p) => {
           const tt = p * dur;
           m.position.set(start.x + vel.x * tt, start.y + vel.y * tt - 0.5 * FX.sparkGravity * tt * tt, start.z + vel.z * tt);
-          m.scale.setScalar(FX.sparkSize * (1 - p));
-          if (p >= 1) this.sparks--;
+          m.scale.setScalar(FX.sparkSize * 1.3 * (1 - p));
+          if (p >= 1) {
+            this.sparks--;
+            if (i === 0) sparkMat.dispose();
+          }
         },
       });
+    }
+
+    // Dust ring sa lupa
+    if (!u.stats.flying) {
+      const groundAt = toVec(u, new THREE.Vector3()).setY(0.04);
+      this.ring(groundAt, size * 0.7, 0x443328);
     }
   }
 
@@ -820,38 +1024,72 @@ export class World3D {
     }
 
     toVec(u, v.group.position);
-    // lunge kapag umaatake
-    const lp = (this.time - v.lungeAt) / FX.lungeMs;
     // Harapin ang direksyon (kalaban o nilalakaran), dahan-dahang umiikot
     const want = Math.atan2(-u.faceLat, u.facePos);
     let diff = want - root.rotation.y;
     diff = Math.atan2(Math.sin(diff), Math.cos(diff));
     root.rotation.y += diff * Math.min(1, (FX.turnSpeed * this.dt) / 1000);
+
+    // lunge kapag umaatake (sugod, yuko, kaskas ng kuko o hampas ng batuta)
+    const lp = (this.time - v.lungeAt) / FX.lungeMs;
+    let armStrike = 0;
     if (lp >= 0 && lp < 1) {
-      const k = Math.sin(lp * Math.PI) * FX.lungeAmount;
-      v.group.position.x += Math.sin(root.rotation.y) * k;
-      v.group.position.z += Math.cos(root.rotation.y) * k;
+      const k = Math.sin(lp * Math.PI);
+      v.group.position.x += Math.sin(root.rotation.y) * k * FX.lungeAmount;
+      v.group.position.z += Math.cos(root.rotation.y) * k * FX.lungeAmount;
+      root.rotation.x = k * 0.35;
+      armStrike = k * 1.5;
+
+      // Manananggal: sisisid pababa para kumaskas sa bayani
+      if (u.stats.flying) {
+        v.group.position.y -= k * 1.35;
+        root.rotation.x = k * 0.55;
+      }
+
+      // Bayaning sumusuntok/humahampas pataas sa lumilipad na halimaw
+      if (v.targetView?.unit.stats.flying && !u.stats.flying) {
+        v.group.position.y += k * 0.55;
+        root.rotation.x = -k * 0.45;
+      }
+    } else {
+      root.rotation.x = 0;
     }
+
+    // stagger / flinch kapag tinamaan ng atake
+    const stp = (this.time - v.staggerAt) / FX.staggerMs;
+    if (stp >= 0 && stp < 1) {
+      const sk = Math.sin(stp * Math.PI) * FX.staggerAmount;
+      v.group.position.x -= Math.sin(root.rotation.y) * sk;
+      v.group.position.z -= Math.cos(root.rotation.y) * sk;
+      root.rotation.x -= sk * 0.45;
+      root.rotation.z += Math.sin(stp * Math.PI * 2) * 0.14;
+    }
+
     // Pangalan: ilang segundo lang pagka-spawn (laging nakikita sa boss)
     v.labelInner.classList.toggle('quiet', !u.stats.boss && this.time - v.bornAt > FX.nameShowMs);
 
     const bob = u.stats.flying ? FX.flyBobAmount : FX.bobAmount * size;
     const speed = u.moving ? FX.bobSpeed * 1.6 : FX.bobSpeed * 0.5;
     root.position.y = Math.abs(Math.sin(t * speed + v.phase)) * bob * (u.moving || u.stats.flying ? 1 : 0.4);
-    root.rotation.z = u.moving ? Math.sin(t * speed + v.phase) * FX.walkSway : 0;
+    if (stp < 0 || stp >= 1) {
+      root.rotation.z = u.moving ? Math.sin(t * speed + v.phase) * FX.walkSway : 0;
+    }
     for (const w of v.model.wings) {
       const axis = (w.userData.flapAxis as 'y' | 'z' | undefined) ?? 'y';
       const amp = (w.userData.flapAmp as number | undefined) ?? 0.7;
-      const speed = u.stats.flying ? FX.flapSpeed : FX.flapSpeed * 0.4;
+      const flapMult = lp >= 0 && lp < 1 ? 1.6 : 1;
+      const fSpeed = (u.stats.flying ? FX.flapSpeed : FX.flapSpeed * 0.4) * flapMult;
       // × scale.x: magkasabay na pumapagaspas ang naka-mirror na pakpak (hindi parang seesaw)
-      w.rotation[axis] = Math.sin(t * speed + v.phase) * amp * Math.sign(w.scale.x);
+      w.rotation[axis] = Math.sin(t * fSpeed + v.phase) * amp * Math.sign(w.scale.x);
     }
     // lakad: cos para magkatabi ang paa sa tuktok ng bob (mid-stance)
     const settle = Math.min(1, (FX.limbSettle * this.dt) / 1000);
     for (const l of v.model.limbs) {
-      const amp = l.userData.limb === 'arm' ? -FX.armSwing : FX.legSwing;
+      const isArm = l.userData.limb === 'arm';
+      const amp = isArm ? -FX.armSwing : FX.legSwing;
       const want = u.moving ? Math.cos(t * speed + v.phase) * amp * (l.userData.side as number) * ((l.userData.swing as number | undefined) ?? 1) : 0;
-      l.rotation.x += (want - l.rotation.x) * (u.moving ? 1 : settle);
+      const extra = isArm && armStrike > 0 ? armStrike * ((l.userData.side as number) > 0 ? 1 : 0.35) : 0;
+      l.rotation.x += (want + extra - l.rotation.x) * (u.moving || armStrike > 0 ? 1 : settle);
     }
     v.model.segments.forEach((sg, i) => (sg.position.x = Math.sin(t * 3 + v.phase - i * 0.6) * 0.12 * ((sg.userData.sway as number | undefined) ?? 1)));
     if (v.model.segments.length) root.rotation.z = 0;

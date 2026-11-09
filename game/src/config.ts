@@ -66,11 +66,11 @@ export const BASE = {
 export const DEFENDERS: Record<DefenderKind, UnitStats> = {
   tanod: {
     name: 'Tanod', hp: 120, damage: 12, range: 1.4, cooldownMs: 800, speed: 2.6,
-    size: 1.6, color: 0x2f6fd6, flying: false, canHitAir: false, heal: 0, ranged: false,
+    size: 1.6, color: 0x2f6fd6, flying: false, canHitAir: true, heal: 0, ranged: false,
   },
   anito: {
     name: 'Anito', hp: 600, damage: 18, range: 1.6, cooldownMs: 1400, speed: 1.5,
-    size: 2.2, color: 0x8b5a2b, flying: false, canHitAir: false, heal: 0, ranged: false,
+    size: 2.2, color: 0x8b5a2b, flying: false, canHitAir: true, heal: 0, ranged: false,
   },
   albularyo: {
     name: 'Albularyo', hp: 100, damage: 0, range: 8, cooldownMs: 1200, speed: 2.0,
@@ -411,6 +411,23 @@ export const FX = {
   sparkGravity: 14,
   sparkColor: 0xffe08a,
   maxSparks: 240, // limit para hindi bumagal kapag maraming tama
+  // Combat slashes, claws, and clash special effects (para mukang nag-aaway)
+  slashMs: 200,
+  slashColors: {
+    tanod: 0x64b5f6, // asul/puting swing ng batuta
+    anito: 0xffb74d, // ginintuang bagsak ng anito
+    sarimanok: 0xffd54f, // engkantadong kislap
+    albularyo: 0x81c784, // halamang orasyon
+    aswang: 0xff2a2a, // pulang kaskas ng kuko
+    manananggal: 0xd05ce3, // purpurang kuko at pakpak
+    tikbalang: 0xffa726, // mabibilis na sipa at hampas
+    kapre: 0xffb300, // dambuhalang hampas
+    mangkukulam: 0xba68c8, // itim at purpurang sumpa
+    bakunawa: 0x26c6da, // kagat ng dambuhalang dragon
+  } as Record<UnitKind, number>,
+  clashSparks: 10,
+  staggerMs: 140,
+  staggerAmount: 0.2,
   puffMs: 550,
   puffColor: 0x2a2030,
   ringMs: 600, // shockwave ng slam / summon

@@ -59,9 +59,9 @@ export interface SimUnit {
 export type WorldEvent =
   | { type: 'spawn'; unit: SimUnit }
   | { type: 'death'; unit: SimUnit }
-  | { type: 'hit'; unit: SimUnit; amount: number }
+  | { type: 'hit'; unit: SimUnit; amount: number; by?: SimUnit }
   | { type: 'heal'; from: SimUnit; to: SimUnit; amount: number }
-  | { type: 'attack'; unit: SimUnit }
+  | { type: 'attack'; unit: SimUnit; target?: SimUnit }
   | { type: 'shot'; from: SimUnit; to: SimUnit; flightMs: number }
   | { type: 'baseHit'; amount: number }
   | { type: 'round'; round: number }
@@ -95,7 +95,7 @@ export class World {
   private queue = new SpawnQueue<DefenderKind>();
   /** Halimaw na pinadala ng viewers (versus), may sariling rate limit. */
   private villainQueue = new SpawnQueue<AttackerKind>();
-  private pendingHits: { at: number; target: SimUnit; amount: number }[] = [];
+  private pendingHits: { at: number; target: SimUnit; amount: number; by?: SimUnit }[] = [];
   private chatCooldowns = new Map<string, number>();
   /** Kabuuang coins na naibigay ng bawat viewer sa round na ito. */
   private contributions: Record<Side, Map<string, number>> = { defender: new Map(), attacker: new Map() };
@@ -252,7 +252,7 @@ export class World {
       () => this.attackers.length < SPAWN.maxAttackers,
       (r) => this.spawnAttacker(r.kind, LANE.spawnPos, r.user, r.coins),
     );
-    this.pendingHits = this.pendingHits.filter((h) => (h.at <= this.now ? (this.damage(h.target, h.amount), false) : true));
+    this.pendingHits = this.pendingHits.filter((h) => (h.at <= this.now ? (this.damage(h.target, h.amount, h.by), false) : true));
 
     for (const d of this.defenders) if (d.alive) this.updateDefender(d, dt);
     for (const a of this.attackers) if (a.alive) this.updateAttacker(a, dt);
@@ -282,23 +282,32 @@ export class World {
       return;
     }
 
-    // Binabantayan ang sona: hinahabol lang ang halimaw na lumampas sa leash, o abot ng tira
-    const target = nearest(
+    // Binabantayan ang sona: hinaharap at inaatake ang halimaw (kasama ang lumilipad gaya ng Manananggal)
+    const validTargets = this.attackers.filter((a) => a.alive && (!a.stats.flying || s.canHitAir));
+    const inRange = nearest(
       d,
-      this.attackers.filter(
-        (a) => a.alive && (!a.stats.flying || s.canHitAir) && (a.pos <= LANE.frontLinePos + LANE.leash || dist(a, d) <= s.range * d.reach),
-      ),
+      validTargets.filter((a) => dist(a, d) <= s.range * d.reach),
     );
+    const target =
+      inRange ??
+      nearest(
+        d,
+        validTargets.filter(
+          (a) => a.pos <= LANE.frontLinePos + LANE.leash || a.pos <= d.pos + 2 || dist(a, d) <= LANE.aggroRange * 1.5,
+        ),
+      ) ??
+      nearest(d, validTargets);
+
     if (target && dist(target, d) <= s.range * d.reach) {
       face(d, target);
       if (this.now - d.lastActionAt >= s.cooldownMs) {
         d.lastActionAt = this.now;
         if (s.ranged) {
           this.emit({ type: 'shot', from: d, to: target, flightMs: FX.projectileMs });
-          this.pendingHits.push({ at: this.now + FX.projectileMs, target, amount: s.damage });
+          this.pendingHits.push({ at: this.now + FX.projectileMs, target, amount: s.damage, by: d });
         } else {
-          this.emit({ type: 'attack', unit: d });
-          this.damage(target, s.damage);
+          this.emit({ type: 'attack', unit: d, target });
+          this.damage(target, s.damage, d);
         }
       }
     } else if (target) {
@@ -313,37 +322,56 @@ export class World {
     const s = a.stats;
     a.moving = false;
     if (s.boss) this.bossAbility(a);
-    const ground = s.flying ? [] : this.defenders.filter((d) => d.alive);
-    const blocker = nearest(a, ground.filter((d) => dist(d, a) <= s.range * a.reach));
-    const atBase = a.pos <= LANE.baseHitPos + (s.ranged ? s.range - LANE.meleeReach : 0);
-    if (blocker || atBase) {
-      if (blocker) face(a, blocker);
-      else {
-        a.facePos = -1; // nakaharap sa kubo
-        a.faceLat = 0;
+
+    // PATAKARAN: DAPAT MAUBOS MUNA ANG MGA BAYANI BAGO NILA MATIRA ANG KUBO!
+    // Ang Manananggal at iba pang halimaw ay dapat ding umaatake sa mga bayani.
+    const livingDefenders = this.defenders.filter((d) => d.alive);
+
+    if (livingDefenders.length > 0) {
+      // May buhay pang bayani sa battlefield: uunahin silang lipulin bago ang kubo
+      const blocker = nearest(a, livingDefenders.filter((d) => dist(d, a) <= s.range * a.reach));
+
+      if (blocker) {
+        face(a, blocker);
+        if (this.now - a.lastActionAt >= s.cooldownMs) {
+          a.lastActionAt = this.now;
+          if (s.ranged) {
+            this.emit({ type: 'shot', from: a, to: blocker, flightMs: FX.projectileMs });
+            this.pendingHits.push({ at: this.now + FX.projectileMs, target: blocker, amount: s.damage, by: a });
+            return;
+          }
+          this.emit({ type: 'attack', unit: a, target: blocker });
+          this.damage(blocker, s.damage, a);
+        }
+        return;
       }
+
+      // Hindi pa abot: lumapit sa pinakamalapit na bayani para makipaglaban
+      const target = nearest(a, livingDefenders);
+      if (target) {
+        this.moveTo(a, target.pos, target.lat, dt);
+        return;
+      }
+    }
+
+    // Ubos na ang bayani (o walang bayani): dito lang pwedeng lumapit at tirahin ang kubo!
+    const atBase = a.pos <= LANE.baseHitPos + (s.ranged ? s.range - LANE.meleeReach : 0);
+    if (atBase) {
+      a.facePos = -1; // nakaharap sa kubo
+      a.faceLat = 0;
       if (this.now - a.lastActionAt >= s.cooldownMs) {
         a.lastActionAt = this.now;
-        if (blocker && s.ranged) {
-          this.emit({ type: 'shot', from: a, to: blocker, flightMs: FX.projectileMs });
-          this.pendingHits.push({ at: this.now + FX.projectileMs, target: blocker, amount: s.damage });
-          return;
-        }
         this.emit({ type: 'attack', unit: a });
-        if (blocker) this.damage(blocker, s.damage);
-        else {
-          // Mas mahina ang tama sa kubo kaysa sa bayani (para makunat ang kubo)
-          const hit = Math.round(ATTACKERS[a.kind as AttackerKind].damage * a.power ** BASE.damagePowerExp);
-          this.baseHp = Math.max(0, this.baseHp - hit);
-          this.emit({ type: 'baseHit', amount: hit });
-        }
+        // Mas mahina ang tama sa kubo kaysa sa bayani (para makunat ang kubo)
+        const hit = Math.round(ATTACKERS[a.kind as AttackerKind].damage * a.power ** BASE.damagePowerExp);
+        this.baseHp = Math.max(0, this.baseHp - hit);
+        this.emit({ type: 'baseHit', amount: hit });
       }
       return;
     }
-    // Lumalapit sa bayaning malapit (kita ang laban); kung wala, diretso sa kubo
-    const prey = nearest(a, ground.filter((d) => d.pos <= a.pos + 1 && dist(d, a) <= LANE.aggroRange));
-    if (prey) this.moveTo(a, prey.pos, prey.lat, dt);
-    else this.moveTo(a, Math.min(a.pos, LANE.baseHitPos) - 1, a.lat, dt);
+
+    // Magmartsa papunta sa kubo dahil walang bayaning humaharang
+    this.moveTo(a, Math.min(a.pos, LANE.baseHitPos) - 1, a.lat, dt);
   }
 
   /** Itinutulak palayo ang magkakapatong na units (parehong panig at magkalaban). */
@@ -405,10 +433,10 @@ export class World {
     }
   }
 
-  private damage(u: SimUnit, amount: number) {
+  private damage(u: SimUnit, amount: number, by?: SimUnit) {
     if (!u.alive) return;
     u.hp = Math.max(0, u.hp - amount);
-    this.emit({ type: 'hit', unit: u, amount });
+    this.emit({ type: 'hit', unit: u, amount, by });
     if (u.hp <= 0) {
       u.alive = false;
       if (u.side === 'attacker') this.kills += 1;
