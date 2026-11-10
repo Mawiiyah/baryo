@@ -67,8 +67,8 @@
   flex-direction: column;
   gap: 10px;
 }
-.left-stack { left: calc(var(--side) + var(--col-w) + 24px); }
-.right-stack { right: calc(var(--side) + var(--col-w) + 24px); }
+.left-stack { left: var(--side); }
+.right-stack { right: var(--side); }
 .stack-col > .wave, .stack-col > .timer { height: var(--top-h); }
 .wave { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 22px 10px; position: relative; }
 .wave-icon { width: 54px; height: 54px; }
@@ -154,20 +154,21 @@
 .like-bar .fill { background-color: var(--like); }
 .like-bar .bar-text { font-size: 15px; --o: 2px; }
 
-/* ---------- Mga column ---------- */
+/* ---------- Mga column (nasa ilalim ng PTS box ng kani-kanilang panig) ---------- */
 .col {
-  position: absolute;
-  top: var(--safe-top);
-  width: var(--col-w);
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-.heroes { left: var(--side); }
-.villains { right: var(--side); }
-.col-title { font-size: 32px; color: #8dff4a; margin-bottom: 8px; white-space: nowrap; --o: 4px; }
+.col-title { font-size: 28px; color: #8dff4a; margin-bottom: 6px; white-space: nowrap; --o: 4px; }
 .col-title.bad { color: var(--bad); }
-.col-rows { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.col-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
+.col-rows > .clean-card { width: auto; min-width: 0; margin-bottom: 0; }
+.col-rows > .clean-card .pic, .col-rows > .clean-card .big-gift-box { width: 66px; height: 66px; }
+.col-rows > .clean-card .big-gift-img { width: 56px; height: 56px; }
+.col-rows > .clean-card .clean-name { max-width: 100%; }
+.col-rows > .clean-card .clean-gift-name { max-width: 100%; }
 .icon-row { display: flex; flex-direction: column; align-items: center; margin-bottom: 4px; }
 .icon-row .count, .icon-row .caption { z-index: 2; position: relative; }
 .pic { position: relative; width: 86px; height: 74px; }
@@ -290,8 +291,8 @@
 }
 /* Pantay ang dalawang kahon sa ibaba (pareho ang laki at layo sa gilid) */
 .bottom-left, .bottom-right { width: var(--side-panel-w); height: 112px; padding: 0 20px; justify-content: center; }
-.bottom-left { left: calc(var(--side) + var(--col-w) + 24px); }
-.bottom-right { right: calc(var(--side) + var(--col-w) + 24px); gap: 14px; }
+.bottom-left { left: var(--side); }
+.bottom-right { right: var(--side); gap: 14px; }
 .big.bad { color: var(--bad); }
 .mini { width: 76px; height: 76px; object-fit: contain; flex: none; }
 .stack { flex: 1; display: flex; flex-direction: column; gap: 6px; }

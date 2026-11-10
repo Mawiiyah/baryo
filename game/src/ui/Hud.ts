@@ -87,18 +87,18 @@ export class Hud {
     kuboHpSlot.append(hp);
     const likes = h('div', 'like-row');
     likes.append(pixelEmoji(ICONS.like, 'like-icon'), barEl(this.likeFill, 'like-bar', this.likeText));
-    const leftStack = h('div', 'stack-col left-stack');
-    leftStack.append(wave, likes, this.teamBox('defender', 'BAYANI'));
-    const rightStack = h('div', 'stack-col right-stack');
-    rightStack.append(timer, this.teamBox('attacker', 'HALIMAW'));
-
-    // Kaliwa: BAYANI, kanan: HALIMAW (versus) — paano tumulong / umatake
+    // Kaliwa: BAYANI, kanan: HALIMAW (versus) — paano tumulong / umatake.
+    // Nakahanay sa ilalim ng kani-kanilang PTS box.
     const heroes = h('div', 'col heroes');
     const heroRows = h('div', 'col-rows');
     heroes.append(h('div', 'col-title', 'BAYANI'), heroRows);
     const villains = h('div', 'col villains');
     const villainRows = h('div', 'col-rows');
     villains.append(h('div', 'col-title bad', 'HALIMAW'), villainRows);
+    const leftStack = h('div', 'stack-col left-stack');
+    leftStack.append(wave, likes, this.teamBox('defender', 'BAYANI'), heroes);
+    const rightStack = h('div', 'stack-col right-stack');
+    rightStack.append(timer, this.teamBox('attacker', 'HALIMAW'), villains);
     const showGuide = new URLSearchParams(window.location.search).has('guide');
 
     const fillColumns = () => {
@@ -181,7 +181,7 @@ export class Hud {
 
     const banner = h('div', 'banner-layer');
     this.overlay.append(this.overTitle, this.overSub, this.overCount);
-    r.append(leftStack, rightStack, heroes, villains, bl, br, chatBanner, this.toasts, banner, this.overlay);
+    r.append(leftStack, rightStack, bl, br, chatBanner, this.toasts, banner, this.overlay);
     parent.appendChild(r);
 
     world.on((e) => this.onWorld(e));
