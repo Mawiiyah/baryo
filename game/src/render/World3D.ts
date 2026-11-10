@@ -5,6 +5,7 @@ import { isDuel, type SimUnit, type World, type WorldEvent } from '../sim/World'
 import { randFloat } from '../sim/rand';
 import { buildBarangay } from './barangay';
 import { buildBaha } from './baha';
+import { CameraOrbit } from './CameraOrbit';
 import { buildBaseKubo, buildKubo, buildModel, type Model } from './models';
 import { fogTexture, glowTexture, palm, torchFlame, type Torch } from './scenery';
 import { buildTemplo } from './templo';
@@ -111,6 +112,7 @@ export class World3D {
   readonly kuboHpSlot = document.createElement('div');
   private scene = new THREE.Scene();
   private camera: THREE.PerspectiveCamera;
+  private orbit: CameraOrbit;
   private views = new Map<number, UnitView>();
   private fx: Fx[] = [];
   private torches: Torch[] = [];
@@ -172,6 +174,7 @@ export class World3D {
     this.camera = new THREE.PerspectiveCamera(V.fov, GAME.width / GAME.height, 0.1, 200);
     this.camera.position.set(V.cameraPos.x, V.cameraPos.y, V.cameraPos.z);
     this.camera.lookAt(V.cameraLookAt.x, V.cameraLookAt.y, V.cameraLookAt.z);
+    this.orbit = new CameraOrbit(V.cameraPos, V.cameraLookAt);
 
     this.buildEnvironment();
 
@@ -1057,9 +1060,8 @@ export class World3D {
     else this.kubo.position.x = shake;
 
     // Camera shake
-    const base = this.V.cameraPos;
     const sk = this.time < this.shakeUntil ? this.shakeAmount * ((this.shakeUntil - this.time) / FX.shakeMs) : 0;
-    this.camera.position.set(base.x + randFloat(-sk, sk), base.y + randFloat(-sk, sk), base.z);
+    this.orbit.apply(this.camera, deltaMs, randFloat(-sk, sk), randFloat(-sk, sk));
 
     // Pulang buwan habang buhay ang Bakunawa
     let blood = false;

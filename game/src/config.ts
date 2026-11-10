@@ -270,6 +270,22 @@ export const SCENE3D = {
    * 'side'   = nasa gilid, kubo sa kaliwa at halimaw galing sa kanan.
    */
   view: 'behind' as 'behind' | 'side',
+  /**
+   * 360° na camera (render/CameraOrbit.ts): i-drag ang mouse para umikot sa paligid ng laban,
+   * scroll para mag-zoom, `resetKey` o double-click para bumalik sa default, `autoKey` = kusang ikot.
+   */
+  orbit: {
+    dragSpeed: 0.006, // rad kada pixel ng drag
+    minPolar: 0.15, // rad mula sa itaas (halos tanaw mula sa langit)
+    maxPolar: 1.42, // rad (halos kapantay ng lupa)
+    zoomSpeed: 0.0012, // kada wheel delta (multiplicative)
+    minDistScale: 0.45, // × default na layo
+    maxDistScale: 1.6,
+    ease: 8, // bilis ng pagsunod sa target (mas mataas = mas mabilis)
+    autoSpeed: 0.18, // rad/s kapag naka-auto na ikot
+    resetKey: 'V',
+    autoKey: 'O',
+  },
   views: {
     behind: {
       fov: 46,

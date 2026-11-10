@@ -18,6 +18,8 @@ kubo pagkaubos ng oras, HALIMAW kapag nawasak ito. May score kada round.
   sa window gamit ang CSS transform.
 - Camera: `SCENE3D.view` = 'behind' (likod ng Bahay Kubo, daan papalayo; default) o 'side'
   (kubo sa kaliwa, halimaw galing sa kanan). Visual na laki ng units: `SCENE3D.unitScale`.
+  360° na camera (`SCENE3D.orbit`, render/CameraOrbit.ts): drag ng mouse = ikot, scroll = zoom,
+  V o double-click = balik sa default, O = kusang ikot.
 - Battlefield: `SCENE3D.battlefield` = 'barangay' (default; kalsada, basketball court, Barangay Hall gate,
   jeepney base na may headlight beams, sari-sari stores, monobloc chairs, traysikel, aspin, banderitas;
   batay sa assets/reference/battlefield_barangay.jpg) o 'baha' (ang barangay na binaha habang may bagyo: maputik na tubig hanggang kalahati ng Bahay Kubo — lumalakad ang units sa ibabaw nito; hanay ng lubog na bahay sa gilid kapalit ng MonsterFog na hamog,
@@ -96,6 +98,7 @@ O sa loob mismo ng game/ o bridge/: npm run dev
 - game/src/sim/World.ts — game logic: combat, rounds (timer + score), base HP, likes, kills,
   top contributor, villain queue; naglalabas ng `WorldEvent`
 - game/src/sim/ — `SpawnQueue` (token bucket, para sa bayani at halimaw), `balance` (coins → lakas), `rand`
+- game/src/render/CameraOrbit.ts — 360° na camera (drag/zoom/reset/auto-ikot)
 - game/src/render/World3D.ts — Three.js na eksena (langit, ilaw, buwan, kubo/jeepney base; 'barangay'/'templo'/'baryo' na battlefield,
   katakut-takot na hamog at pagdilim kapag nag-spawn ang halimaw), unit views, effects, CSS2D labels
 - game/src/render/barangay.ts — 'barangay' na battlefield (assets/reference/battlefield_barangay.jpg)
@@ -122,7 +125,7 @@ BAYANI: 1 = Tanod (fake like event na sapat para sa isang Tanod), L = 10 likes, 
 A = Finger Heart (5c, Anito), D = Dolphin (10c, Sarimanok), F = follow, T = chat `!tanod`
 HALIMAW: G = GG (1c, Aswang), H = Heart Me (1c, Manananggal), P = Panda (5c, Tikbalang),
 C = Rosa (10c, Mangkukulam), K = Gold Boxing Gloves (10c, Kapre), X = chat `!aswang`
-M = mute/unmute ng tunog (hindi game event)
+M = mute/unmute ng tunog, V = reset ng camera, O = kusang ikot ng camera (hindi game events)
 Lahat ng gifts ay 100% tugma sa opisyal na presyo ng TikTok LIVE gifts (1 hanggang 10 coins).
 Labels sa ibabaw ng ulo: laging ipinapakita ang pangalan ng Hero/Karakter (hindi "debug").
 Clickable test buttons (bayani at halimaw): http://localhost:5173/?debug (naka-config sa `DEBUG_PANEL`; wala sa OBS kapag walang `?debug`).
