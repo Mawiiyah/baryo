@@ -128,19 +128,24 @@
   font-size: 22px;
 }
 
-.hp-row {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
 .like-row { display: flex; align-items: center; gap: 8px; }
-.hp-row { top: calc(var(--safe-top) + 22px); width: 700px; }
-.hp-icon { width: 56px; height: 56px; }
 .like-icon { width: 36px; height: 36px; }
-.hp-bar { flex: 1; height: 50px; }
+
+/* HP ng kubo: CSS2D label sa ibabaw ng bubong (nasa .labels layer, kaya dito ang mga variable) */
+.kubo-hp {
+  --b: 4px;
+  --ink: #1a0d04;
+  --gold: #ffd25a;
+  --bad: #ff5048;
+  --good: #6fdc5a;
+  font-family: 'Silkscreen', monospace;
+  font-weight: 700;
+  color: #fff;
+  pointer-events: none;
+}
+.hp-row { width: 240px; }
+.hp-bar { height: 30px; }
+.hp-bar .bar-text { font-size: 18px; --o: 2px; }
 .hp-bar .fill { background-color: var(--good); }
 .hp-bar .fill.warn { background-color: var(--gold); }
 .hp-bar .fill.danger { background-color: var(--bad); }

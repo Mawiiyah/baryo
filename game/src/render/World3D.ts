@@ -107,6 +107,8 @@ const easeOutBack = (t: number) => 1 + 2.70158 * (t - 1) ** 3 + 1.70158 * (t - 1
 export class World3D {
   readonly renderer: THREE.WebGLRenderer;
   readonly labels: CSS2DRenderer;
+  /** Lalagyan sa ibabaw ng Bahay Kubo (CSS2D); dito inilalagay ng HUD ang HP bar ng kubo. */
+  readonly kuboHpSlot = document.createElement('div');
   private scene = new THREE.Scene();
   private camera: THREE.PerspectiveCamera;
   private views = new Map<number, UnitView>();
@@ -172,6 +174,14 @@ export class World3D {
     this.camera.lookAt(V.cameraLookAt.x, V.cameraLookAt.y, V.cameraLookAt.z);
 
     this.buildEnvironment();
+
+    // HP bar ng kubo: nakalutang sa ibabaw ng bubong
+    this.kuboHpSlot.className = 'kubo-hp';
+    const hpLabel = new CSS2DObject(this.kuboHpSlot);
+    const kp = this.kubo.getWorldPosition(new THREE.Vector3());
+    hpLabel.position.set(kp.x, kp.y + S.kuboHpHeight, kp.z);
+    this.scene.add(hpLabel);
+
     world.on((e) => this.onWorld(e));
   }
 

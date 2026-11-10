@@ -27,7 +27,7 @@ kubo pagkaubos ng oras, HALIMAW kapag nawasak ito. May score kada round.
   o sa Test panel (`?debug`), o sa "🗺️ MAPA" button sa kaliwang-ibaba (`MAP_PICKER`, ui/MapPicker.ts;
   lumalabas lang kapag gumalaw ang mouse para malinis sa OBS; naaalala ang pinili sa localStorage; mas nauuna ang `?map=`).
 - HUD: BAYANI column sa kaliwa, HALIMAW sa kanan. Itaas-kaliwa: score → likes → BAYANI coins/top
-  gifter. Itaas-kanan: oras → HALIMAW coins/top gifter. Itaas-gitna: HP ng kubo (%). Ibaba: defenders
+  gifter. Itaas-kanan: oras → HALIMAW coins/top gifter. HP ng kubo (%): nakalutang sa ibabaw ng kubo (CSS2D label, `World3D.kuboHpSlot`, taas = `SCENE3D.kuboHpHeight`). Ibaba: defenders
   at kills/natitirang halimaw. Layers: labels (z1) < HUD (z2) < panalo/talo overlay.
 
 ## Mga karakter

@@ -35,7 +35,7 @@ const debugRoundSecs = params.has('debug') ? Number(params.get('round')) : 0;
 const world = new World(debugRoundSecs > 0 ? debugRoundSecs * 1000 : ROUND.durationMs);
 const view = new World3D(stage, world);
 const monsterFog = new MonsterFog(stage, world, { flanks: SCENE3D.battlefield !== 'baha' });
-const hud = new Hud(stage, world, renderPortraits());
+const hud = new Hud(stage, world, renderPortraits(), view.kuboHpSlot);
 const sound = new Sound(world);
 setEventTarget((e) => {
   if (e.type === 'gift' && e.icon) setGiftIcons({ [e.gift]: e.icon });

@@ -64,7 +64,8 @@ export class Hud {
   private overCount = h('div', 'over-count');
   private net: NetStatus = 'connecting';
 
-  constructor(parent: HTMLElement, private world: World, private portraits: Record<UnitKind, string>) {
+  /** @param kuboHpSlot lalagyan sa ibabaw ng kubo (galing sa World3D) para sa HP bar ng kubo. */
+  constructor(parent: HTMLElement, private world: World, private portraits: Record<UnitKind, string>, kuboHpSlot: HTMLElement) {
     const r = this.root;
     r.style.setProperty('--safe-top', `${HUD.safeTop}px`);
     r.style.setProperty('--safe-bottom', `${HUD.safeBottom}px`);
@@ -80,9 +81,10 @@ export class Hud {
     const timer = h('div', 'panel timer');
     timer.append(this.netDot, this.timerLabel, this.timer);
 
-    // Base HP at likes
+    // HP ng kubo (nasa ibabaw ng mismong kubo, hindi sa HUD) at likes
     const hp = h('div', 'hp-row');
-    hp.append(pixelEmoji('🛖', 'hp-icon'), barEl(this.hpFill, 'hp-bar', this.hpText));
+    hp.append(barEl(this.hpFill, 'hp-bar', this.hpText));
+    kuboHpSlot.append(hp);
     const likes = h('div', 'like-row');
     likes.append(pixelEmoji(ICONS.like, 'like-icon'), barEl(this.likeFill, 'like-bar', this.likeText));
     const leftStack = h('div', 'stack-col left-stack');
@@ -179,7 +181,7 @@ export class Hud {
 
     const banner = h('div', 'banner-layer');
     this.overlay.append(this.overTitle, this.overSub, this.overCount);
-    r.append(leftStack, rightStack, hp, heroes, villains, bl, br, chatBanner, this.toasts, banner, this.overlay);
+    r.append(leftStack, rightStack, heroes, villains, bl, br, chatBanner, this.toasts, banner, this.overlay);
     parent.appendChild(r);
 
     world.on((e) => this.onWorld(e));

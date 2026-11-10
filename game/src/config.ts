@@ -436,6 +436,7 @@ export const SCENE3D = {
   roofColor: 0x543e22,
   forestColor: 0x040705,
   kuboPos: 0, // pos ng Bahay Kubo
+  kuboHpHeight: 6.2, // m: taas ng HP bar ng kubo (nasa ibabaw ng bubong)
   kuboWindowColor: 0xffa040,
   kuboLight: 0xff9a38,
   kuboLightIntensity: 16, // mainit na liwanag na pugad sa gitna ng kadiliman
