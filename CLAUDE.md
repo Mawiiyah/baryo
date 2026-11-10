@@ -102,7 +102,7 @@ O sa loob mismo ng game/ o bridge/: npm run dev
   top contributor, villain queue; naglalabas ng `WorldEvent`
 - game/src/sim/ — `SpawnQueue` (token bucket, para sa bayani at halimaw), `balance` (coins → lakas), `rand`
 - game/src/render/CameraOrbit.ts — 360° na camera (drag/zoom/reset/auto-ikot)
-- game/src/render/World3D.ts — Three.js na eksena (langit, ilaw, buwan, buwan-at-ulap na sprite sa langit (`SCENE3D.skyMoon`; nakapirmi sa mundo, hindi HTML overlay), kubo/jeepney base; 'barangay'/'templo'/'baryo' na battlefield,
+- game/src/render/World3D.ts — Three.js na eksena (langit, ilaw, buwan, buwan-at-ulap na sprite (`SCENE3D.skyMoon`; nakapatong gaya ng overlay pero dumadausdos ayon sa ikot/tingala ng camera), kubo/jeepney base; 'barangay'/'templo'/'baryo' na battlefield,
   katakut-takot na hamog at pagdilim kapag nag-spawn ang halimaw), unit views, effects, CSS2D labels
 - game/src/render/barangay.ts — 'barangay' na battlefield (assets/reference/battlefield_barangay.jpg)
 - game/src/render/baha.ts — 'baha' na battlefield: `buildBarangay(sc, { flooded: true })` + tubig, ulan, kidlat,

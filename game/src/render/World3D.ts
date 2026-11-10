@@ -125,7 +125,8 @@ export class World3D {
   private moonGlow!: THREE.Sprite;
   /** Buwan at ulap sa langit (dati HTML overlay na nakadikit sa screen). */
   private skyMoon!: THREE.Sprite;
-  private skyMoonBaseY = 0;
+  /** Yaw/pitch ng default na camera (dito nasa ndcX/ndcY ang buwan). */
+  private skyMoonHome = { yaw: 0, pitch: 0 };
   /** Pilit na pulang buwan (Test panel). */
   debugBloodMoon = false;
   private hemi!: THREE.HemisphereLight;
@@ -1105,7 +1106,7 @@ export class World3D {
     this.moonMat.color.lerp(target, k);
     this.moonGlow.material.color.lerp(blood ? target : new THREE.Color(S.moonGlowColor), k);
     this.skyMoon.material.color.lerp(new THREE.Color(blood ? S.bloodMoonColor : 0xffffff), k);
-    this.skyMoon.position.y = this.skyMoonBaseY + Math.sin((this.time / 1000) * S.skyMoon.floatSpeed) * S.skyMoon.floatAmp;
+    this.placeSkyMoon();
     this.fog.color.lerp(new THREE.Color(blood ? S.bloodFog : this.fogBase), k);
     this.hemi.color.lerp(new THREE.Color(blood ? S.bloodSky : S.hemiSky), k);
 
@@ -1237,14 +1238,11 @@ export class World3D {
     v.labelInner.style.transform = `scale(${s.toFixed(3)})`;
   }
 
-  /** Buwan + ulap sa langit, inilalagay kung saan ito makikita sa default na camera. */
+  /** Buwan + ulap sa langit (sprite na laging nakapatong; pinupuwesto kada frame ng `placeSkyMoon`). */
   private buildSkyMoon() {
     const M = S.skyMoon;
     const cam = this.camera;
-    cam.updateMatrixWorld();
-    const p = new THREE.Vector3(M.ndcX, M.ndcY, 0.5).unproject(cam).sub(cam.position).normalize();
-    const fwd = cam.getWorldDirection(new THREE.Vector3());
-    const pos = cam.position.clone().addScaledVector(p, M.dist / p.dot(fwd)); // nasa layong `dist` sa harap ng camera
+    this.skyMoonHome = camYawPitch(cam);
     const viewW = 2 * M.dist * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * cam.aspect;
     const tex = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}effects/moon_clouds.png`, (t) => {
       const img = t.image as HTMLImageElement;
@@ -1253,16 +1251,39 @@ export class World3D {
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.magFilter = THREE.NearestFilter;
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, depthTest: false, fog: false }));
-    sp.renderOrder = S.skyMoon.renderOrder; // laging nakapatong (gaya ng dating overlay), hindi natatakpan ng Barangay Hall
+    sp.renderOrder = M.renderOrder; // laging nakapatong (gaya ng dating overlay), hindi natatakpan ng Barangay Hall
     sp.scale.set(M.widthFrac * viewW, 1, 1); // taas: itatama pagka-load ng larawan
-    sp.position.copy(pos);
-    this.skyMoonBaseY = pos.y;
     this.skyMoon = sp;
     this.scene.add(sp);
+    this.placeSkyMoon();
+  }
+
+  /** Puwesto sa screen ayon sa ikot ng camera mula sa default: lumilipat ang langit kasalungat ng galaw ng camera. */
+  private placeSkyMoon() {
+    const M = S.skyMoon;
+    const cam = this.camera;
+    cam.updateMatrixWorld();
+    const { yaw, pitch } = camYawPitch(cam);
+    const halfV = THREE.MathUtils.degToRad(cam.fov / 2);
+    const halfH = Math.atan(Math.tan(halfV) * cam.aspect);
+    const dYaw = THREE.MathUtils.euclideanModulo(yaw - this.skyMoonHome.yaw + Math.PI, Math.PI * 2) - Math.PI;
+    const x = M.ndcX + dYaw / halfH; // +x sa mundo = kaliwa ng screen → paikot pakaliwa, dausdos pakanan
+    const y = M.ndcY + (this.skyMoonHome.pitch - pitch) / halfV + Math.sin((this.time / 1000) * M.floatSpeed) * M.floatAmp;
+    const sp = this.skyMoon;
+    sp.visible = Math.abs(dYaw) < Math.PI / 2;
+    if (!sp.visible) return;
+    const dir = new THREE.Vector3(x, y, 0.5).unproject(cam).sub(cam.position).normalize();
+    const fwd = cam.getWorldDirection(new THREE.Vector3());
+    sp.position.copy(cam.position).addScaledVector(dir, M.dist / dir.dot(fwd)); // nasa layong `dist` sa harap ng camera
   }
 }
 
 // ---------- Helpers ----------
+/** Yaw (paikot sa y) at pitch (tingala) ng camera. */
+function camYawPitch(cam: THREE.Camera) {
+  const f = cam.getWorldDirection(new THREE.Vector3());
+  return { yaw: Math.atan2(f.x, f.z), pitch: Math.asin(THREE.MathUtils.clamp(f.y, -1, 1)) };
+}
 function skyTexture() {
   const c = document.createElement('canvas');
   c.width = 4;
