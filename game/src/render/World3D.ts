@@ -4,7 +4,7 @@ import { FX, GAME, LANE, SCENE3D as S } from '../config';
 import { isDuel, type SimUnit, type World, type WorldEvent } from '../sim/World';
 import { randFloat } from '../sim/rand';
 import { buildBarangay } from './barangay';
-import { buildBaha } from './baha';
+import { buildBaha, waveHeight } from './baha';
 import { CameraOrbit, type CamModeId } from './CameraOrbit';
 import { buildBaseKubo, buildKubo, buildModel, type Model } from './models';
 import { fogTexture, glowTexture, palm, torchFlame, type Torch } from './scenery';
@@ -78,6 +78,9 @@ function createSlashGeometry(radius: number, width: number, arcAngle: number, se
 
 // Shared na geometry para sa maraming maliliit na particle at slashes
 const SPARK_GEO = new THREE.SphereGeometry(1, 6, 4);
+const SPLASH_GEO = new THREE.BoxGeometry(1, 1, 1); // pixel na patak ng tubig
+const SPLASH_RING_GEO = new THREE.RingGeometry(0.75, 1, 20).rotateX(-Math.PI / 2);
+const SB = S.baha;
 SPARK_GEO.userData.shared = true;
 
 const SLASH_GEO_M = createSlashGeometry(0.85, 0.42, Math.PI * 0.65);
@@ -140,6 +143,8 @@ export class World3D {
   private shakeUntil = 0;
   private shakeAmount = 0;
   private sparks = 0;
+  private splashDrops = 0;
+  private splashMats: THREE.MeshBasicMaterial[] = [];
   private time = 0;
   private dt = 0;
   private tmp = new THREE.Vector3();
@@ -437,6 +442,7 @@ export class World3D {
         const v = this.views.get(e.unit.id);
         if (v) {
           this.puff(v);
+          this.splashAt(e.unit, SB.splash.drops);
           v.diedAt = this.time;
           v.label.visible = false;
           for (const m of v.model.mats) m.transparent = true;
@@ -452,6 +458,7 @@ export class World3D {
           this.updateHp(v);
           const byView = e.by ? this.views.get(e.by.id) : undefined;
           this.clashImpact(v, byView);
+          this.splashAt(e.unit, SB.splash.drops);
           this.floatText(v, `-${e.amount}`, e.unit.side === 'defender' ? 'dmg-bad' : 'dmg');
         }
         break;
@@ -473,6 +480,7 @@ export class World3D {
           const targetView = e.target ? this.views.get(e.target.id) : null;
           v.targetView = targetView || null;
           this.slashVfx(v, targetView || null);
+          this.splashAt(e.unit, SB.splash.dropsStep);
         }
         break;
       }
@@ -503,6 +511,7 @@ export class World3D {
         if (v) {
           v.lungeAt = this.time;
           this.ring(toVec(e.unit), e.radius, FX.slamColor);
+          this.splashAt(e.unit, SB.splash.dropsSlam);
         }
         this.shake(FX.shakeSlam);
         break;
@@ -913,6 +922,62 @@ export class World3D {
       tick: (p) => {
         ring.scale.setScalar(radius * (0.2 + 0.8 * Math.sqrt(p)));
         mat.opacity = 1 - p;
+        if (p >= 1) mat.dispose();
+      },
+    });
+  }
+
+  /** Talsik ng tubig sa paa ng unit (sa 'baha' lang; hindi sa lumilipad). `n` = patak (× laki). */
+  private splashAt(u: SimUnit, n: number) {
+    if (S.battlefield !== 'baha' || u.stats.flying || u.alt > 0.5) return;
+    const P = SB.splash;
+    const size = vsz(u);
+    const t = this.time / 1000;
+    const x = -u.lat + randFloat(-0.25, 0.25) * size;
+    const z = u.pos + randFloat(-0.25, 0.25) * size;
+    const y = surf() + waveHeight(x, z, t);
+    if (!this.splashMats.length) this.splashMats = P.colors.map((c) => new THREE.MeshBasicMaterial({ color: c, fog: false }));
+    const count = Math.round(n * Math.max(1, Math.sqrt(size)));
+    const dur = P.ms / 1000;
+    for (let i = 0; i < count && this.splashDrops < P.max; i++) {
+      const m = new THREE.Mesh(SPLASH_GEO, this.splashMats[i % this.splashMats.length]);
+      const ang = randFloat(0, Math.PI * 2);
+      const sp = randFloat(0.4, 1) * P.speed * Math.sqrt(size);
+      const vx = Math.cos(ang) * sp;
+      const vz = Math.sin(ang) * sp;
+      const vy = randFloat(P.up[0], P.up[1]) * Math.sqrt(size);
+      const s0 = P.dropSize * randFloat(0.7, 1.4) * Math.max(1, Math.sqrt(size));
+      this.splashDrops++;
+      this.scene.add(m);
+      this.fx.push({
+        obj: m,
+        start: this.time,
+        dur: P.ms,
+        shared: true,
+        tick: (p) => {
+          const tt = p * dur;
+          const py = y + vy * tt - 0.5 * P.gravity * tt * tt;
+          m.position.set(x + vx * tt, Math.max(y - 0.05, py), z + vz * tt);
+          m.scale.setScalar(s0 * (py < y ? 0.3 : 1 - p * 0.5));
+          if (p >= 1) this.splashDrops--;
+        },
+      });
+    }
+    // bilog ng bula sa tubig
+    const mat = new THREE.MeshBasicMaterial({ color: P.ringColor, transparent: true, depthWrite: false, fog: false });
+    const ring = new THREE.Mesh(SPLASH_RING_GEO, mat);
+    ring.position.set(x, y + 0.03, z);
+    this.scene.add(ring);
+    const r = P.ringSize * Math.max(0.6, size * 0.6) * (n >= P.dropsSlam ? 2 : 1);
+    this.fx.push({
+      obj: ring,
+      start: this.time,
+      dur: P.ringMs,
+      shared: true,
+      tick: (p) => {
+        ring.scale.setScalar(r * (0.25 + 0.75 * Math.sqrt(p)));
+        ring.position.y = surf() + waveHeight(x, z, this.time / 1000) + 0.03;
+        mat.opacity = 0.8 * (1 - p);
         if (p >= 1) mat.dispose();
       },
     });

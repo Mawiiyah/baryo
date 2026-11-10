@@ -377,6 +377,33 @@ export const SCENE3D = {
     bobAmp: 0.05, // taas ng pag-alon ng lumulutang na bagay (metro)
     bobSpeed: 1.6,
     driftSpeed: 0.12, // gaano kabilis inaanod ang kalat (metro kada segundo)
+    /** Alon sa ibabaw ng baha: suma ng mga sine wave (dirX/dirZ = direksyon, len = haba ng alon sa metro, amp = taas). */
+    waterRoughness: 0.7,
+    waveCrestBoost: 2.2, // gaano kaliwanag ang tuktok ng alon (× waterColor)
+    waveTroughShade: 0.45, // liwanag ng lambak ng alon (× waterColor)
+    waveCrestBlue: 1.08, // bahagyang mala-bula na tint sa tuktok
+    waveSegments: 90, // dami ng hati ng tubig (mas marami = mas makinis na alon)
+    waves: [
+      { dirX: 0.3, dirZ: -1, len: 7, speed: 1.4, amp: 0.18 }, // pangunahing alon, papunta sa kubo
+      { dirX: -0.8, dirZ: -0.6, len: 4.5, speed: 1.9, amp: 0.07 },
+      { dirX: 1, dirZ: 0.2, len: 2.6, speed: 2.6, amp: 0.035 }, // maliliit na kulot
+    ],
+    /** Talsik ng tubig habang naglalaban (sa 'baha' lang). */
+    splash: {
+      drops: 12, // patak kada tama (× laki ng unit)
+      dropsSlam: 40, // patak sa slam/pagbagsak ng dambuhala
+      dropsStep: 4, // patak sa paa ng umaatake
+      dropSize: 0.1,
+      speed: 3.2, // m/s palabas
+      up: [2.5, 5], // m/s pataas (min, max)
+      gravity: 16,
+      ms: 650,
+      colors: [0xb8a888, 0xd8d0bc, 0x8c7a5a], // maputik na tubig at bula
+      ringColor: 0xe0d8c4, // bilog ng bula sa tubig
+      ringSize: 1.1, // m (× laki ng unit)
+      ringMs: 600,
+      max: 260, // limit ng patak sa eksena
+    },
   },
   templo: {
     // camera para sa 'behind' (mas nakatingala nang kaunti para kita ang templo sa dulo)

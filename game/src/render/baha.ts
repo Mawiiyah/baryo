@@ -15,6 +15,17 @@ import { Vox } from './voxel';
 const W = S.baha;
 const HALF = LANE.halfWidth + 0.5;
 
+/** Taas ng alon (metro, kaugnay ng `waterLevel`) sa puwestong (x, z) sa oras na t (segundo). */
+export function waveHeight(x: number, z: number, t: number): number {
+  let h = 0;
+  for (const w of W.waves) {
+    const k = (Math.PI * 2) / w.len;
+    const n = Math.hypot(w.dirX, w.dirZ);
+    h += Math.sin(((x * w.dirX + z * w.dirZ) / n) * k - t * w.speed) * w.amp;
+  }
+  return h;
+}
+
 export function buildBaha(sc: THREE.Scene): {
   base: THREE.Object3D;
   torches: Torch[];
@@ -26,15 +37,21 @@ export function buildBaha(sc: THREE.Scene): {
   // ---- 1. Tubig-baha ----
   const waterTex = waterTexture();
   waterTex.repeat.set(W.waterSize / 6, W.waterSize / 6);
+  const waterGeo = new THREE.PlaneGeometry(W.waterSize, W.waterSize, W.waveSegments, W.waveSegments);
+  const waterPos = waterGeo.attributes.position as THREE.BufferAttribute;
+  const waterCol = new THREE.BufferAttribute(new Float32Array(waterPos.count * 3), 3);
+  waterGeo.setAttribute('color', waterCol);
+  const waveMax = W.waves.reduce((a, w) => a + w.amp, 0);
   const water = new THREE.Mesh(
-    new THREE.PlaneGeometry(W.waterSize, W.waterSize),
+    waterGeo,
     new THREE.MeshStandardMaterial({
       map: waterTex,
-      color: W.waterColor,
+      vertexColors: true, // maliwanag sa tuktok ng alon, madilim sa lambak
+      color: new THREE.Color(W.waterColor).multiplyScalar(W.waveCrestBoost),
       transparent: true,
       opacity: W.waterOpacity,
-      roughness: 0.25,
-      metalness: 0.15,
+      roughness: W.waterRoughness, // hindi masyadong makintab: walang puting silaw sa gilid ng alon
+      metalness: 0,
       depthWrite: false,
     }),
   );
@@ -256,6 +273,17 @@ export function buildBaha(sc: THREE.Scene): {
       brgy.tick(t);
       // Agos ng tubig
       waterTex.offset.set(t * W.waterFlow * 0.4, -t * W.waterFlow);
+      // Alon: lokal na (x, y) ng plane → mundo (x, z = 16 - y) dahil naka-rotate ng -90° sa x
+      for (let i = 0; i < waterPos.count; i++) {
+        const h = waveHeight(waterPos.getX(i), water.position.z - waterPos.getY(i), t);
+        waterPos.setZ(i, h);
+        const k = (h / waveMax + 1) / 2; // 0 = lambak, 1 = tuktok
+        const b = (W.waveTroughShade + (W.waveCrestBoost - W.waveTroughShade) * k * k) / W.waveCrestBoost;
+        waterCol.setXYZ(i, b, b, b * W.waveCrestBlue);
+      }
+      waterPos.needsUpdate = true;
+      waterCol.needsUpdate = true;
+      waterGeo.computeVertexNormals();
 
       // Ulan
       for (let i = 0; i < rainN; i++) {
@@ -278,8 +306,9 @@ export function buildBaha(sc: THREE.Scene): {
         const cycle = Math.floor(life);
         if (cycle !== rp.cycle) {
           rp.cycle = cycle;
-          rp.m.position.set(randFloat(-HALF - 8, HALF + 8), W.waterLevel + 0.01, randFloat(-3, 30));
+          rp.m.position.set(randFloat(-HALF - 8, HALF + 8), 0, randFloat(-3, 30));
         }
+        rp.m.position.y = W.waterLevel + waveHeight(rp.m.position.x, rp.m.position.z, t) + 0.02;
         const p = life - cycle;
         rp.m.scale.setScalar(0.05 + p * W.rippleSize);
         rp.mat.opacity = 0.5 * (1 - p);
