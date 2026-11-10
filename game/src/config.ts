@@ -429,6 +429,15 @@ export const SCENE3D = {
   moonColor: 0xeae0cc, // maputlang buwan
   moonGlowColor: 0x908cac,
   moonGlowScale: 16,
+  /** Buwan at ulap (effects/moon_clouds.png) bilang sprite sa langit: nakapirmi sa mundo, kaya hindi sumasama sa ikot ng camera. */
+  skyMoon: {
+    ndcX: 0, // puwesto sa screen (−1..1) sa default na camera; dito ito ilalagay sa mundo
+    ndcY: 0.855, // malapit sa itaas ng screen
+    dist: 150, // m mula sa default na camera (dapat < camera far)
+    widthFrac: 0.43, // lapad bilang bahagi ng lapad ng screen sa default na camera
+    floatAmp: 0.6, // m na dahan-dahang paglutang
+    floatSpeed: 0.9, // rad/s
+  },
   bloodMoonColor: 0xff3a24, // kulay ng buwan habang buhay ang Bakunawa
   bloodMoonLerp: 1.5, // bilis ng pagpalit ng kulay (kada segundo)
   bloodMoonRecoverLerp: 9, // bilis ng balik sa dating kulay pagkamatay ng Bakunawa (~0.3 s)

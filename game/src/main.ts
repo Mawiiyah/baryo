@@ -55,7 +55,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 // Clickable test buttons: buksan ang http://localhost:5173/?debug
-if (params.has('debug')) mountDebugPanel(monsterFog);
+if (params.has('debug')) mountDebugPanel(monsterFog, view);
 
 connectBridge(import.meta.env.VITE_WS_URL, handleEvent, (s) => hud.setNet(s), setGiftIcons);
 

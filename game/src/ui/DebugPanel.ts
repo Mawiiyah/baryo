@@ -1,10 +1,11 @@
 import { DEBUG_PANEL, DEBUG_ROUND_LINKS, MAP_PICKER, SCENE3D } from '../config';
 import { handleEvent, type GameEvent } from '../events';
 import type { MonsterFog } from '../render/MonsterFog';
+import type { World3D } from '../render/World3D';
 import { chooseBattlefield } from './MapPicker';
 
 /** Mga test button sa labas ng #stage (hindi naka-scale). Bawat click → handleEvent. */
-export function mountDebugPanel(monsterFog?: MonsterFog) {
+export function mountDebugPanel(monsterFog?: MonsterFog, view?: World3D) {
   const panel = document.createElement('div');
   panel.className = 'debug-panel';
   const title = document.createElement('div');
@@ -74,7 +75,7 @@ export function mountDebugPanel(monsterFog?: MonsterFog) {
     bloodBtn.textContent = '🩸 Blood Moon';
     bloodBtn.addEventListener('click', () => {
       bloodOn = !bloodOn;
-      monsterFog.setBloodMoon(bloodOn);
+      if (view) view.debugBloodMoon = bloodOn;
       bloodBtn.textContent = bloodOn ? '🌕 Normal Moon' : '🩸 Blood Moon';
     });
     panel.append(bloodBtn);

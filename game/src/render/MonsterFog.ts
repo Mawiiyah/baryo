@@ -9,14 +9,11 @@ interface EyeEntry {
 
 export class MonsterFog {
   readonly root: HTMLDivElement;
-  private moonContainer: HTMLDivElement;
   private flankLeft: HTMLDivElement;
   private flankRight: HTMLDivElement;
   private eyes: EyeEntry[] = [];
   private flareTimeout: number | null = null;
   private enabled = true;
-  /** Mga buhay na Bakunawa (id) — pula ang buwan habang may laman. */
-  private bakunawas = new Set<number>();
 
   /** `flanks: false` = walang hamog/mata sa gilid (hal. sa 'baha', may mga lubog na bahay doon). */
   constructor(parent: HTMLElement, world?: World, opts: { flanks?: boolean } = {}) {
@@ -24,15 +21,7 @@ export class MonsterFog {
     this.root.className = 'monster-fog-root';
     if (opts.flanks === false) this.root.classList.add('mf-no-flanks');
 
-    // 1. Pixel Moon & Dark Clouds (Itaas sa Gitna)
-    this.moonContainer = document.createElement('div');
-    this.moonContainer.className = 'mf-moon-container';
-    const moonImg = document.createElement('img');
-    moonImg.className = 'mf-moon-clouds';
-    moonImg.src = `${import.meta.env.BASE_URL}effects/moon_clouds.png`;
-    moonImg.alt = 'Full Moon and Clouds';
-    this.moonContainer.appendChild(moonImg);
-    this.root.appendChild(this.moonContainer);
+    // (Ang buwan at ulap ay nasa 3D na langit na: World3D.buildSkyMoon, para hindi sumama sa ikot ng camera.)
 
     // 2. Kaliwang Hamog at Silhouettes ng Halimaw na may Kumikislap na Mata
     this.flankLeft = document.createElement('div');
@@ -82,20 +71,10 @@ export class MonsterFog {
         } else if (e.type === 'attack' && e.unit.side === 'attacker') {
           this.triggerCombatPulse();
         }
-        // Pulang buwan habang may buhay na Bakunawa; balik agad sa dati kapag napatay
-        if (e.type === 'spawn' && e.unit.kind === 'bakunawa') {
-          this.bakunawas.add(e.unit.id);
-          this.setBloodMoon(true);
-        } else if (e.type === 'death' && this.bakunawas.delete(e.unit.id)) {
-          if (this.bakunawas.size === 0) this.setBloodMoon(false);
-        }
         if (e.type === 'breath') {
           this.triggerFlare(3000);
         } else if (e.type === 'slam' || e.type === 'summon') {
           this.triggerFlare(2000);
-        } else if (e.type === 'round' || e.type === 'reset') {
-          this.bakunawas.clear();
-          this.setBloodMoon(false);
         }
       });
     }
@@ -179,14 +158,6 @@ export class MonsterFog {
         e.el.classList.add('mf-flare');
         window.setTimeout(() => e.el.classList.remove('mf-flare'), 320);
       }
-    }
-  }
-
-  setBloodMoon(isBlood: boolean) {
-    if (isBlood) {
-      this.moonContainer.classList.add('mf-moon-blood');
-    } else {
-      this.moonContainer.classList.remove('mf-moon-blood');
     }
   }
 

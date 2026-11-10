@@ -10,45 +10,6 @@
   z-index: 2;
 }
 
-/* ---- Pixel Moon & Drifting Clouds ---- */
-.mf-moon-container {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 820px;
-  max-width: 46%;
-  pointer-events: none;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  transition: filter 0.3s ease;
-  animation: mf-moon-float 7s ease-in-out infinite alternate;
-}
-
-.mf-moon-clouds {
-  width: 100%;
-  height: auto;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0 20px rgba(220, 240, 255, 0.45));
-}
-
-.mf-moon-blood {
-  filter: hue-rotate(290deg) saturate(3.5) brightness(1.2) drop-shadow(0 0 28px rgba(255, 20, 20, 0.95)) !important;
-}
-
-@keyframes mf-moon-float {
-  0% {
-    transform: translateX(-50%) translateY(0px);
-  }
-  50% {
-    transform: translateX(-49.7%) translateY(3px);
-  }
-  100% {
-    transform: translateX(-50.3%) translateY(-2px);
-  }
-}
-
 /* ---- Fog Flanks (Left & Right) ---- */
 .mf-flank {
   position: absolute;
