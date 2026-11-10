@@ -303,7 +303,7 @@ export class World {
     const validTargets = this.attackers.filter((a) => a.alive && (!a.stats.flying || s.canHitAir));
     const inRange = nearest(
       d,
-      validTargets.filter((a) => dist(a, d) <= s.range * d.reach),
+      validTargets.filter((a) => dist(a, d) <= reachTo(d, a)),
     );
     const target =
       inRange ??
@@ -315,7 +315,8 @@ export class World {
       ) ??
       nearest(d, validTargets);
 
-    if (target && dist(target, d) <= s.range * d.reach) {
+    if (target && dist(target, d) <= reachTo(d, target)) {
+      if (isDuel(d, target)) this.duelAdjust(d, target, dt);
       face(d, target);
       if (this.now - d.lastActionAt >= s.cooldownMs) {
         d.lastActionAt = this.now;
@@ -328,7 +329,10 @@ export class World {
         }
       }
     } else if (target) {
-      this.moveTo(d, Math.min(target.pos, LANE.length), target.lat, dt); // habulin ang kalaban
+      if (isDuel(d, target)) {
+        const spot = duelSpot(d, target);
+        this.moveTo(d, Math.min(spot.pos, LANE.length), spot.lat, dt);
+      } else this.moveTo(d, Math.min(target.pos, LANE.length), target.lat, dt); // habulin ang kalaban
     } else {
       this.moveTo(d, LANE.frontLinePos + d.idleOffset, d.homeLat, dt);
       if (!d.moving) d.facePos = 1; // nakaharap sa gubat habang naghihintay
@@ -346,9 +350,10 @@ export class World {
 
     if (livingDefenders.length > 0) {
       // May buhay pang bayani sa battlefield: uunahin silang lipulin bago ang kubo
-      const blocker = nearest(a, livingDefenders.filter((d) => dist(d, a) <= s.range * a.reach));
+      const blocker = nearest(a, livingDefenders.filter((d) => dist(d, a) <= reachTo(a, d)));
 
       if (blocker) {
+        if (isDuel(a, blocker)) this.duelAdjust(a, blocker, dt);
         face(a, blocker);
         if (this.now - a.lastActionAt >= s.cooldownMs) {
           a.lastActionAt = this.now;
@@ -366,7 +371,8 @@ export class World {
       // Hindi pa abot: lumapit sa pinakamalapit na bayani para makipaglaban
       const target = nearest(a, livingDefenders);
       if (target) {
-        this.moveTo(a, target.pos, target.lat, dt);
+        const spot = isDuel(a, target) ? duelSpot(a, target) : target;
+        this.moveTo(a, spot.pos, spot.lat, dt);
         return;
       }
     }
@@ -500,6 +506,18 @@ export class World {
     }
   }
 
+  /** Habang naglalaban ang dambuhala: dahan-dahang umikot papunta sa pahilis na puwesto (hindi naglalakad na anim). */
+  private duelAdjust(u: SimUnit, foe: SimUnit, dt: number) {
+    const spot = duelSpot(u, foe);
+    const dp = spot.pos - u.pos;
+    const dl = spot.lat - u.lat;
+    const d = Math.hypot(dp, dl);
+    if (d < 0.05) return;
+    const step = Math.min(d, u.stats.speed * LANE.duel.adjustSpeed * dt);
+    u.pos += (dp / d) * step;
+    u.lat += (dl / d) * step;
+  }
+
   /** Lakad papunta sa (pos, lat) at humarap doon. */
   private moveTo(u: SimUnit, pos: number, lat: number, dt: number) {
     const dp = pos - u.pos;
@@ -570,6 +588,36 @@ export class World {
 /** Layo sa daan (pos at lat). */
 function dist(a: SimUnit, b: SimUnit) {
   return Math.hypot(a.pos - b.pos, a.lat - b.lat);
+}
+
+/** Yabugan ng dalawang dambuhalang melee (LANE.duel), hal. Higante vs Kapre. */
+export function isDuel(a: SimUnit, b: SimUnit) {
+  const sa = a.stats;
+  const sb = b.stats;
+  return !sa.ranged && !sb.ranged && !sa.flying && !sb.flying && sa.size >= LANE.duel.minSize && sb.size >= LANE.duel.minSize;
+}
+
+function duelGap(a: SimUnit, b: SimUnit) {
+  return (a.stats.size + b.stats.size) * LANE.duel.gap;
+}
+
+/** Abot ng atake ni u kay foe. */
+function reachTo(u: SimUnit, foe: SimUnit) {
+  return isDuel(u, foe) ? duelGap(u, foe) * LANE.duel.reachSlack : u.stats.range * u.reach;
+}
+
+/**
+ * Puwesto ni u sa yabugan: pahilis kay foe (bayani ang mas malapit sa kubo), para magkatabi
+ * sila sa camera at kita ang suntukan. Pumupunta sa panig na may luwag sa daan.
+ */
+function duelSpot(u: SimUnit, foe: SimUnit) {
+  const gap = duelGap(u, foe);
+  const ang = (LANE.duel.angleDeg * Math.PI) / 180;
+  const latOff = Math.sin(ang) * gap;
+  let side = Math.sign(u.lat - foe.lat) || (u.side === 'defender' ? 1 : -1);
+  if (Math.abs(foe.lat + side * latOff) > LANE.halfWidth) side = -side;
+  const dir = u.side === 'defender' ? -1 : 1;
+  return { pos: Math.max(0, foe.pos + dir * Math.cos(ang) * gap), lat: foe.lat + side * latOff };
 }
 
 /** Harapin ang isang unit. */

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject, CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { FX, GAME, LANE, SCENE3D as S } from '../config';
-import type { SimUnit, World, WorldEvent } from '../sim/World';
+import { isDuel, type SimUnit, type World, type WorldEvent } from '../sim/World';
 import { randFloat } from '../sim/rand';
 import { buildBarangay } from './barangay';
 import { buildBaha } from './baha';
@@ -20,6 +20,8 @@ interface UnitView {
   diedAt: number | null;
   lungeAt: number;
   staggerAt: number;
+  /** Lakas ng flinch sa huling tama (mas malaki kapag yabugan ng dambuhala). */
+  staggerAmt: number;
   flashUntil: number;
   phase: number;
   targetView: UnitView | null;
@@ -419,6 +421,7 @@ export class World3D {
         if (v) {
           if (this.time - v.flashUntil > FX.hitFlashCooldownMs) v.flashUntil = this.time + FX.hitFlashMs;
           v.staggerAt = this.time;
+          v.staggerAmt = e.by && isDuel(e.unit, e.by) ? FX.duel.stagger : FX.staggerAmount;
           this.updateHp(v);
           const byView = e.by ? this.views.get(e.by.id) : undefined;
           this.clashImpact(v, byView);
@@ -547,7 +550,7 @@ export class World3D {
     this.scene.add(group);
     const v: UnitView = {
       unit: u, group, model, label, labelInner: inner, hpFill,
-      bornAt: this.time, diedAt: null, lungeAt: -Infinity, staggerAt: -Infinity, flashUntil: 0, phase: randFloat(0, Math.PI * 2),
+      bornAt: this.time, diedAt: null, lungeAt: -Infinity, staggerAt: -Infinity, staggerAmt: FX.staggerAmount, flashUntil: 0, phase: randFloat(0, Math.PI * 2),
       targetView: null,
     };
     this.updateHp(v);
@@ -1091,12 +1094,22 @@ export class World3D {
     // lunge kapag umaatake (sugod, yuko, kaskas ng kuko o hampas ng batuta)
     const lp = (this.time - v.lungeAt) / FX.lungeMs;
     let armStrike = 0;
+    let duelTwist = false;
     if (lp >= 0 && lp < 1) {
       const k = Math.sin(lp * Math.PI);
-      v.group.position.x += Math.sin(root.rotation.y) * k * FX.lungeAmount;
-      v.group.position.z += Math.cos(root.rotation.y) * k * FX.lungeAmount;
+      const duel = v.targetView?.unit.alive && isDuel(u, v.targetView.unit);
+      const lunge = duel ? FX.duel.lunge : FX.lungeAmount;
+      v.group.position.x += Math.sin(root.rotation.y) * k * lunge;
+      v.group.position.z += Math.cos(root.rotation.y) * k * lunge;
       root.rotation.x = k * 0.35;
       armStrike = k * 1.5;
+
+      // Yabugan: buong katawang suntok — umiikot ang balikat at bahagyang tumatalon sa bigat
+      if (duel) {
+        root.rotation.z = Math.sin(lp * Math.PI * 2) * FX.duel.twist * (v.phase > Math.PI ? 1 : -1);
+        v.group.position.y += k * FX.duel.lift;
+        duelTwist = true;
+      }
 
       // Manananggal: sisisid pababa para kumaskas sa bayani
       if (u.stats.flying) {
@@ -1116,7 +1129,7 @@ export class World3D {
     // stagger / flinch kapag tinamaan ng atake
     const stp = (this.time - v.staggerAt) / FX.staggerMs;
     if (stp >= 0 && stp < 1) {
-      const sk = Math.sin(stp * Math.PI) * FX.staggerAmount;
+      const sk = Math.sin(stp * Math.PI) * v.staggerAmt;
       v.group.position.x -= Math.sin(root.rotation.y) * sk;
       v.group.position.z -= Math.cos(root.rotation.y) * sk;
       root.rotation.x -= sk * 0.45;
@@ -1128,7 +1141,7 @@ export class World3D {
     const bob = u.stats.flying ? FX.flyBobAmount : FX.bobAmount * size;
     const speed = u.moving ? FX.bobSpeed * 1.6 : FX.bobSpeed * 0.5;
     root.position.y = Math.abs(Math.sin(t * speed + v.phase)) * bob * (u.moving || u.stats.flying ? 1 : 0.4);
-    if (stp < 0 || stp >= 1) {
+    if ((stp < 0 || stp >= 1) && !duelTwist) {
       root.rotation.z = u.moving ? Math.sin(t * speed + v.phase) * FX.walkSway : 0;
     }
     for (const w of v.model.wings) {

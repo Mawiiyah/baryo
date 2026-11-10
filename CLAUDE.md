@@ -42,6 +42,8 @@ Base: Bahay Kubo (may HP) sa harap ng camera. Papalapit ang halimaw mula sa mala
 Patakaran sa laban: DAPAT MAUBOS MUNA ANG BAYANI bago makatira sa Bahay Kubo ang halimaw.
 Kaya ding ma-attack ng Tanod at iba pang bayani ang Manananggal. May combat VFX (slash arcs,
 claw swipes, clash sparks, impact flash, flinch/stagger recoil, at Manananggal dive swoop).
+Yabugan (`LANE.duel`, `FX.duel`, `isDuel` sa sim/World.ts): kapag dalawang dambuhalang melee ang naglaban
+(hal. Higante vs Kapre), nagkakaharap sila nang pahilis para hindi matakpan ng isa ang isa, at malalaki ang suntok/uga.
 
 ## Mga patakaran
 - Lahat ng numbers (HP, damage, likes kada spawn, cooldowns, camera, ilaw, FX) ay nasa

@@ -51,6 +51,17 @@ export const LANE = {
   leash: 4.5, // bayani: hinahabol lang ang halimaw hanggang frontLinePos + ito
   rangeJitter: 0.45, // ranged units: tumitigil sa (1 - random×ito) ng range para nakakalat sila
   meleeReach: 1.4, // abot ng suntok; ranged na halimaw ay tumitigil nang (range - meleeReach) mas malayo sa kubo
+  /**
+   * Yabugan ng dalawang dambuhala (hal. Higante vs Kapre): nagkakaharap sila nang pahilis
+   * (hindi magkapila sa iisang linya) para hindi matakpan ng isa ang isa mula sa camera.
+   */
+  duel: {
+    minSize: 3, // parehong melee at ganito kalaki pataas = yabugan
+    gap: 0.4, // layo ng magkalaban = (size A + size B) × ito (hindi nagsasapawan ang katawan)
+    reachSlack: 1.2, // abot ng suntok = layo × ito
+    angleDeg: 62, // anggulo mula sa daan; 90 = magkatabi pakaliwa/pakanan
+    adjustSpeed: 0.5, // bahagi ng speed habang umaayos ng puwesto habang naglalaban
+  },
 } as const;
 
 export const BASE = {
@@ -485,6 +496,7 @@ export const FX = {
   clashSparks: 10,
   staggerMs: 120,
   staggerAmount: 0.04, // banayad na flinch lang, hindi tinutulak paatras para tuloy ang laban
+  duel: { lunge: 1.1, stagger: 0.32, twist: 0.35, lift: 0.25 }, // yabugan ng dambuhala (LANE.duel): malalaking suntok at uga
   puffMs: 550,
   puffColor: 0x2a2030,
   ringMs: 600, // shockwave ng slam / summon
