@@ -303,9 +303,10 @@ export const SCENE3D = {
   },
   /** 'baha': ang 'barangay' na mapa na binaha (gumagamit din ng `barangay` settings sa itaas). */
   baha: {
-    waterLevel: 0.16, // taas ng baha (metro); bahagyang lubog ang paa ng units
-    waterColor: 0x7a6240, // maputik na tubig-baha
-    waterOpacity: 0.8, // aninag pa ang kalsada at "BARANGAY" sa ilalim
+    waterLevel: 2.1, // taas ng baha (metro): hanggang kalahati ng Bahay Kubo (lubog ang mga bahay, tindahan, sasakyan)
+    unitWade: 0.5, // gaano kalalim nakalubog ang units sa tubig (metro); lumalakad sila sa ibabaw ng baha
+    waterColor: 0x6a5434, // maputik na tubig-baha
+    waterOpacity: 0.93, // malalim na: halos hindi na aninag ang kalsada sa ilalim
     waterFlow: 0.03, // bilis ng agos ng texture (kada segundo)
     waterSize: 90, // lapad/haba ng tubig (metro)
     rainCount: 1800,

@@ -83,7 +83,11 @@ const CLASH_FLASH_GEO = new THREE.PlaneGeometry(1, 1);
 CLASH_FLASH_GEO.userData.shared = true;
 
 /** posisyon sa mundo: pos → z, lat → x (baligtad para kaliwa sa screen ang -lat). */
-const toVec = (u: SimUnit, out = new THREE.Vector3()) => out.set(-u.lat, u.alt, u.pos);
+/** Taas ng "lupa" na nilalakaran ng units: sa 'baha', nasa ibabaw ng tubig (bahagyang lubog). */
+const gy = (): number => (S.battlefield === 'baha' ? S.baha.waterLevel - S.baha.unitWade : 0);
+/** Ibabaw ng lupa/tubig para sa mga epektong nakalapag (rings, anino). */
+const surf = (): number => (S.battlefield === 'baha' ? S.baha.waterLevel : 0);
+const toVec = (u: SimUnit, out = new THREE.Vector3()) => out.set(-u.lat, gy() + u.alt, u.pos);
 /** Visual na taas ng unit (stats.size × unitScale). */
 /** Aktibong camera view (tingnan ang SCENE3D.view). */
 function getViewConfig() {
@@ -234,7 +238,7 @@ export class World3D {
       this.buildBaseKubo(sc);
     }
     this.spawnGlow = new THREE.PointLight(0x7a18b8, 22, 18, 2);
-    this.spawnGlow.position.set(0, 2, LANE.spawnPos - 2);
+    this.spawnGlow.position.set(0, gy() + 2, LANE.spawnPos - 2);
     sc.add(this.spawnGlow);
 
     // Eerie gumagapang na hamog sa paligid ng pinto kung saan lumalabas ang halimaw
@@ -249,7 +253,7 @@ export class World3D {
       const sp = new THREE.Sprite(mat);
       const rz = randFloat(LANE.spawnPos - 8, LANE.spawnPos + 4);
       const rx = randFloat(-LANE.halfWidth * 1.3, LANE.halfWidth * 1.3);
-      sp.position.set(rx, randFloat(0.25, 0.75), rz);
+      sp.position.set(rx, gy() + randFloat(0.25, 0.75), rz);
       const sc2 = randFloat(4.5, 7.5);
       sp.scale.set(sc2, sc2 * 0.45, 1);
       sc.add(sp);
@@ -502,7 +506,7 @@ export class World3D {
         new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false }),
       );
       sh.rotation.x = -Math.PI / 2;
-      sh.position.y = -u.alt + 0.03;
+      sh.position.y = surf() - gy() - u.alt + 0.03;
       group.add(sh);
     }
 
@@ -600,7 +604,7 @@ export class World3D {
     );
     halo.scale.setScalar(FX.projectileRadius * 8);
     orb.add(halo);
-    const a = toVec(from.unit).setY(from.unit.alt + vsz(from.unit) * 0.7);
+    const a = toVec(from.unit).setY(gy() + from.unit.alt + vsz(from.unit) * 0.7);
     this.scene.add(orb);
     this.fx.push({
       obj: orb,
@@ -621,7 +625,7 @@ export class World3D {
     );
     halo.scale.setScalar(FX.projectileRadius * 8);
     orb.add(halo);
-    const a = toVec(from.unit).setY(from.unit.alt + vsz(from.unit) * 0.7);
+    const a = toVec(from.unit).setY(gy() + from.unit.alt + vsz(from.unit) * 0.7);
     const target = to.unit;
     this.scene.add(orb);
     this.fx.push({
@@ -629,7 +633,7 @@ export class World3D {
       start: this.time,
       dur: ms,
       tick: (p) => {
-        const b = toVec(target, this.tmp).setY(target.alt + vsz(target) * 0.5);
+        const b = toVec(target, this.tmp).setY(gy() + target.alt + vsz(target) * 0.5);
         orb.position.lerpVectors(a, b, p);
         orb.position.y += Math.sin(p * Math.PI) * FX.projectileArc;
       },
@@ -637,8 +641,8 @@ export class World3D {
   }
 
   private beam(from: UnitView, to: UnitView) {
-    const a = toVec(from.unit).setY(vsz(from.unit) * 0.8);
-    const b = toVec(to.unit).setY(to.unit.alt + vsz(to.unit) * 0.6);
+    const a = toVec(from.unit).setY(gy() + vsz(from.unit) * 0.8);
+    const b = toVec(to.unit).setY(gy() + to.unit.alt + vsz(to.unit) * 0.6);
     const len = a.distanceTo(b);
     const mat = new THREE.MeshBasicMaterial({ color: FX.beamColor, transparent: true, blending: THREE.AdditiveBlending });
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(FX.beamRadius, FX.beamRadius, len, 6), mat);
@@ -662,7 +666,7 @@ export class World3D {
     const geo = isLarge ? SLASH_GEO_L : SLASH_GEO_M;
     const size = vsz(u);
 
-    const at = toVec(u, new THREE.Vector3()).setY(u.alt + size * 0.55);
+    const at = toVec(u, new THREE.Vector3()).setY(gy() + u.alt + size * 0.55);
     const forward = new THREE.Vector3(Math.sin(attacker.model.root.rotation.y), 0, Math.cos(attacker.model.root.rotation.y));
 
     let strikePos: THREE.Vector3;
@@ -670,7 +674,7 @@ export class World3D {
     let isHittingAir = false;
 
     if (target) {
-      const targetPos = toVec(target.unit, new THREE.Vector3()).setY(target.unit.alt + vsz(target.unit) * 0.55);
+      const targetPos = toVec(target.unit, new THREE.Vector3()).setY(gy() + target.unit.alt + vsz(target.unit) * 0.55);
       strikePos = at.clone().lerp(targetPos, 0.65);
       targetDir = targetPos.clone().sub(at).normalize();
       isHittingAir = target.unit.stats.flying && !u.stats.flying;
@@ -793,10 +797,10 @@ export class World3D {
   private clashImpact(victim: UnitView, byView?: UnitView) {
     const u = victim.unit;
     const size = vsz(u);
-    const at = toVec(u, new THREE.Vector3()).setY(u.alt + size * 0.55);
+    const at = toVec(u, new THREE.Vector3()).setY(gy() + u.alt + size * 0.55);
 
     if (byView) {
-      const byPos = toVec(byView.unit, new THREE.Vector3()).setY(byView.unit.alt + vsz(byView.unit) * 0.55);
+      const byPos = toVec(byView.unit, new THREE.Vector3()).setY(gy() + byView.unit.alt + vsz(byView.unit) * 0.55);
       at.lerp(byPos, 0.35);
     }
 
@@ -833,14 +837,14 @@ export class World3D {
 
     // Dust ring sa lupa
     if (!u.stats.flying) {
-      const groundAt = toVec(u, new THREE.Vector3()).setY(0.04);
+      const groundAt = toVec(u, new THREE.Vector3()).setY(surf() + 0.04);
       this.ring(groundAt, size * 0.7, 0x443328);
     }
   }
 
   /** Usok kapag namatay. */
   private puff(v: UnitView) {
-    const at = toVec(v.unit).setY(v.unit.alt + vsz(v.unit) * 0.4);
+    const at = toVec(v.unit).setY(gy() + v.unit.alt + vsz(v.unit) * 0.4);
     const mat = new THREE.MeshBasicMaterial({ color: FX.puffColor, transparent: true, depthWrite: false });
     const g = new THREE.Group();
     for (let i = 0; i < 5; i++) {
@@ -870,7 +874,7 @@ export class World3D {
     const mat = new THREE.MeshBasicMaterial({ color, transparent: true, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.8, 1, 40), mat);
     ring.rotation.x = -Math.PI / 2;
-    ring.position.set(at.x, 0.05, at.z);
+    ring.position.set(at.x, surf() + 0.05, at.z);
     this.scene.add(ring);
     this.fx.push({
       obj: ring,
@@ -888,7 +892,7 @@ export class World3D {
   private breath(u: SimUnit, length: number) {
     const mat = new THREE.MeshBasicMaterial({ color: FX.breathColor, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
     const g = new THREE.Group();
-    const mouth = toVec(u).setY(vsz(u) * 0.45);
+    const mouth = toVec(u).setY(gy() + vsz(u) * 0.45);
     const parts: { m: THREE.Mesh; delay: number; dx: number; dy: number }[] = [];
     for (let i = 0; i < FX.breathParticles; i++) {
       const m = new THREE.Mesh(SPARK_GEO, mat);
@@ -905,7 +909,7 @@ export class World3D {
         for (const q of parts) {
           const k = THREE.MathUtils.clamp((p - q.delay) / (1 - q.delay), 0, 1);
           q.m.visible = k > 0 && k < 1;
-          q.m.position.set(mouth.x + q.dx * k * 1.8, Math.max(0.1, mouth.y + q.dy * k * 1.5), mouth.z - k * length);
+          q.m.position.set(mouth.x + q.dx * k * 1.8, Math.max(gy() + 0.1, mouth.y + q.dy * k * 1.5), mouth.z - k * length);
           q.m.scale.setScalar(0.15 + k * 0.6);
         }
         mat.opacity = 1 - p * 0.6;
@@ -917,7 +921,7 @@ export class World3D {
   /** Katakut-takot na usok/hamog kapag lumabas ang halimaw sa pinto/spawn. */
   private spawnEnemyFog(u: SimUnit) {
     const isBoss = !!u.stats.boss;
-    const at = toVec(u).setY(0.08);
+    const at = toVec(u).setY(surf() + 0.08);
     const count = isBoss ? FX.bossSpawnFogCount : FX.enemySpawnFogCount;
     const baseSize = isBoss ? FX.bossSpawnFogSize : FX.enemySpawnFogSize;
     const ringRadius = isBoss ? FX.bossSpawnRingRadius : LANE.meleeReach * 2;
