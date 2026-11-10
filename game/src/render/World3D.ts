@@ -1252,7 +1252,8 @@ export class World3D {
     });
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.magFilter = THREE.NearestFilter;
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false }));
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, depthTest: false, fog: false }));
+    sp.renderOrder = S.skyMoon.renderOrder; // laging nakapatong (gaya ng dating overlay), hindi natatakpan ng Barangay Hall
     sp.scale.set(M.widthFrac * viewW, 1, 1); // taas: itatama pagka-load ng larawan
     sp.position.copy(pos);
     this.skyMoonBaseY = pos.y;

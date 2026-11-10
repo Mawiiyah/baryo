@@ -437,6 +437,7 @@ export const SCENE3D = {
     widthFrac: 0.43, // lapad bilang bahagi ng lapad ng screen sa default na camera
     floatAmp: 0.6, // m na dahan-dahang paglutang
     floatSpeed: 0.9, // rad/s
+    renderOrder: 10, // mataas = iginuguhit sa ibabaw ng mga gusali
   },
   bloodMoonColor: 0xff3a24, // kulay ng buwan habang buhay ang Bakunawa
   bloodMoonLerp: 1.5, // bilis ng pagpalit ng kulay (kada segundo)
