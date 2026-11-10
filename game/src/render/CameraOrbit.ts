@@ -22,6 +22,10 @@ export class CameraOrbit {
   private lastX = 0;
   private lastY = 0;
   private auto = false;
+  /** idleSpin: umiikot sa buong mapa dahil walang unit. */
+  private idle = false;
+  private clock = 0;
+  private lastActiveAt = 0;
 
   constructor(pos: Vec, lookAt: Vec) {
     this.homeTarget = new THREE.Vector3(lookAt.x, lookAt.y, lookAt.z);
@@ -74,12 +78,21 @@ export class CameraOrbit {
   setMode(id: CamModeId) {
     this.mode = CAM_PICKER.modes.find((m) => m.id === id) ?? CAM_PICKER.modes[0];
     this.dragging = false;
+    this.idle = false;
+    this.lastActiveAt = this.clock;
     this.reset();
   }
 
   /** Balik sa preset ng mode (pinakamalapit na ikot, hindi paikot-ikot pabalik). */
   reset() {
     const m = this.mode;
+    if (this.idle) {
+      const O = S.orbit;
+      this.auto = true;
+      this.goal.radius = this.home.radius * O.idleRadius;
+      this.goal.phi = O.idlePhi;
+      return;
+    }
     this.auto = m.spin;
     const twoPi = Math.PI * 2;
     const theta = this.home.theta + m.turn;
@@ -93,8 +106,18 @@ export class CameraOrbit {
    */
   apply(camera: THREE.PerspectiveCamera, dtMs: number, shakeX: number, shakeY: number, focus: THREE.Vector3 | null) {
     const dt = dtMs / 1000;
-    if (this.auto) this.goal.theta += S.orbit.autoSpeed * dt;
-    const want = this.mode.follow && focus ? focus : this.homeTarget;
+    this.clock += dtMs;
+    // idleSpin: walang unit nang matagal → ikot sa mapa; may unit ulit → balik sa tutok sa laban
+    if (this.mode.idleSpin) {
+      if (focus) this.lastActiveAt = this.clock;
+      const idle = !focus && this.clock - this.lastActiveAt > S.orbit.idleDelayMs;
+      if (idle !== this.idle) {
+        this.idle = idle;
+        this.reset();
+      }
+    }
+    if (this.auto) this.goal.theta += (this.idle ? S.orbit.idleSpeed : S.orbit.autoSpeed) * dt;
+    const want = this.mode.follow && focus && !this.idle ? focus : this.homeTarget;
     this.target.lerp(want, 1 - Math.exp(-S.orbit.focusLerp * dt));
     const k = 1 - Math.exp(-S.orbit.ease * dt);
     this.cur.radius += (this.goal.radius - this.cur.radius) * k;

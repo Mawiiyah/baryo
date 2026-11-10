@@ -287,6 +287,10 @@ export const SCENE3D = {
     autoKey: 'O',
     focusLerp: 2.5, // bilis ng pagsunod ng camera sa gitna ng laban
     focusHeight: 1.2, // m: taas ng tinitingnan sa gitna ng laban
+    idleDelayMs: 2500, // ganito katagal na walang unit bago magsimulang umikot sa mapa (idleSpin)
+    idleRadius: 1.15, // × default na layo habang umiikot sa mapa
+    idlePhi: 0.85, // rad mula sa itaas habang umiikot sa mapa
+    idleSpeed: 0.12, // rad/s na ikot sa mapa
   },
   views: {
     behind: {
@@ -658,16 +662,17 @@ export const DEBUG_KEYS = {
 /**
  * "🎥 CAMERA" button (ui/CamPicker.ts, kanang-ibaba; auto-hide gaya ng MAPA).
  * `follow` = sinusundan ang gitna ng laban; `radius` = × default na layo; `phi` = anggulo mula sa itaas
- * (null = gaya ng default); `turn` = ikot mula sa default (rad); `drag` = puwedeng i-drag/zoom; `spin` = kusang ikot.
+ * (null = gaya ng default); `turn` = ikot mula sa default (rad); `drag` = puwedeng i-drag/zoom; `spin` = kusang ikot;
+ * `idleSpin` = kapag walang unit (walang nagpapadala), iikot sa buong mapa; pagdating ng units, tutok ulit sa laban.
  */
 export const CAM_PICKER = {
   modes: [
-    { id: 'default', label: '🏠 Normal', desc: 'Likod ng kubo (default)', follow: false, radius: 1, phi: null, turn: 0, drag: false, spin: false },
-    { id: 'free', label: '🖱️ Free Cam', desc: 'I-drag para umikot, scroll = zoom', follow: false, radius: 1, phi: null, turn: 0, drag: true, spin: false },
-    { id: 'laban', label: '⚔️ Sundan ang Laban', desc: 'Malapit, sinusundan ang bakbakan', follow: true, radius: 0.5, phi: null, turn: 0, drag: true, spin: false },
-    { id: 'gilid', label: '👀 Gilid ng Laban', desc: 'Tagilid na tanaw sa bakbakan', follow: true, radius: 0.55, phi: 1.1, turn: Math.PI / 2, drag: true, spin: false },
-    { id: 'itaas', label: '🦅 Mula sa Itaas', desc: 'Tanaw mula sa langit', follow: true, radius: 0.7, phi: 0.2, turn: 0, drag: true, spin: false },
-    { id: 'ikot', label: '🔄 Ikot sa Laban', desc: 'Kusang umiikot sa bakbakan', follow: true, radius: 0.6, phi: 0.9, turn: 0, drag: true, spin: true },
+    { id: 'default', label: '🏠 Normal', desc: 'Likod ng kubo (default)', follow: false, radius: 1, phi: null, turn: 0, drag: false, spin: false, idleSpin: false },
+    { id: 'free', label: '🖱️ Free Cam', desc: 'I-drag para umikot, scroll = zoom', follow: false, radius: 1, phi: null, turn: 0, drag: true, spin: false, idleSpin: false },
+    { id: 'laban', label: '⚔️ Sundan ang Laban', desc: 'Ikot sa mapa; tutok sa laban kapag may units', follow: true, radius: 0.5, phi: null, turn: 0, drag: true, spin: false, idleSpin: true },
+    { id: 'gilid', label: '👀 Gilid ng Laban', desc: 'Tagilid na tanaw sa bakbakan', follow: true, radius: 0.55, phi: 1.1, turn: Math.PI / 2, drag: true, spin: false, idleSpin: false },
+    { id: 'itaas', label: '🦅 Mula sa Itaas', desc: 'Tanaw mula sa langit', follow: true, radius: 0.7, phi: 0.2, turn: 0, drag: true, spin: false, idleSpin: false },
+    { id: 'ikot', label: '🔄 Ikot sa Laban', desc: 'Kusang umiikot sa bakbakan', follow: true, radius: 0.6, phi: 0.9, turn: 0, drag: true, spin: true, idleSpin: false },
   ] as const,
   defaultMode: 'default' as const,
   autoHideMs: 2500,

@@ -22,6 +22,7 @@ kubo pagkaubos ng oras, HALIMAW kapag nawasak ito. May score kada round.
   V o double-click = balik sa preset ng mode, O = kusang ikot. "🎥 CAMERA" button sa kanang-ibaba (`CAM_PICKER`, ui/CamPicker.ts;
   auto-hide gaya ng MAPA, naaalala sa localStorage): Normal, Free Cam, Sundan ang Laban, Gilid ng Laban, Mula sa Itaas,
   Ikot sa Laban. Ang mga nakatutok sa laban ay sumusunod sa gitna ng nagbabakbakang units (`World3D.fightFocus`).
+  Sundan ang Laban (`idleSpin`): kapag walang unit nang `orbit.idleDelayMs`, umiikot sa buong mapa; pagdating ng units, tutok ulit sa laban.
 - Battlefield: `SCENE3D.battlefield` = 'barangay' (default; kalsada, basketball court, Barangay Hall gate,
   jeepney base na may headlight beams, sari-sari stores, monobloc chairs, traysikel, aspin, banderitas;
   batay sa assets/reference/battlefield_barangay.jpg) o 'baha' (ang barangay na binaha habang may bagyo: maputik na tubig hanggang kalahati ng Bahay Kubo — lumalakad ang units sa ibabaw nito; hanay ng lubog na bahay sa gilid kapalit ng MonsterFog na hamog,
