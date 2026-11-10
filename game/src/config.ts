@@ -285,6 +285,8 @@ export const SCENE3D = {
     autoSpeed: 0.18, // rad/s kapag naka-auto na ikot
     resetKey: 'V',
     autoKey: 'O',
+    focusLerp: 2.5, // bilis ng pagsunod ng camera sa gitna ng laban
+    focusHeight: 1.2, // m: taas ng tinitingnan sa gitna ng laban
   },
   views: {
     behind: {
@@ -653,6 +655,25 @@ export const DEBUG_KEYS = {
  * Button na pampili ng battlefield (laging nandiyan, sa labas ng #stage). Nakatago hanggang
  * gumalaw ang mouse, kaya malinis sa OBS. Naaalala ang pinili (localStorage); mas nauuna ang `?map=`.
  */
+/**
+ * "🎥 CAMERA" button (ui/CamPicker.ts, kanang-ibaba; auto-hide gaya ng MAPA).
+ * `follow` = sinusundan ang gitna ng laban; `radius` = × default na layo; `phi` = anggulo mula sa itaas
+ * (null = gaya ng default); `turn` = ikot mula sa default (rad); `drag` = puwedeng i-drag/zoom; `spin` = kusang ikot.
+ */
+export const CAM_PICKER = {
+  modes: [
+    { id: 'default', label: '🏠 Normal', desc: 'Likod ng kubo (default)', follow: false, radius: 1, phi: null, turn: 0, drag: false, spin: false },
+    { id: 'free', label: '🖱️ Free Cam', desc: 'I-drag para umikot, scroll = zoom', follow: false, radius: 1, phi: null, turn: 0, drag: true, spin: false },
+    { id: 'laban', label: '⚔️ Sundan ang Laban', desc: 'Malapit, sinusundan ang bakbakan', follow: true, radius: 0.5, phi: null, turn: 0, drag: true, spin: false },
+    { id: 'gilid', label: '👀 Gilid ng Laban', desc: 'Tagilid na tanaw sa bakbakan', follow: true, radius: 0.55, phi: 1.1, turn: Math.PI / 2, drag: true, spin: false },
+    { id: 'itaas', label: '🦅 Mula sa Itaas', desc: 'Tanaw mula sa langit', follow: true, radius: 0.7, phi: 0.2, turn: 0, drag: true, spin: false },
+    { id: 'ikot', label: '🔄 Ikot sa Laban', desc: 'Kusang umiikot sa bakbakan', follow: true, radius: 0.6, phi: 0.9, turn: 0, drag: true, spin: true },
+  ] as const,
+  defaultMode: 'default' as const,
+  autoHideMs: 2500,
+  storageKey: 'laban-baryo.cam',
+};
+
 export const MAP_PICKER = {
   maps: [
     { id: 'barangay', label: '🏘️ Barangay', desc: 'Kalsada, court, jeepney' },

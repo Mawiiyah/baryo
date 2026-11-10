@@ -5,7 +5,7 @@ import { isDuel, type SimUnit, type World, type WorldEvent } from '../sim/World'
 import { randFloat } from '../sim/rand';
 import { buildBarangay } from './barangay';
 import { buildBaha } from './baha';
-import { CameraOrbit } from './CameraOrbit';
+import { CameraOrbit, type CamModeId } from './CameraOrbit';
 import { buildBaseKubo, buildKubo, buildModel, type Model } from './models';
 import { fogTexture, glowTexture, palm, torchFlame, type Torch } from './scenery';
 import { buildTemplo } from './templo';
@@ -1018,6 +1018,34 @@ export class World3D {
   }
 
   // ---------- Frame ----------
+  /** Palitan ang camera mode (galing sa 🎥 CAMERA button). */
+  setCameraMode(id: CamModeId) {
+    this.orbit.setMode(id);
+  }
+
+  /**
+   * Gitna ng laban: average ng mga unit na may kalaban (nagbabakbakan); kapag wala,
+   * average ng lahat ng buhay na unit; kapag wala ring unit, null.
+   */
+  private fightFocus(): THREE.Vector3 | null {
+    const fight = new THREE.Vector3();
+    const all = new THREE.Vector3();
+    let nf = 0;
+    let na = 0;
+    for (const v of this.views.values()) {
+      if (v.diedAt !== null || !v.unit.alive) continue;
+      all.add(v.group.position);
+      na++;
+      if (v.targetView) {
+        fight.add(v.group.position);
+        nf++;
+      }
+    }
+    const p = nf > 0 ? fight.divideScalar(nf) : na > 0 ? all.divideScalar(na) : null;
+    if (p) p.y = gy() + S.orbit.focusHeight;
+    return p;
+  }
+
   update(deltaMs: number) {
     this.time += deltaMs;
     this.dt = deltaMs;
@@ -1061,7 +1089,7 @@ export class World3D {
 
     // Camera shake
     const sk = this.time < this.shakeUntil ? this.shakeAmount * ((this.shakeUntil - this.time) / FX.shakeMs) : 0;
-    this.orbit.apply(this.camera, deltaMs, randFloat(-sk, sk), randFloat(-sk, sk));
+    this.orbit.apply(this.camera, deltaMs, randFloat(-sk, sk), randFloat(-sk, sk), this.fightFocus());
 
     // Pulang buwan habang buhay ang Bakunawa
     let blood = false;
