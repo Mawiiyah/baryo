@@ -50,6 +50,11 @@ export const LANE = {
   aggroRange: 5.5, // halimaw: lumalapit sa bayani na nasa loob nito (para kita ang laban)
   leash: 4.5, // bayani: hinahabol lang ang halimaw hanggang frontLinePos + ito
   rangeJitter: 0.45, // ranged units: tumitigil sa (1 - random×ito) ng range para nakakalat sila
+  /**
+   * Melee laban sa malaking kalaban: abot = max(range, (size A + size B) × separation + ito),
+   * para maabot ng maliit na bayani ang dambuhala (hal. Tanod vs Kapre) kahit tinutulak siya pagilid.
+   */
+  meleeContactPad: 0.35,
   meleeReach: 1.4, // abot ng suntok; ranged na halimaw ay tumitigil nang (range - meleeReach) mas malayo sa kubo
   /**
    * Yabugan ng dalawang dambuhala (hal. Higante vs Kapre): nagkakaharap sila nang pahilis

@@ -601,9 +601,12 @@ function duelGap(a: SimUnit, b: SimUnit) {
   return (a.stats.size + b.stats.size) * LANE.duel.gap;
 }
 
-/** Abot ng atake ni u kay foe. */
+/** Abot ng atake ni u kay foe (kasama ang laki ng katawan ng malaking kalaban). */
 function reachTo(u: SimUnit, foe: SimUnit) {
-  return isDuel(u, foe) ? duelGap(u, foe) * LANE.duel.reachSlack : u.stats.range * u.reach;
+  if (isDuel(u, foe)) return duelGap(u, foe) * LANE.duel.reachSlack;
+  const base = u.stats.range * u.reach;
+  if (u.stats.ranged || u.stats.flying || foe.stats.flying) return base;
+  return Math.max(base, (u.stats.size + foe.stats.size) * LANE.separation + LANE.meleeContactPad);
 }
 
 /**
