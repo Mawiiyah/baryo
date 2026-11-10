@@ -379,7 +379,8 @@ export class World {
 
     // Ubos na ang bayani (o walang bayani): dito lang pwedeng lumapit at tirahin ang mismong kubo!
     const kuboTargetLat = Math.sign(a.homeLat) * Math.min(Math.abs(a.homeLat), 1.6);
-    const attackReach = s.ranged ? s.range : LANE.baseHitPos;
+    const hitPos = baseHitPos(a);
+    const attackReach = s.ranged ? s.range : hitPos;
     const atBase = a.pos <= attackReach && Math.abs(a.lat - kuboTargetLat) <= 0.8;
 
     if (atBase) {
@@ -400,7 +401,7 @@ export class World {
     }
 
     // Magmartsa papunta sa mismong Bahay Kubo: lumalapit sa harap ng kubo (pos at lat)
-    this.moveTo(a, LANE.baseHitPos - 0.2, kuboTargetLat, dt);
+    this.moveTo(a, hitPos - 0.2, kuboTargetLat, dt);
   }
 
   /**
@@ -448,6 +449,8 @@ export class World {
     for (const u of all) {
       u.lat = Math.max(-LANE.halfWidth, Math.min(LANE.halfWidth, u.lat));
       u.pos = Math.max(0, u.pos);
+      // Hindi maitutulak papasok sa kubo ang halimaw na naglalakad (para walang nagsisiksikan sa kubo)
+      if (u.side === 'attacker' && !u.stats.flying) u.pos = Math.max(baseHitPos(u) - LANE.baseCrowdSlack, u.pos);
     }
   }
 
@@ -621,6 +624,11 @@ function duelSpot(u: SimUnit, foe: SimUnit) {
   if (Math.abs(foe.lat + side * latOff) > LANE.halfWidth) side = -side;
   const dir = u.side === 'defender' ? -1 : 1;
   return { pos: Math.max(0, foe.pos + dir * Math.cos(ang) * gap), lat: foe.lat + side * latOff };
+}
+
+/** Layo mula sa kubo kung saan tumitigil at umaatake ang melee na halimaw (mas malayo kapag malaki). */
+function baseHitPos(a: SimUnit) {
+  return LANE.baseHitPos + Math.max(0, a.stats.size - LANE.baseSizeRef) * LANE.baseSizePad;
 }
 
 /** Harapin ang isang unit. */
