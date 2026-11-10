@@ -40,6 +40,7 @@ export const LANE = {
   length: 30, // hanggang saan ang daan
   halfWidth: 7.0, // lapad ng daan / 2 (pinalapad mula 4.8 para maluwag ang labanan)
   spawnPos: 32, // dito lumalabas ang halimaw (labas ng screen sa kanan)
+  spawnLat: 1.6, // ± m mula sa gitna: sa gitna lang ng gate lumalabas ang halimaw
   baseHitPos: 3.2, // dito tumitigil at umaatake sa kubo ang halimaw (normal na laki)
   /** Malaking halimaw (hal. Kapre) ay tumitigil nang mas malayo para hindi bumaon sa kubo: + (size - ref) × pad. */
   baseSizeRef: 1.6,

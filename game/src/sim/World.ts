@@ -581,6 +581,7 @@ export class World {
   private spawnAttacker(kind: AttackerKind, pos: number = LANE.spawnPos, owner = '', coins?: number) {
     if (this.attackers.length >= SPAWN.maxAttackers) return;
     const u = this.makeUnit(kind, 'attacker', ATTACKERS[kind], pos, owner, coins);
+    if (pos >= LANE.spawnPos) u.lat = randFloat(-LANE.spawnLat, LANE.spawnLat); // sa gitna ng gate lumalabas
     this.attackers.push(u);
     this.emit({ type: 'spawn', unit: u });
   }

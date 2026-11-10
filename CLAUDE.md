@@ -45,7 +45,7 @@ Mangkukulam (sumpa mula sa malayo + nagpapatawag ng Aswang), Bakunawa (apoy; nag
 pula ang eksena).
 Base: Bahay Kubo (may HP) sa harap ng camera, pinatibay (`buildBaseKubo` sa render/models.ts, settings sa `SCENE3D.kuboFort`):
 batong pundasyon, bakod na matulis na kawayan sa likod at gilid (bukas ang harap/pinto sa camera), bantay na poste na may
-bandila ng BAYANI, sulo, kalasag, at kumikinang na pananggalang sa lupa. Ang `buildKubo` ay para sa mga dekorasyong kubo. Papalapit ang halimaw mula sa malayo.
+bandila ng BAYANI, sulo, kalasag, at kumikinang na pananggalang sa lupa. Ang `buildKubo` ay para sa mga dekorasyong kubo. Papalapit ang halimaw mula sa malayo; sa gitna lang ng gate sila lumalabas (`LANE.spawnLat`).
 Patakaran sa laban: DAPAT MAUBOS MUNA ANG BAYANI bago makatira sa Bahay Kubo ang halimaw.
 Kapag kubo na lang ang target, puwedeng magdikit-dikit ang halimaw (walang ally separation, `toBase`) at
 nakakalat sa harap ng kubo (`LANE.baseSpreadLat`); mas malayo tumitigil ang malaki (`LANE.baseSizePad`).
