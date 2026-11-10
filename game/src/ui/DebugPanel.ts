@@ -1,6 +1,7 @@
-import { DEBUG_PANEL, DEBUG_ROUND_LINKS, SCENE3D } from '../config';
+import { DEBUG_PANEL, DEBUG_ROUND_LINKS, MAP_PICKER, SCENE3D } from '../config';
 import { handleEvent, type GameEvent } from '../events';
 import type { MonsterFog } from '../render/MonsterFog';
+import { chooseBattlefield } from './MapPicker';
 
 /** Mga test button sa labas ng #stage (hindi naka-scale). Bawat click → handleEvent. */
 export function mountDebugPanel(monsterFog?: MonsterFog) {
@@ -38,20 +39,12 @@ export function mountDebugPanel(monsterFog?: MonsterFog) {
   mapTitle.className = 'debug-title';
   mapTitle.textContent = 'MAPA (Battlefield)';
   panel.append(mapTitle);
-  const maps: { id: 'barangay' | 'templo' | 'baryo'; label: string }[] = [
-    { id: 'barangay', label: '🏘️ Barangay (Bago)' },
-    { id: 'templo', label: '🏛️ Templo (Isla)' },
-    { id: 'baryo', label: '🌾 Baryo (Luma)' },
-  ];
-  for (const m of maps) {
-    const a = document.createElement('a');
-    const sp = new URLSearchParams(location.search);
-    sp.set('map', m.id);
-    a.href = `?${sp.toString()}`;
+  for (const m of MAP_PICKER.maps) {
+    const btn = document.createElement('button');
     const isActive = SCENE3D.battlefield === m.id;
-    a.textContent = (isActive ? '▶ ' : '') + m.label;
-    if (isActive) a.style.fontWeight = 'bold';
-    panel.append(a);
+    btn.textContent = (isActive ? '▶ ' : '') + m.label;
+    btn.addEventListener('click', () => chooseBattlefield(m.id));
+    panel.append(btn);
   }
 
   // Atmospera (Monster Fog & Moon Overlay)

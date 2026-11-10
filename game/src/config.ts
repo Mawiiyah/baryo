@@ -559,6 +559,20 @@ export const DEBUG_KEYS = {
 } as const;
 
 /** Para sa testing: ?debug&round=N → N segundo lang ang round. */
+/**
+ * Button na pampili ng battlefield (laging nandiyan, sa labas ng #stage). Nakatago hanggang
+ * gumalaw ang mouse, kaya malinis sa OBS. Naaalala ang pinili (localStorage); mas nauuna ang `?map=`.
+ */
+export const MAP_PICKER = {
+  maps: [
+    { id: 'barangay', label: '🏘️ Barangay', desc: 'Kalsada, court, jeepney' },
+    { id: 'templo', label: '🏛️ Templo', desc: 'Isla, daang bato' },
+    { id: 'baryo', label: '🌾 Baryo', desc: 'Daang lupa, kawayan' },
+  ] as { id: typeof SCENE3D.battlefield; label: string; desc: string }[],
+  autoHideMs: 2500, // itatago ang button pagkalipas nito kapag hindi gumagalaw ang mouse
+  storageKey: 'laban-baryo.map',
+};
+
 export const DEBUG_ROUND_LINKS = [30, 60] as const;
 
 /** Clickable test buttons (lalabas lang sa URL na may ?debug). Dumadaan pa rin sa handleEvent. */

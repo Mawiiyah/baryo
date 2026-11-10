@@ -424,6 +424,37 @@
 .debug-panel a { color: #9fd3ff; font: 700 11px "Silkscreen", monospace; text-decoration: none; padding: 4px 2px; }
 .debug-panel a:hover { text-decoration: underline; }
 
+/* ---------- MAPA button (pampili ng battlefield; nakatago kapag hindi gumagalaw ang mouse) ---------- */
+.map-picker {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  font-family: "Silkscreen", monospace;
+  transition: opacity 0.3s;
+}
+.map-picker.hidden { opacity: 0; pointer-events: none; }
+.map-picker button {
+  font: 700 13px "Silkscreen", monospace;
+  border: 0;
+  cursor: pointer;
+  color: #2a1607;
+  background: #ffd25a;
+  box-shadow: inset -3px -3px 0 #c89a20, inset 3px 3px 0 #fff0a0;
+  padding: 10px 14px;
+}
+.map-picker button:hover { background: #ffe680; }
+.map-menu { display: none; flex-direction: column; gap: 4px; padding: 8px; background: rgba(0, 0, 0, 0.85); }
+.map-picker.open .map-menu { display: flex; }
+.map-picker .map-option { display: flex; flex-direction: column; align-items: flex-start; min-width: 200px; text-align: left; background: #9fd3ff; box-shadow: inset -3px -3px 0 #4a8ac0, inset 3px 3px 0 #dff1ff; }
+.map-picker .map-option small { font-size: 10px; opacity: 0.75; margin-top: 2px; }
+.map-picker .map-option.active { background: #9cff57; box-shadow: inset -3px -3px 0 #4f9e1c, inset 3px 3px 0 #dcffc0; }
+.map-picker .map-option.active span::before { content: '▶ '; }
+
 /* ---------- Transparent Chat Helper Banner (Pantay na pantay sa bottom boxes para kita ang Kubo) ---------- */
 .chat-helper-banner {
   position: absolute;

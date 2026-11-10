@@ -22,7 +22,8 @@ kubo pagkaubos ng oras, HALIMAW kapag nawasak ito. May score kada round.
   jeepney base na may headlight beams, sari-sari stores, monobloc chairs, traysikel, aspin, banderitas;
   batay sa assets/reference/battlefield_barangay.jpg) o 'templo' (isla, daang bato, templo) o 'baryo' (luma;
   daang lupa, bakod na kawayan). Puwedeng palitan via URL query (`?map=barangay`, `?map=templo`, `?map=baryo`)
-  o sa Test panel (`?debug`).
+  o sa Test panel (`?debug`), o sa "🗺️ MAPA" button sa kaliwang-ibaba (`MAP_PICKER`, ui/MapPicker.ts;
+  lumalabas lang kapag gumalaw ang mouse para malinis sa OBS; naaalala ang pinili sa localStorage; mas nauuna ang `?map=`).
 - HUD: BAYANI column sa kaliwa, HALIMAW sa kanan. Itaas-kaliwa: score → likes → BAYANI coins/top
   gifter. Itaas-kanan: oras → HALIMAW coins/top gifter. Itaas-gitna: HP ng kubo (%). Ibaba: defenders
   at kills/natitirang halimaw. Layers: labels (z1) < HUD (z2) < panalo/talo overlay.
@@ -98,7 +99,7 @@ O sa loob mismo ng game/ o bridge/: npm run dev
 - game/src/ui/Hud.ts + hud.css — score, likes, coins/top gifter kada panig, oras, HP ng kubo,
   BAYANI at HALIMAW columns (galing sa config, may coin value), defenders, kills, toasts,
   banners (round, boss alert), panalo/talo screen
-- game/src/ui/ — `DebugPanel` (?debug), `giftIcons` (TikTok icon registry), `pixel` (pixelated icons)
+- game/src/ui/ — `DebugPanel` (?debug), `MapPicker` (MAPA button, pampili ng battlefield), `giftIcons` (TikTok icon registry), `pixel` (pixelated icons)
 - game/src/systems/Net.ts — WS + reconnect
 - game/src/systems/Sound.ts — synthesized na tunog (Web Audio) kada spawn; settings sa `SOUND` (config.ts)
 - assets/reference/ — reference sheets (PNG) ng mga karakter; batayan ng voxel models (hindi bundled)

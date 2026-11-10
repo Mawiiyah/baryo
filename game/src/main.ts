@@ -1,5 +1,5 @@
 import '@fontsource/silkscreen/700.css';
-import { DEBUG_KEYS, GAME, ROUND, SCENE3D, SOUND } from './config';
+import { DEBUG_KEYS, GAME, ROUND, SOUND } from './config';
 import { handleEvent, setEventTarget } from './events';
 import { renderPortraits } from './render/portraits';
 import { MonsterFog } from './render/MonsterFog';
@@ -8,6 +8,7 @@ import { World } from './sim/World';
 import { connectBridge } from './systems/Net';
 import { Sound } from './systems/Sound';
 import { mountDebugPanel } from './ui/DebugPanel';
+import { mountMapPicker, resolveBattlefield } from './ui/MapPicker';
 import { Hud } from './ui/Hud';
 import { setGiftIcons } from './ui/giftIcons';
 
@@ -25,11 +26,9 @@ window.addEventListener('resize', fit);
 fit();
 
 const params = new URLSearchParams(location.search);
-// Pumili ng mapa (battlefield: barangay | templo | baryo)
-const mapParam = params.get('map') || params.get('battlefield');
-if (mapParam === 'barangay' || mapParam === 'templo' || mapParam === 'baryo') {
-  (SCENE3D as { battlefield: string }).battlefield = mapParam;
-}
+// Pumili ng mapa (battlefield): ?map= > naka-save na pinili sa MAPA button > config
+resolveBattlefield(params);
+mountMapPicker();
 
 // ?round=N segundo (kasama ng ?debug lang) → maikling round para sa testing
 const debugRoundSecs = params.has('debug') ? Number(params.get('round')) : 0;
