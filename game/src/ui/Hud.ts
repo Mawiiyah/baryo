@@ -30,6 +30,24 @@ const h = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = '') =
   return el;
 };
 
+/**
+ * DOM write lang kapag nagbago ang value (tinatawag ang HUD kada frame; ang paulit-ulit na
+ * textContent/innerHTML/style write ay nagpapabigat ng style recalc at layout habang tumatagal).
+ */
+const last = new WeakMap<HTMLElement, Map<string, string>>();
+const put = (el: HTMLElement, key: 'text' | 'html' | 'width' | 'class' | 'title', val: string) => {
+  let m = last.get(el);
+  if (!m) last.set(el, (m = new Map()));
+  if (m.get(key) === val) return;
+  m.set(key, val);
+  if (key === 'text') el.textContent = val;
+  else if (key === 'html') el.innerHTML = val;
+  else if (key === 'width') el.style.width = val;
+  else if (key === 'class') el.className = val;
+  else el.title = val;
+};
+const pct = (r: number) => `${(r * 100).toFixed(1)}%`;
+
 const fmtTime = (ms: number) => {
   const s = Math.ceil(ms / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -321,44 +339,45 @@ export class Hud {
   update() {
     const w = this.world;
     // Score: BAYANI (berde) - HALIMAW (pula), at progreso ng oras ng round
-    this.roundLabel.textContent = `ROUND ${w.round}`;
-    this.scoreNum.innerHTML = `<b class="good">${w.score.bayani}</b><small>-</small><b class="bad">${w.score.halimaw}</b>`;
-    this.roundFill.style.width = `${(1 - w.msLeft / w.roundDurationMs) * 100}%`;
+    put(this.roundLabel, 'text', `ROUND ${w.round}`);
+    put(this.scoreNum, 'html', `<b class="good">${w.score.bayani}</b><small>-</small><b class="bad">${w.score.halimaw}</b>`);
+    put(this.roundFill, 'width', pct(1 - w.msLeft / w.roundDurationMs));
 
     // Puntos (PTS) at top contributor ng bawat panig ("WALA PA" kapag wala pa)
     for (const side of ['defender', 'attacker'] as const) {
       const t = this.teams[side];
       const top = w.topContributor(side);
-      t.total.textContent = `${w.totalCoins(side)} PTS`;
-      t.name.textContent = top ? top.user : 'WALA PA';
-      t.coins.textContent = top ? `${top.coins} PTS` : '';
+      put(t.total, 'text', `${w.totalCoins(side)} PTS`);
+      put(t.name, 'text', top ? top.user : 'WALA PA');
+      put(t.coins, 'text', top ? `${top.coins} PTS` : '');
     }
 
     const warn = w.msLeft <= ROUND.warnMs;
-    this.timerLabel.textContent = 'ORAS';
-    this.timerLabel.classList.toggle('bad', warn);
+    put(this.timerLabel, 'text', 'ORAS');
+    this.timerLabel.classList.toggle('bad', warn); // no-op kapag pareho na
     this.timer.classList.toggle('bad', warn);
 
-    this.timer.textContent = fmtTime(w.msLeft);
-    this.netDot.className = `net-dot ${this.net}`;
-    this.netDot.title = `bridge: ${this.net}`;
+    put(this.timer, 'text', fmtTime(w.msLeft));
+    put(this.netDot, 'class', `net-dot ${this.net}`);
+    put(this.netDot, 'title', `bridge: ${this.net}`);
 
     const hpR = w.baseHp / BASE.hp;
-    this.hpFill.style.width = `${hpR * 100}%`;
-    this.hpFill.className = `fill ${hpR < HUD.hpDanger ? 'danger' : hpR < HUD.hpWarn ? 'warn' : ''}`;
-    this.hpText.textContent = `${Math.ceil(hpR * 100)}%`;
-    this.likeFill.style.width = `${(w.likes / SPAWN.likesPerTanod) * 100}%`;
-    this.likeText.textContent = `${w.likes}/${SPAWN.likesPerTanod} EXP > ${DEFENDERS.tanod.name}`;
+    put(this.hpFill, 'width', pct(hpR));
+    put(this.hpFill, 'class', `fill ${hpR < HUD.hpDanger ? 'danger' : hpR < HUD.hpWarn ? 'warn' : ''}`);
+    put(this.hpText, 'text', `${Math.ceil(hpR * 100)}%`);
+    put(this.likeFill, 'width', pct(w.likes / SPAWN.likesPerTanod));
+    put(this.likeText, 'text', `${w.likes}/${SPAWN.likesPerTanod} EXP > ${DEFENDERS.tanod.name}`);
 
-    this.defCount.innerHTML = `${w.defenders.length}<small>/${SPAWN.maxDefenders}</small>${w.queued ? ` <em>+${w.queued}</em>` : ''}`;
-    this.defFill.style.width = `${(w.defenders.length / SPAWN.maxDefenders) * 100}%`;
-    this.killCount.textContent = String(w.kills);
+    put(this.defCount, 'html', `${w.defenders.length}<small>/${SPAWN.maxDefenders}</small>${w.queued ? ` <em>+${w.queued}</em>` : ''}`);
+    put(this.defFill, 'width', pct(w.defenders.length / SPAWN.maxDefenders));
+    put(this.killCount, 'text', String(w.kills));
 
     // Natitirang halimaw (buhay + parating)
-    this.remainCount.textContent = String(w.remaining);
+    put(this.remainCount, 'text', String(w.remaining));
 
-    if (w.state === 'over') this.overCount.textContent = `Bagong laban sa ${Math.ceil(w.msToRestart / 1000)}s...`;
+    if (w.state === 'over') put(this.overCount, 'text', `Bagong laban sa ${Math.ceil(w.msToRestart / 1000)}s...`);
   }
+
 }
 
 function barEl(fill: HTMLElement, cls: string, text?: HTMLElement) {

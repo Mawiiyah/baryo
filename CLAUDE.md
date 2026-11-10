@@ -79,6 +79,11 @@ Yabugan (`LANE.duel`, `FX.duel`, `isDuel` sa sim/World.ts): kapag dalawang dambu
 - May auto-reconnect ang WebSocket at ang TikTok connection.
 - May max na bilang ng units sa screen at rate limit sa spawn (para sa
   like spam).
+- Memory (para hindi bumagal/lumaki ang RAM habang tumatagal ang LIVE): bawat effect/unit na inaalis ay
+  dumadaan sa `disposeTree` (render/World3D.ts) — dine-dispose ang geometry at material maliban sa may
+  `userData.shared`. Gumamit ng shared na geometry (`SPARK_GEO`, `PROJ_GEO`, `RING_GEO`...) at i-scale na lang;
+  huwag gumawa ng bagong geometry kada atake. Sa HUD/labels na tinatawag kada frame: DOM write lang kapag
+  nagbago ang value (`put` sa ui/Hud.ts).
 - Original art lang. Walang gagamitin na copyrighted characters.
 - Voxel (pixel 3D) ang mga karakter: game/src/render/voxModels.ts (pixel data) + voxel.ts (mesher).
   Binti/braso na may pivot (`Model.limbs`, `limb`/`limbPair`) ay umuugoy habang naglalakad (`FX.legSwing`/`armSwing`).

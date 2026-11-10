@@ -26,6 +26,7 @@ interface UnitView {
   flashUntil: number;
   phase: number;
   targetView: UnitView | null;
+  labelTf: string; // huling CSS transform ng label (para DOM write lang kapag nagbago)
 }
 
 interface Fx {
@@ -33,7 +34,7 @@ interface Fx {
   start: number;
   dur: number;
   tick: (p: number) => void;
-  shared?: boolean; // shared na geometry/material: huwag i-dispose
+  shared?: boolean; // magkakasalo ang material ng ilang fx: ang tick na ang nagdi-dispose nito
 }
 
 /** Tapered crescent slash geometry para sa mga atake/kuko/suntok. */
@@ -81,12 +82,31 @@ const SPARK_GEO = new THREE.SphereGeometry(1, 6, 4);
 const SPLASH_GEO = new THREE.BoxGeometry(1, 1, 1); // pixel na patak ng tubig
 const SPLASH_RING_GEO = new THREE.RingGeometry(0.75, 1, 20).rotateX(-Math.PI / 2);
 const SB = S.baha;
-SPARK_GEO.userData.shared = true;
+// Shared din: bala ng ranged, beam (unit na taas, sina-scale), ring sa lupa, anino ng lumilipad
+const PROJ_GEO = new THREE.SphereGeometry(FX.projectileRadius, 10, 8);
+const BEAM_GEO = new THREE.CylinderGeometry(FX.beamRadius, FX.beamRadius, 1, 6);
+const RING_GEO = new THREE.RingGeometry(0.8, 1, 40);
+const SHADOW_GEO = new THREE.CircleGeometry(1, 16);
+for (const g of [SPARK_GEO, SPLASH_GEO, SPLASH_RING_GEO, PROJ_GEO, BEAM_GEO, RING_GEO, SHADOW_GEO]) g.userData.shared = true;
 
 const SLASH_GEO_M = createSlashGeometry(0.85, 0.42, Math.PI * 0.65);
 const SLASH_GEO_L = createSlashGeometry(1.6, 0.72, Math.PI * 0.75);
 const CLASH_FLASH_GEO = new THREE.PlaneGeometry(1, 1);
 CLASH_FLASH_GEO.userData.shared = true;
+
+/**
+ * I-dispose ang geometry at material ng isang effect/unit (para hindi lumaki ang RAM/GPU memory habang tumatagal).
+ * Hindi ginagalaw ang naka-mark na `userData.shared`. Ligtas ang dobleng dispose.
+ */
+function disposeTree(obj: THREE.Object3D, materials = true) {
+  obj.traverse((o) => {
+    if (o instanceof THREE.Mesh && !o.geometry.userData.shared) o.geometry.dispose();
+    if (materials && (o instanceof THREE.Mesh || o instanceof THREE.Sprite || o instanceof THREE.Points)) {
+      const ms = Array.isArray(o.material) ? o.material : [o.material];
+      for (const m of ms) if (!m.userData.shared) m.dispose();
+    }
+  });
+}
 
 /** posisyon sa mundo: pos → z, lat → x (baligtad para kaliwa sa screen ang -lat). */
 /** Taas ng "lupa" na nilalakaran ng units: sa 'baha', nasa ibabaw ng tubig (bahagyang lubog). */
@@ -148,6 +168,8 @@ export class World3D {
   private time = 0;
   private dt = 0;
   private tmp = new THREE.Vector3();
+  private cTarget = new THREE.Color();
+  private cTmp = new THREE.Color();
   private V = getViewConfig();
 
   constructor(parent: HTMLElement, world: World) {
@@ -540,10 +562,8 @@ export class World3D {
     group.add(model.root);
     // anino sa lupa para sa lumilipad
     if (u.stats.flying) {
-      const sh = new THREE.Mesh(
-        new THREE.CircleGeometry(vsz(u) * 0.35, 16),
-        new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false }),
-      );
+      const sh = new THREE.Mesh(SHADOW_GEO, new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false }));
+      sh.scale.setScalar(vsz(u) * 0.35);
       sh.rotation.x = -Math.PI / 2;
       sh.position.y = surf() - gy() - u.alt + 0.03;
       group.add(sh);
@@ -587,7 +607,7 @@ export class World3D {
     const v: UnitView = {
       unit: u, group, model, label, labelInner: inner, hpFill,
       bornAt: this.time, diedAt: null, lungeAt: -Infinity, staggerAt: -Infinity, staggerAmt: FX.staggerAmount, flashUntil: 0, phase: randFloat(0, Math.PI * 2),
-      targetView: null,
+      targetView: null, labelTf: '',
     };
     this.updateHp(v);
     this.views.set(u.id, v);
@@ -602,9 +622,7 @@ export class World3D {
   private removeView(v: UnitView) {
     v.label.element.remove();
     this.scene.remove(v.group);
-    v.group.traverse((o) => {
-      if (o instanceof THREE.Mesh && !o.geometry.userData.shared) o.geometry.dispose(); // voxel geometry ay naka-cache
-    });
+    disposeTree(v.group); // voxel geometry ay naka-cache (shared); materials at anino ay dine-dispose
     for (const m of v.model.mats) m.dispose();
   }
 
@@ -637,7 +655,7 @@ export class World3D {
 
   private projectileToPoint(from: UnitView, targetPos: THREE.Vector3, ms: number) {
     const color = from.unit.side === 'attacker' ? FX.curseColor : FX.projectileColor;
-    const orb = new THREE.Mesh(new THREE.SphereGeometry(FX.projectileRadius, 10, 8), new THREE.MeshBasicMaterial({ color }));
+    const orb = new THREE.Mesh(PROJ_GEO, new THREE.MeshBasicMaterial({ color }));
     const halo = new THREE.Sprite(
       new THREE.SpriteMaterial({ map: glowTexture(), color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }),
     );
@@ -658,7 +676,7 @@ export class World3D {
 
   private projectile(from: UnitView, to: UnitView, ms: number) {
     const color = from.unit.side === 'attacker' ? FX.curseColor : FX.projectileColor;
-    const orb = new THREE.Mesh(new THREE.SphereGeometry(FX.projectileRadius, 10, 8), new THREE.MeshBasicMaterial({ color }));
+    const orb = new THREE.Mesh(PROJ_GEO, new THREE.MeshBasicMaterial({ color }));
     const halo = new THREE.Sprite(
       new THREE.SpriteMaterial({ map: glowTexture(), color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }),
     );
@@ -684,7 +702,8 @@ export class World3D {
     const b = toVec(to.unit).setY(gy() + to.unit.alt + vsz(to.unit) * 0.6);
     const len = a.distanceTo(b);
     const mat = new THREE.MeshBasicMaterial({ color: FX.beamColor, transparent: true, blending: THREE.AdditiveBlending });
-    const beam = new THREE.Mesh(new THREE.CylinderGeometry(FX.beamRadius, FX.beamRadius, len, 6), mat);
+    const beam = new THREE.Mesh(BEAM_GEO, mat);
+    beam.scale.set(1, len, 1);
     beam.position.copy(a).add(b).multiplyScalar(0.5);
     beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
     this.scene.add(beam);
@@ -911,7 +930,7 @@ export class World3D {
   /** Lumalawak na bilog sa lupa (slam / summon). */
   private ring(at: THREE.Vector3, radius: number, color: number) {
     const mat = new THREE.MeshBasicMaterial({ color, transparent: true, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.8, 1, 40), mat);
+    const ring = new THREE.Mesh(RING_GEO, mat);
     ring.rotation.x = -Math.PI / 2;
     ring.position.set(at.x, surf() + 0.05, at.z);
     this.scene.add(ring);
@@ -936,7 +955,11 @@ export class World3D {
     const x = -u.lat + randFloat(-0.25, 0.25) * size;
     const z = u.pos + randFloat(-0.25, 0.25) * size;
     const y = surf() + waveHeight(x, z, t);
-    if (!this.splashMats.length) this.splashMats = P.colors.map((c) => new THREE.MeshBasicMaterial({ color: c, fog: false }));
+    if (!this.splashMats.length) this.splashMats = P.colors.map((c) => {
+        const m = new THREE.MeshBasicMaterial({ color: c, fog: false });
+        m.userData.shared = true; // ginagamit ng lahat ng patak; hindi dine-dispose
+        return m;
+      });
     const count = Math.round(n * Math.max(1, Math.sqrt(size)));
     const dur = P.ms / 1000;
     for (let i = 0; i < count && this.splashDrops < P.max; i++) {
@@ -1123,22 +1146,18 @@ export class World3D {
     this.dt = deltaMs;
     const t = this.time / 1000;
 
-    for (const v of [...this.views.values()]) this.animateView(v, t);
+    for (const v of this.views.values()) this.animateView(v, t); // ligtas mag-delete habang nag-i-iterate sa Map
 
-    this.fx = this.fx.filter((f) => {
+    let keep = 0;
+    for (const f of this.fx) {
       const p = Math.min(1, (this.time - f.start) / f.dur);
       f.tick(p);
       if (p >= 1) {
         this.scene.remove(f.obj);
-        if (!f.shared) {
-          f.obj.traverse((o) => {
-            if (o instanceof THREE.Mesh) o.geometry.dispose();
-          });
-        }
-        return false;
-      }
-      return true;
-    });
+        disposeTree(f.obj, !f.shared); // shared: magkakasalo sa material, ang tick na ang nagdi-dispose
+      } else this.fx[keep++] = f;
+    }
+    this.fx.length = keep;
 
     this.ambientMist.forEach((sp, i) => {
       sp.material.rotation += (i % 2 === 0 ? 0.04 : -0.04) * (deltaMs / 1000);
@@ -1166,14 +1185,14 @@ export class World3D {
     // Pulang buwan habang buhay ang Bakunawa
     let blood = this.debugBloodMoon;
     for (const v of this.views.values()) if (v.unit.kind === 'bakunawa' && v.diedAt === null) blood = true;
-    const target = new THREE.Color(blood ? S.bloodMoonColor : S.moonColor);
+    const target = this.cTarget.setHex(blood ? S.bloodMoonColor : S.moonColor);
     const k = Math.min(1, (deltaMs / 1000) * (blood ? S.bloodMoonLerp : S.bloodMoonRecoverLerp)); // mabilis bumalik pagkamatay
     this.moonMat.color.lerp(target, k);
-    this.moonGlow.material.color.lerp(blood ? target : new THREE.Color(S.moonGlowColor), k);
-    this.skyMoon.material.color.lerp(new THREE.Color(blood ? S.bloodMoonColor : 0xffffff), k);
+    this.moonGlow.material.color.lerp(blood ? target : this.cTmp.setHex(S.moonGlowColor), k);
+    this.skyMoon.material.color.lerp(this.cTmp.setHex(blood ? S.bloodMoonColor : 0xffffff), k);
     this.placeSkyMoon();
-    this.fog.color.lerp(new THREE.Color(blood ? S.bloodFog : this.fogBase), k);
-    this.hemi.color.lerp(new THREE.Color(blood ? S.bloodSky : S.hemiSky), k);
+    this.fog.color.lerp(this.cTmp.setHex(blood ? S.bloodFog : this.fogBase), k);
+    this.hemi.color.lerp(this.cTmp.setHex(blood ? S.bloodSky : S.hemiSky), k);
 
     // Hamog at pagdilim kapag nag-spawn ang halimaw
     this.currentFogNear = THREE.MathUtils.lerp(this.currentFogNear, S.fogNear, Math.min(1, (FX.fogPulseRecoverSpeed * deltaMs) / 1000));
@@ -1300,7 +1319,11 @@ export class World3D {
     // laki ng label ayon sa layo
     const d = this.camera.position.distanceTo(v.group.position);
     const s = THREE.MathUtils.clamp(FX.labelRefDist / d, FX.labelMinScale, FX.labelMaxScale);
-    v.labelInner.style.transform = `scale(${s.toFixed(3)})`;
+    const tf = `scale(${s.toFixed(2)})`;
+    if (v.labelTf !== tf) {
+      v.labelTf = tf; // DOM write lang kapag nagbago (iwas style recalc kada frame)
+      v.labelInner.style.transform = tf;
+    }
   }
 
   /** Buwan + ulap sa langit: sprite na NAKAPIRMI sa isang puwesto sa mundo (hindi sumasama sa galaw ng camera). */
