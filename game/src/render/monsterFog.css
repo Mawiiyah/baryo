@@ -22,7 +22,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  transition: filter 0.8s ease;
+  transition: filter 0.3s ease;
   animation: mf-moon-float 7s ease-in-out infinite alternate;
 }
 

@@ -1048,7 +1048,7 @@ export class World3D {
     let blood = false;
     for (const v of this.views.values()) if (v.unit.kind === 'bakunawa' && v.diedAt === null) blood = true;
     const target = new THREE.Color(blood ? S.bloodMoonColor : S.moonColor);
-    const k = Math.min(1, (deltaMs / 1000) * S.bloodMoonLerp);
+    const k = Math.min(1, (deltaMs / 1000) * (blood ? S.bloodMoonLerp : S.bloodMoonRecoverLerp)); // mabilis bumalik pagkamatay
     this.moonMat.color.lerp(target, k);
     this.moonGlow.material.color.lerp(blood ? target : new THREE.Color(S.moonGlowColor), k);
     this.fog.color.lerp(new THREE.Color(blood ? S.bloodFog : this.fogBase), k);

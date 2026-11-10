@@ -409,6 +409,7 @@ export const SCENE3D = {
   moonGlowScale: 16,
   bloodMoonColor: 0xff3a24, // kulay ng buwan habang buhay ang Bakunawa
   bloodMoonLerp: 1.5, // bilis ng pagpalit ng kulay (kada segundo)
+  bloodMoonRecoverLerp: 9, // bilis ng balik sa dating kulay pagkamatay ng Bakunawa (~0.3 s)
   bloodFog: 0x360b18, // hamog habang buhay ang Bakunawa
   bloodSky: 0xd9442e, // ilaw mula sa langit habang buhay ang Bakunawa
   starCount: 500,

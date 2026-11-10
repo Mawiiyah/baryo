@@ -15,6 +15,8 @@ export class MonsterFog {
   private eyes: EyeEntry[] = [];
   private flareTimeout: number | null = null;
   private enabled = true;
+  /** Mga buhay na Bakunawa (id) — pula ang buwan habang may laman. */
+  private bakunawas = new Set<number>();
 
   /** `flanks: false` = walang hamog/mata sa gilid (hal. sa 'baha', may mga lubog na bahay doon). */
   constructor(parent: HTMLElement, world?: World, opts: { flanks?: boolean } = {}) {
@@ -79,12 +81,20 @@ export class MonsterFog {
           this.triggerFlare();
         } else if (e.type === 'attack' && e.unit.side === 'attacker') {
           this.triggerCombatPulse();
-        } else if (e.type === 'breath') {
-          this.triggerFlare(3000);
+        }
+        // Pulang buwan habang may buhay na Bakunawa; balik agad sa dati kapag napatay
+        if (e.type === 'spawn' && e.unit.kind === 'bakunawa') {
+          this.bakunawas.add(e.unit.id);
           this.setBloodMoon(true);
+        } else if (e.type === 'death' && this.bakunawas.delete(e.unit.id)) {
+          if (this.bakunawas.size === 0) this.setBloodMoon(false);
+        }
+        if (e.type === 'breath') {
+          this.triggerFlare(3000);
         } else if (e.type === 'slam' || e.type === 'summon') {
           this.triggerFlare(2000);
         } else if (e.type === 'round' || e.type === 'reset') {
+          this.bakunawas.clear();
           this.setBloodMoon(false);
         }
       });
