@@ -16,9 +16,11 @@ export class MonsterFog {
   private flareTimeout: number | null = null;
   private enabled = true;
 
-  constructor(parent: HTMLElement, world?: World) {
+  /** `flanks: false` = walang hamog/mata sa gilid (hal. sa 'baha', may mga lubog na bahay doon). */
+  constructor(parent: HTMLElement, world?: World, opts: { flanks?: boolean } = {}) {
     this.root = document.createElement('div');
     this.root.className = 'monster-fog-root';
+    if (opts.flanks === false) this.root.classList.add('mf-no-flanks');
 
     // 1. Pixel Moon & Dark Clouds (Itaas sa Gitna)
     this.moonContainer = document.createElement('div');

@@ -20,7 +20,7 @@ kubo pagkaubos ng oras, HALIMAW kapag nawasak ito. May score kada round.
   (kubo sa kaliwa, halimaw galing sa kanan). Visual na laki ng units: `SCENE3D.unitScale`.
 - Battlefield: `SCENE3D.battlefield` = 'barangay' (default; kalsada, basketball court, Barangay Hall gate,
   jeepney base na may headlight beams, sari-sari stores, monobloc chairs, traysikel, aspin, banderitas;
-  batay sa assets/reference/battlefield_barangay.jpg) o 'baha' (ang barangay na binaha habang may bagyo: maputik na tubig hanggang kalahati ng Bahay Kubo — lumalakad ang units sa ibabaw nito,
+  batay sa assets/reference/battlefield_barangay.jpg) o 'baha' (ang barangay na binaha habang may bagyo: maputik na tubig hanggang kalahati ng Bahay Kubo — lumalakad ang units sa ibabaw nito; hanay ng lubog na bahay sa gilid kapalit ng MonsterFog na hamog,
   ulan, kidlat, rescue boat, pamilya at lolo't lola sa bubong, lumulutang na kalat; assets/reference/battlefield_baha.png)
   o 'templo' (isla, daang bato, templo) o 'baryo' (luma;
   daang lupa, bakod na kawayan). Puwedeng palitan via URL query (`?map=barangay`, `?map=baha`, `?map=templo`, `?map=baryo`)

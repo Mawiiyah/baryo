@@ -556,7 +556,7 @@ export function buildBarangay(sc: THREE.Scene, opts: { flooded?: boolean } = {})
   // ---- 13. Niyog at Halaman sa Paligid ----
   for (let i = 0; i < B.palmCount; i++) {
     const side = i % 2 ? 1 : -1;
-    const x = side * randFloat(HALF + 4.5, 20);
+    const x = side * randFloat(HALF + 4.5, opts.flooded ? HALF + 7 : 20); // sa baha: may lubog na mga bahay sa labas nito
     const z = randFloat(-2, 32);
     // Iwasan kung may tindahan o bahay
     if (Math.abs(z - 11) < 2.5 && Math.abs(x) < HALF + 5) continue;
@@ -587,7 +587,7 @@ export function buildBarangay(sc: THREE.Scene, opts: { flooded?: boolean } = {})
 
   // ---- 14. Nakatagong mga Mata ng Halimaw sa Dilim ----
   const eyeColors = [0xff2222, 0xffd000, 0xc022ff];
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < (opts.flooded ? 0 : 14); i++) { // sa baha: lubog na sa tubig
     const side = i % 2 ? 1 : -1;
     const eyePair = new THREE.Group();
     const eColor = pick(eyeColors, i, 3, 9);

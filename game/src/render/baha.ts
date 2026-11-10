@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { LANE, SCENE3D as S } from '../config';
 import { randFloat } from '../sim/rand';
 import { buildBarangay, monoblocChairVox } from './barangay';
+import { buildKubo } from './models';
 import { fogTexture, voxGroup, type Torch } from './scenery';
 import { Vox } from './voxel';
 
@@ -87,6 +88,96 @@ export function buildBaha(sc: THREE.Scene): {
   beam.target.position.set(0, 0, 8);
   boat.add(beam, beam.target);
   sc.add(boat);
+
+  // ---- 3b. Mga bahay na lubog sa baha (magkabilang gilid; kapalit ng hamog sa gilid) ----
+  // Hanay ng konkretong bahay (may yero, ilaw sa itaas na bintana), lubog ang unang palapag.
+  // Iilan ay may rooftop na may mga taong humihingi ng saklolo at karatulang "TULONG".
+  const HU = 0.2; // metro kada voxel ng bahay
+  const houseSpots: { x: number; z: number; v: number; rot: number }[] = [
+    // kaliwa sa screen (+x): unang hanay (isang palapag lang)
+    { x: HALF + 9.5, z: -3, v: 0, rot: 0.08 },
+    { x: HALF + 9, z: 6.5, v: 4, rot: -0.05 },
+    { x: HALF + 9.5, z: 16, v: 2, rot: 0.06 },
+    { x: HALF + 9, z: 25.5, v: 3, rot: -0.04 },
+    { x: HALF + 9.5, z: 35, v: 2, rot: 0.05 },
+    // kaliwa: ikalawang hanay (mas malayo sa kalsada; may 2 palapag)
+    { x: HALF + 16, z: 1.5, v: 5, rot: -0.1 },
+    { x: HALF + 16.5, z: 11, v: 0, rot: 0.04 },
+    { x: HALF + 16, z: 20.5, v: 1, rot: -0.06 },
+    { x: HALF + 16.5, z: 30, v: 2, rot: 0.08 },
+    { x: HALF + 16, z: 40, v: 4, rot: 0 },
+    // kanan sa screen (-x): unang hanay (isang palapag lang para hindi matakpan ang laban)
+    { x: -(HALF + 9.5), z: -2, v: 4, rot: -0.06 },
+    { x: -(HALF + 9), z: 7.5, v: 2, rot: 0.05 },
+    { x: -(HALF + 9.5), z: 17, v: 3, rot: -0.08 },
+    { x: -(HALF + 9), z: 26.5, v: 0, rot: 0.04 },
+    { x: -(HALF + 9.5), z: 36, v: 4, rot: -0.05 },
+    // kanan: ikalawang hanay
+    { x: -(HALF + 16), z: 2.5, v: 4, rot: 0.07 },
+    { x: -(HALF + 16.5), z: 12, v: 1, rot: -0.04 },
+    { x: -(HALF + 16), z: 21.5, v: 5, rot: 0.1 },
+    { x: -(HALF + 16.5), z: 31, v: 1, rot: -0.06 },
+    { x: -(HALF + 16), z: 41, v: 2, rot: 0.03 },
+  ];
+  houseSpots.forEach((h, i) => {
+    const o = HOUSES[h.v]!;
+    const g = voxGroup(houseVox(o), `baha:house:${h.v}`, HU);
+    g.position.set(h.x, 0, h.z);
+    g.rotation.y = h.rot;
+    sc.add(g);
+    if (!o.deck) return;
+    // Rooftop: mga taong naghihintay ng saklolo + karatulang TULONG
+    const deckY = (o.floors * FLOOR_H + 2) * HU; // ibabaw ng sahig ng rooftop
+    const p1 = addPerson(g, { shirt: 0xe0e0e0, pants: 0x2a3a5a, skin: 0xb07a52, hair: 0x1a1210, wave: true }, -0.8, deckY, -0.6, `deck${i}a`);
+    p1.rotation.x = 0;
+    const p2 = addPerson(g, { shirt: 0xd06030, pants: 0x3a3030, skin: 0xbf8a62, hair: 0x22140e }, 0.5, deckY, -0.4, `deck${i}b`);
+    p2.rotation.x = 0;
+    // Nakalatag sa sahig (parang SOS sa bubong), nababasa mula sa camera sa itaas
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(3, 1), new THREE.MeshBasicMaterial({ map: helpSignTexture(), transparent: true }));
+    sign.position.set(0, deckY + 0.02, 0.8);
+    sign.rotation.set(-Math.PI / 2, 0, Math.PI);
+    g.add(sign);
+  });
+
+  // Mga kubong lubog hanggang bintana (sa pagitan ng mga bahay)
+  for (const k of [
+    { x: HALF + 12.5, z: 44, s: 0.85, r: 0.3 },
+    { x: -(HALF + 12.5), z: 45, s: 0.8, r: -0.2 },
+    { x: HALF + 22.5, z: 15, s: 0.9, r: 0.5 },
+    { x: -(HALF + 22.5), z: 26, s: 0.9, r: -0.4 },
+  ]) {
+    const hut = buildKubo();
+    hut.scale.setScalar(k.s);
+    hut.position.set(k.x, 0, k.z);
+    hut.rotation.y = k.r;
+    sc.add(hut);
+  }
+
+  // Poste ng kuryente na may nakalaylay na kable (sa pagitan ng kalsada at mga bahay)
+  const postMat = new THREE.MeshStandardMaterial({ color: 0x55504a, roughness: 1 });
+  const wireMat = new THREE.LineBasicMaterial({ color: 0x0c0c10 });
+  for (const side of [1, -1]) {
+    const tops: THREE.Vector3[] = [];
+    for (let z = -6; z <= 46; z += 13) {
+      const x = side * (HALF + 6.2);
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.22, 7.5, 0.22), postMat);
+      post.position.set(x, 3.75, z);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.12, 0.12), postMat);
+      arm.position.set(x, 7.1, z);
+      sc.add(post, arm);
+      tops.push(new THREE.Vector3(x - 0.7, 7.05, z), new THREE.Vector3(x + 0.7, 7.05, z));
+    }
+    for (const lane of [0, 1]) {
+      for (let i = lane; i + 2 < tops.length; i += 2) {
+        const a = tops[i]!;
+        const b = tops[i + 2]!;
+        const mid = a.clone().lerp(b, 0.5);
+        mid.y -= 0.9; // laylay ng kable
+        const pts = new THREE.QuadraticBezierCurve3(a, mid, b).getPoints(10);
+        sc.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), wireMat));
+      }
+    }
+  }
 
   // ---- 4. Lumulutang na kalat ----
   const floaters: { obj: THREE.Object3D; x: number; z: number; ph: number; spin: number }[] = [];
@@ -271,6 +362,134 @@ function waterTexture() {
   tex.magFilter = THREE.NearestFilter;
   tex.minFilter = THREE.NearestFilter;
   tex.generateMipmaps = false;
+  return tex;
+}
+
+/** Haba ng isang palapag at sukat ng bahay (sa voxels ng `HU`). */
+const FLOOR_H = 15;
+const HOUSE_W = 13; // kalahating lapad (x)
+const HOUSE_D = 10; // kalahating lalim (z)
+
+interface HouseOpts {
+  wall: number;
+  trim: number;
+  roof: number;
+  floors: 1 | 2;
+  deck?: boolean; // patag na rooftop na may barandilya (walang yero)
+  antenna?: boolean;
+  tank?: boolean; // asul na drum ng tubig sa bubong
+}
+
+/** Mga uri ng bahay (iba-ibang pintura at bubong). */
+const HOUSES: HouseOpts[] = [
+  { wall: 0xd8c8a0, trim: 0x8a6a42, roof: 0x7a7e84, floors: 1, antenna: true },
+  { wall: 0x8ab0c8, trim: 0x2f4a62, roof: 0x8a4a2a, floors: 2, tank: true },
+  { wall: 0xe0a8a0, trim: 0x8a3a3a, roof: 0xa04030, floors: 1 },
+  { wall: 0xc8d890, trim: 0x4a6a2a, roof: 0x3a6a8a, floors: 1, deck: true },
+  { wall: 0xf0e0c0, trim: 0x6a5a4a, roof: 0x6a6e74, floors: 1, tank: true },
+  { wall: 0xb0a8d0, trim: 0x4a3a6a, roof: 0x7a5a3a, floors: 2, antenna: true },
+];
+
+const shade = (c: number, f: number) => {
+  const r = Math.min(255, Math.round(((c >> 16) & 255) * f));
+  const g = Math.min(255, Math.round(((c >> 8) & 255) * f));
+  const b = Math.min(255, Math.round((c & 255) * f));
+  return (r << 16) | (g << 8) | b;
+};
+
+/** Konkretong bahay (hollow blocks, yero o rooftop), nakatayo sa y = 0; harap = -z. */
+function houseVox(o: HouseOpts) {
+  const v = new Vox();
+  const W = HOUSE_W;
+  const D = HOUSE_D;
+  const H = o.floors * FLOOR_H;
+  const mortar = shade(o.wall, 0.82);
+  const wallAt = (y: number) => (y % 4 === 0 ? mortar : o.wall);
+  // Mga pader (hungkag)
+  for (let y = 0; y <= H; y++) {
+    const c = wallAt(y);
+    v.box(-W, y, -D, W, y, -D, c);
+    v.box(-W, y, D, W, y, D, c);
+    v.box(-W, y, -D, -W, y, D, c);
+    v.box(W, y, -D, W, y, D, c);
+  }
+  // Mantsa ng putik sa pader (linya ng tubig noong mas mataas pa ang baha)
+  const mud = 0x5a4630;
+  for (const y of [13, 14]) {
+    v.box(-W, y, -D, W, y, -D, mud);
+    v.box(-W, y, D, W, y, D, mud);
+    v.box(-W, y, -D, -W, y, D, mud);
+    v.box(W, y, -D, W, y, D, mud);
+  }
+  // Bintana kada palapag (may ilaw ang nasa itaas na hindi lubog)
+  for (let f = 0; f < o.floors; f++) {
+    const y0 = f * FLOOR_H + 5;
+    const lit = f === o.floors - 1;
+    const pane = lit ? 0x8a5a24 : 0x1a1c24; // madilim na kulay: pinapaliwanag ng emissive
+    for (const wx of [-9, 4]) {
+      v.box(wx, y0, -D, wx + 5, y0 + 5, -D, pane, lit);
+      v.box(wx - 1, y0 - 1, -D - 1, wx + 6, y0 - 1, -D - 1, o.trim); // pasamano
+      v.box(wx + 2, y0, -D - 1, wx + 3, y0 + 5, -D - 1, o.trim); // rehas
+      v.box(wx, y0, D, wx + 5, y0 + 5, D, pane, lit);
+    }
+    for (const sx of [-W, W]) v.box(sx, y0, -3, sx, y0 + 5, 3, pane, lit);
+    // Hangganan ng palapag
+    if (f > 0) v.box(-W - 1, f * FLOOR_H, -D - 1, W + 1, f * FLOOR_H, D + 1, o.trim);
+  }
+  if (o.deck) {
+    // Patag na rooftop na may barandilya
+    v.box(-W - 1, H + 1, -D - 1, W + 1, H + 1, D + 1, 0x9a968c);
+    for (let x = -W - 1; x <= W + 1; x++) {
+      for (const z of [-D - 1, D + 1]) v.box(x, H + 2, z, x, H + (x % 3 === 0 ? 5 : 2), z, o.trim);
+    }
+    for (let z = -D - 1; z <= D + 1; z++) {
+      for (const x of [-W - 1, W + 1]) v.box(x, H + 2, z, x, H + (z % 3 === 0 ? 5 : 2), z, o.trim);
+    }
+    v.box(-W - 1, H + 5, -D - 1, W + 1, H + 5, -D - 1, o.trim);
+    v.box(-W - 1, H + 5, D + 1, W + 1, H + 5, D + 1, o.trim);
+    v.box(-W - 1, H + 5, -D - 1, -W - 1, H + 5, D + 1, o.trim);
+    v.box(W + 1, H + 5, -D - 1, W + 1, H + 5, D + 1, o.trim);
+    return v;
+  }
+  // Bubong na yero (gable; tagaytay sa x), may kalawang
+  const RZ = D + 2;
+  for (let z = -RZ; z <= RZ; z++) {
+    const ry = H + 1 + Math.floor((RZ - Math.abs(z)) * 0.55);
+    for (let x = -W - 2; x <= W + 2; x++) {
+      const rust = (x * 7 + z * 13 + 100) % 17 === 0 || (x * 3 + z * 5 + 50) % 23 === 0;
+      const c = z === 0 ? shade(o.roof, 1.25) : rust ? 0x8a4a22 : x % 2 ? o.roof : shade(o.roof, 0.82);
+      v.set(x, ry, z, c);
+      if (Math.abs(z) <= D && Math.abs(x) === W) v.box(x, H + 1, z, x, ry - 1, z, o.wall); // tatsulok na dulo
+    }
+  }
+  const top = H + 1 + Math.floor(RZ * 0.55);
+  if (o.antenna) {
+    v.box(-6, top + 1, 0, -6, top + 12, 0, 0x8a8a90);
+    for (const [y, w] of [[top + 8, 4], [top + 10, 3], [top + 12, 2]] as const) v.box(-6 - w, y, 0, -6 + w, y, 0, 0x8a8a90);
+  }
+  if (o.tank) {
+    v.box(5, top - 2, -2, 9, top + 4, 2, 0x2a64b0);
+    v.box(5, top + 4, -2, 9, top + 4, 2, 0x3a78c8);
+  }
+  return v;
+}
+
+/** Karatulang "TULONG!" na pininturahan sa kumot (puti na may pulang letra). */
+function helpSignTexture() {
+  const c = document.createElement('canvas');
+  c.width = 128;
+  c.height = 40;
+  const g = c.getContext('2d')!;
+  g.fillStyle = '#e8e4da';
+  g.fillRect(2, 2, 124, 36);
+  g.fillStyle = '#c81e1e';
+  g.font = 'bold 28px Impact, "Arial Black", sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillText('TULONG!', 64, 22);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.magFilter = THREE.NearestFilter;
   return tex;
 }
 

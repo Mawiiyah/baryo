@@ -180,3 +180,8 @@
 }
 .mf-creeping-mist-left { left: 0; }
 .mf-creeping-mist-right { right: 0; }
+
+/* Walang hamog sa gilid (hal. 'baha' na mapa) */
+.mf-no-flanks .mf-flank,
+.mf-no-flanks .mf-creeping-mist-left,
+.mf-no-flanks .mf-creeping-mist-right { display: none; }

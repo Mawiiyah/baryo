@@ -1,5 +1,5 @@
 import '@fontsource/silkscreen/700.css';
-import { DEBUG_KEYS, GAME, ROUND, SOUND } from './config';
+import { DEBUG_KEYS, GAME, ROUND, SCENE3D, SOUND } from './config';
 import { handleEvent, setEventTarget } from './events';
 import { renderPortraits } from './render/portraits';
 import { MonsterFog } from './render/MonsterFog';
@@ -34,7 +34,7 @@ mountMapPicker();
 const debugRoundSecs = params.has('debug') ? Number(params.get('round')) : 0;
 const world = new World(debugRoundSecs > 0 ? debugRoundSecs * 1000 : ROUND.durationMs);
 const view = new World3D(stage, world);
-const monsterFog = new MonsterFog(stage, world);
+const monsterFog = new MonsterFog(stage, world, { flanks: SCENE3D.battlefield !== 'baha' });
 const hud = new Hud(stage, world, renderPortraits());
 const sound = new Sound(world);
 setEventTarget((e) => {
