@@ -52,6 +52,8 @@ export interface SimUnit {
   lastActionAt: number;
   lastAbilityAt: number;
   moving: boolean;
+  /** Halimaw na kubo na lang ang inaatake (ubos ang bayani): puwedeng magdikit-dikit sa kapwa halimaw. */
+  toBase: boolean;
   alive: boolean;
 }
 
@@ -342,6 +344,7 @@ export class World {
   private updateAttacker(a: SimUnit, dt: number) {
     const s = a.stats;
     a.moving = false;
+    a.toBase = false;
     if (s.boss) this.bossAbility(a);
 
     // PATAKARAN: DAPAT MAUBOS MUNA ANG MGA BAYANI BAGO NILA MATIRA ANG KUBO!
@@ -378,7 +381,8 @@ export class World {
     }
 
     // Ubos na ang bayani (o walang bayani): dito lang pwedeng lumapit at tirahin ang mismong kubo!
-    const kuboTargetLat = Math.sign(a.homeLat) * Math.min(Math.abs(a.homeLat), 1.6);
+    a.toBase = true;
+    const kuboTargetLat = (a.homeLat / LANE.halfWidth) * LANE.baseSpreadLat; // kalat sa harap ng kubo
     const hitPos = baseHitPos(a);
     const attackReach = s.ranged ? s.range : hitPos;
     const atBase = a.pos <= attackReach && Math.abs(a.lat - kuboTargetLat) <= 0.8;
@@ -428,7 +432,10 @@ export class World {
           d = Math.hypot(dp, dl);
         }
 
-        if (a.side === b.side) {
+        if (a.side === b.side && a.toBase && b.toBase) {
+          // Kubo na lang ang target: hayaang magdikit-dikit ang halimaw para lahat ay makatama
+          continue;
+        } else if (a.side === b.side) {
           // Parehong panig (allies): banayad na ihiwalay para nakakalat sila
           const push = (min - d) / 2 / d;
           a.pos += dp * push;
@@ -559,6 +566,7 @@ export class World {
       lastActionAt: 0,
       lastAbilityAt: this.now,
       moving: false,
+      toBase: false,
       alive: true,
     };
   }

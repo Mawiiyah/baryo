@@ -44,6 +44,7 @@ export const LANE = {
   /** Malaking halimaw (hal. Kapre) ay tumitigil nang mas malayo para hindi bumaon sa kubo: + (size - ref) × pad. */
   baseSizeRef: 1.6,
   baseSizePad: 0.45,
+  baseSpreadLat: 1.8, // kalat (± m) ng halimaw sa harap ng kubo habang inaatake ito
   baseCrowdSlack: 0.5, // gaano kalapit sa hitPos ang puwedeng pagtulak sa halimaw papunta sa kubo
   defenderSpawnPos: 3.0,
   frontLinePos: 7, // dito naghihintay ang defenders kapag walang kalaban

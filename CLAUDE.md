@@ -40,6 +40,8 @@ Mangkukulam (sumpa mula sa malayo + nagpapatawag ng Aswang), Bakunawa (apoy; nag
 pula ang eksena).
 Base: Bahay Kubo (may HP) sa harap ng camera. Papalapit ang halimaw mula sa malayo.
 Patakaran sa laban: DAPAT MAUBOS MUNA ANG BAYANI bago makatira sa Bahay Kubo ang halimaw.
+Kapag kubo na lang ang target, puwedeng magdikit-dikit ang halimaw (walang ally separation, `toBase`) at
+nakakalat sa harap ng kubo (`LANE.baseSpreadLat`); mas malayo tumitigil ang malaki (`LANE.baseSizePad`).
 Kaya ding ma-attack ng Tanod at iba pang bayani ang Manananggal. May combat VFX (slash arcs,
 claw swipes, clash sparks, impact flash, flinch/stagger recoil, at Manananggal dive swoop).
 Yabugan (`LANE.duel`, `FX.duel`, `isDuel` sa sim/World.ts): kapag dalawang dambuhalang melee ang naglaban
