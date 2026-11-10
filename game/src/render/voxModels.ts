@@ -674,23 +674,102 @@ function haliya(_tint: number) {
 
 // ---------- Mga halimaw ----------
 
-function aswang(body: number) {
-  const m = new VoxModel('aswang', 1 / 16);
+// Batay sa assets/reference/aswang.png: kuba at payat, maputlang berdeng-abong balat, kumikinang na
+// maputlang mata, mahabang gusgusing itim na buhok, punit-punit na kayumangging bestida, nakayapak,
+// mahahabang braso na may kuko, at nakatiklop na pakpak ng paniki sa likod.
+function aswang(_tint: number) {
+  const m = new VoxModel('aswang', 1 / 24);
   const v = new Vox();
-  const grey = 0x4a3a3a;
-  v.boxSym(1, 0, 0, 2, 3, 0, grey); // paa
-  for (let y = 4; y <= 10; y++) {
-    const dz = Math.floor((y - 4) / 3); // kuba, nakayuko pasulong
-    v.box(-3, y, -1 + dz, 3, y, 1 + dz, body);
+  const skin = 0x8c9a78;
+  const skinDark = 0x667257;
+  const dress = 0x4a3626;
+  const dressDark = 0x33251a;
+  const dressLit = 0x5e4632;
+  const hair = 0x15120f;
+  const hairLit = 0x2a2420;
+  const eye = 0xe4f5c8;
+
+  // ---- punit-punit na palda (bestida), gulanit ang laylayan ----
+  for (let x = -4; x <= 4; x++)
+    for (let z = -2; z <= 2; z++) {
+      const edge = Math.abs(x) === 4 || Math.abs(z) === 2;
+      const hem = 3 + ((x * 3 + z * 5 + 9) % 3); // 3..5: gulanit
+      for (let y = edge ? hem : 6; y <= 10; y++) {
+        const c = (x + y) % 4 === 0 ? dressDark : y <= 5 ? dressDark : dress;
+        v.set(x, y, z, c);
+      }
+    }
+  v.box(-4, 10, -2, 4, 10, 2, dressDark); // tali sa baywang
+  // ---- katawan (kuba: pasulong habang tumataas) ----
+  for (let y = 11; y <= 16; y++) {
+    const dz = Math.floor((y - 11) / 2);
+    v.box(-3, y, -2 + dz, 3, y, 1 + dz, y === 16 ? dressLit : dress);
+    v.boxSym(3, y, -2 + dz, 3, y, -2 + dz, dressDark);
   }
-  v.box(-2, 10, 1, 2, 13, 4, grey); // ulo
-  v.box(-3, 12, -1, 3, 14, 2, C.black); // buhok
-  v.box(-3, 6, -2, 3, 13, -2, C.black);
-  v.boxSym(1, 12, 5, 1, 12, 5, C.redGlow, true); // mata
-  v.box(-1, 10, 5, 1, 10, 5, C.white); // pangil
-  v.boxSym(4, 3, 1, 4, 9, 1, grey); // mahabang braso
-  v.boxSym(4, 1, 2, 4, 2, 2, C.white); // kuko
+  v.box(-1, 14, 4, 1, 15, 4, dressDark); // gusot na kwelyo
+  v.set(0, 15, 4, skinDark); // leeg na sumisilip
+  // ---- leeg at ulo (nakayuko pasulong) ----
+  v.box(-1, 17, 2, 1, 17, 3, skin);
+  v.box(-2, 18, 2, 2, 22, 5, skin);
+  v.boxSym(2, 18, 5, 2, 18, 5, skinDark); // lubog na pisngi
+  v.boxSym(1, 20, 6, 1, 20, 6, eye, true); // kumikinang na mata
+  v.boxSym(1, 21, 6, 1, 21, 6, skinDark); // kilay/lubog na mata
+  v.set(0, 19, 6, skinDark); // ilong
+  v.box(-1, 18, 6, 1, 18, 6, 0x2a1010); // bibig
+  // ---- mahabang gusgusing buhok ----
+  v.box(-3, 23, 1, 3, 23, 5, hair);
+  v.box(-2, 23, 2, 1, 23, 4, hairLit);
+  v.box(-2, 22, 6, 2, 22, 6, hair); // bangs
+  v.set(-1, 21, 6, hair);
+  v.set(2, 21, 6, hair);
+  for (const x of [-3, 3]) {
+    for (let y = 13; y <= 22; y++) v.box(x, y, 1 + Math.floor((y - 11) / 2) - 1, x, y, 5, hair);
+  }
+  for (const [x, bot] of [[-3, 11], [-2, 13], [2, 12], [3, 10]] as const) v.box(x, bot, 5, x, 18, 6, hair); // hibla sa harap
+  for (let y = 9; y <= 22; y++) {
+    const z = Math.min(1, -3 + Math.floor((y - 9) / 2));
+    const half = y < 12 ? 2 : 3;
+    for (let x = -half; x <= half; x++) if ((x + y) % 5 !== 0 || y > 12) v.set(x, y, z, (x * 7 + y) % 6 === 0 ? hairLit : hair);
+  }
   m.part('body', v);
+
+  // ---- payat na binti at nakayapak na paa ----
+  const leg = new Vox();
+  leg.box(-1, -6, 0, 0, -1, 0, skin);
+  leg.box(-1, -7, -1, 0, -7, 1, skinDark); // paa
+  m.limbPair('leg', leg, 'leg', 1.5, 8, 0);
+
+  // ---- mahahabang braso na may punit na manggas at kuko ----
+  const arm = new Vox();
+  arm.box(-1, -3, -1, 0, 0, 1, dress);
+  arm.set(-1, -4, 0, dressDark); // punit na manggas
+  arm.box(-1, -9, 0, 0, -4, 0, skin);
+  arm.box(-1, -10, 0, 0, -10, 1, skinDark); // kamay
+  arm.set(-1, -11, 1, 0xd8d0b0);
+  arm.set(0, -11, 1, 0xd8d0b0); // kuko
+  m.limbPair('arm', arm, 'arm', 4, 16, 2);
+
+  // ---- nakatiklop na pakpak ng paniki sa likod ----
+  const bone = 0x2a221d;
+  const membrane = 0x3e3530;
+  const membraneLit = 0x4e433b;
+  const w = new Vox();
+  const tops: readonly number[] = [5, 7, 9, 10, 10, 9, 7, 4]; // bilugang balikat ng pakpak (hanggang ulo)
+  for (let x = 0; x <= 7; x++) {
+    const bottom = -9 + x + (x % 2 === 0 ? 0 : 2); // kulot na laylayan
+    const top = tops[x] ?? 0;
+    for (let y = bottom; y <= top; y++) {
+      const finger = y === top || (x >= 2 && y === top - (x - 2) * 2 - 2); // buto ng pakpak
+      w.set(x, y, 0, finger ? bone : (x + y) % 5 === 0 ? membraneLit : membrane);
+    }
+  }
+  for (const side of [-1, 1]) {
+    const p = m.pivot(side * 1, 15, -3);
+    p.scale.x = side;
+    p.userData.flapAmp = 0.22; // nakatiklop: bahagyang galaw lang
+    m.part('wing', w, p);
+    m.wings.push(p);
+  }
   return m.done();
 }
 
