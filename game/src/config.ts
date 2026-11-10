@@ -377,6 +377,18 @@ export const SCENE3D = {
     bobAmp: 0.05, // taas ng pag-alon ng lumulutang na bagay (metro)
     bobSpeed: 1.6,
     driftSpeed: 0.12, // gaano kabilis inaanod ang kalat (metro kada segundo)
+    /** Dagdag na kalat na nakakalat nang random sa baha (bukod sa mga nakapuwestong kalat). */
+    debris: {
+      count: 90, // isa-isang kalat (gulong, karton, plastik, yero, sanga, styro, galon, water lily…)
+      clusters: 16, // bunton ng basura (maliliit na plastik at balot na magkakadikit)
+      perCluster: [6, 11] as [number, number],
+      clusterRadius: 1.4, // m
+      areaX: 17, // ± m mula sa gitna
+      zMin: -2,
+      zMax: 31,
+      kuboClear: { halfX: 4, zMax: 3.5 }, // walang kalat sa mismong harap ng kubo
+      laneKeep: 0.55, // bahagi ng kalat na pinapayagan sa daan (para hindi matakpan ang labanan)
+    },
     /** Alon sa ibabaw ng baha: suma ng mga sine wave (dirX/dirZ = direksyon, len = haba ng alon sa metro, amp = taas). */
     waterRoughness: 0.7,
     waveCrestBoost: 2.2, // gaano kaliwanag ang tuktok ng alon (× waterColor)

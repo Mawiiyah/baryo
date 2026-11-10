@@ -218,6 +218,48 @@ export function buildBaha(sc: THREE.Scene): {
   addFloater(voxGroup(bottleVox(), 'baha:bottle', 0.04), -(HALF + 3.5), 18);
   addFloater(voxGroup(bottleVox(), 'baha:bottle', 0.04), 4.8, 8.5);
 
+  // Dagdag na kalat: random na nakakalat sa buong baha
+  const D = W.debris;
+  const free = (x: number, z: number) => !(Math.abs(x) < D.kuboClear.halfX && z < D.kuboClear.zMax);
+  const spot = (): [number, number] => {
+    for (;;) {
+      const x = randFloat(-D.areaX, D.areaX);
+      const z = randFloat(D.zMin, D.zMax);
+      if (!free(x, z)) continue;
+      if (Math.abs(x) < LANE.halfWidth && Math.random() > D.laneKeep) continue;
+      return [x, z];
+    }
+  };
+  const pick = <T,>(a: readonly T[]): T => a[Math.floor(Math.random() * a.length)]!;
+  const plastics = [0xe8e8e8, 0x2a6ad0, 0xd84040, 0x40b060, 0xf0d040, 0x202024, 0xe080b0];
+  const makers: (() => THREE.Object3D)[] = [
+    () => { const c = pick(plastics); return voxGroup(bagVox(c), `baha:bag:${c}`, 0.05); },
+    () => voxGroup(tireVox(), 'baha:tire', 0.06),
+    () => voxGroup(boxVox(), 'baha:box', 0.07),
+    () => voxGroup(styroVox(), 'baha:styro', 0.06),
+    () => voxGroup(branchVox(), 'baha:branch', 0.07),
+    () => voxGroup(yeroVox(), 'baha:yero', 0.08),
+    () => { const c = pick([0x4a90d8, 0xe8e0c8, 0x40a060]); return voxGroup(galonVox(c), `baha:galon:${c}`, 0.05); },
+    () => voxGroup(lilyVox(), 'baha:lily', 0.06),
+    () => voxGroup(logVox(), 'baha:logS', 0.06),
+    () => voxGroup(bottleVox(), 'baha:bottle', 0.04),
+    () => { const c = pick(plastics); return voxGroup(slipperVox(c), `baha:slipper:${c}`, 0.04); },
+    () => { const c = pick(plastics); return voxGroup(basinVox(c), `baha:basinS:${c}`, 0.05); },
+  ];
+  for (let i = 0; i < D.count; i++) addFloater(pick(makers)(), ...spot());
+  // Bunton ng basura: maliliit na balot, sachet at plastik na magkakadikit
+  for (let i = 0; i < D.clusters; i++) {
+    const [cx, cz] = spot();
+    const n = Math.round(randFloat(D.perCluster[0], D.perCluster[1]));
+    for (let j = 0; j < n; j++) {
+      const a = randFloat(0, Math.PI * 2);
+      const r = Math.sqrt(Math.random()) * D.clusterRadius;
+      const c = pick(plastics);
+      const obj = j % 3 === 0 ? voxGroup(bagVox(c), `baha:bagS:${c}`, 0.035) : voxGroup(wrapperVox(c), `baha:wrap:${c}`, 0.04);
+      addFloater(obj, cx + Math.cos(a) * r, cz + Math.sin(a) * r);
+    }
+  }
+
   // ---- 5. Ulan (mga guhit na bumabagsak) ----
   const RA = W.rainArea;
   const rainN = W.rainCount;
@@ -317,7 +359,9 @@ export function buildBaha(sc: THREE.Scene): {
       // Lumulutang na kalat: umaalon at dahan-dahang inaanod
       for (const f of floaters) {
         const d = Math.sin(t * W.driftSpeed + f.ph) * 0.6;
-        f.obj.position.set(f.x + d, W.waterLevel - 0.03 + Math.sin(t * W.bobSpeed + f.ph) * W.bobAmp, f.z + Math.cos(t * W.driftSpeed * 0.7 + f.ph) * 0.4);
+        const fx = f.x + d;
+        const fz = f.z + Math.cos(t * W.driftSpeed * 0.7 + f.ph) * 0.4;
+        f.obj.position.set(fx, W.waterLevel - 0.03 + waveHeight(fx, fz, t) + Math.sin(t * W.bobSpeed + f.ph) * W.bobAmp, fz);
         f.obj.rotation.y += f.spin * 0.016;
         f.obj.rotation.z = Math.sin(t * W.bobSpeed * 0.8 + f.ph) * 0.08;
       }
@@ -640,5 +684,88 @@ function bottleVox() {
   v.box(-1, 0, -4, 1, 2, 3, 0x9ad0e0);
   v.set(0, 1, 4, 0x9ad0e0);
   v.set(0, 1, 5, 0x2a8a3a);
+  return v;
+}
+
+/** Supot na plastik (lobo-lobo, may tali sa taas). */
+function bagVox(c: number) {
+  const v = new Vox();
+  v.box(-2, 0, -2, 2, 2, 2, c);
+  v.box(-1, 3, -1, 1, 3, 1, c);
+  v.boxSym(1, 4, 0, 1, 4, 0, c); // tainga ng supot
+  return v;
+}
+
+/** Lumang gulong (nakahiga). */
+function tireVox() {
+  const v = new Vox();
+  for (let x = -5; x <= 5; x++)
+    for (let z = -5; z <= 5; z++) {
+      const r = Math.hypot(x, z);
+      if (r <= 5.3 && r > 2.6) v.box(x, 0, z, x, 2, z, r > 4.4 ? 0x18181a : 0x2a2a2e);
+    }
+  return v;
+}
+
+/** Basang karton na kahon (bahagyang lubog). */
+function boxVox() {
+  const v = new Vox();
+  v.box(-4, 0, -3, 4, 4, 3, 0xa07848);
+  v.box(-4, 4, -3, 4, 4, -2, 0x8a6438);
+  v.box(-4, 2, 3, 4, 2, 3, 0xc8a070); // tape
+  v.box(-5, 4, -1, -5, 5, 2, 0x8a6438); // bukas na takip
+  return v;
+}
+
+function styroVox() {
+  const v = new Vox();
+  v.box(-4, 0, -3, 4, 1, 3, 0xf2f2ec);
+  v.box(-3, 2, -2, 3, 2, -2, 0xdcdcd4);
+  v.set(2, 2, 1, 0xdcdcd4);
+  return v;
+}
+
+/** Sangang may dahon na inanod. */
+function branchVox() {
+  const v = new Vox();
+  v.line([[0, 0, -9], [0, 0, 0], [3, 0, 6], [5, 0, 9]], 0x4a3220);
+  v.line([[0, 0, 0], [-4, 0, 5]], 0x4a3220);
+  for (const [x, z] of [[5, 9], [-4, 5], [3, 6], [-1, -6], [1, -3]] as const) v.box(x - 1, 1, z - 1, x + 1, 1, z + 1, 0x2e5a22);
+  return v;
+}
+
+/** Yerong natuklap sa bubong (may kulot). */
+function yeroVox() {
+  const v = new Vox();
+  for (let x = -6; x <= 6; x++) v.box(x, x % 2 === 0 ? 0 : 1, -8, x, x % 2 === 0 ? 0 : 1, 8, x % 4 === 0 ? 0x8a4a2a : 0x8a8a90);
+  return v;
+}
+
+/** Galon (plastic container) na nakahiga. */
+function galonVox(c: number) {
+  const v = new Vox();
+  v.box(-3, 0, -4, 3, 5, 4, c);
+  v.box(-1, 2, 5, 1, 4, 5, c);
+  v.box(1, 6, -2, 2, 6, 2, c); // hawakan
+  v.box(-1, 3, 6, 0, 3, 6, 0xd84040); // takip
+  return v;
+}
+
+/** Kumpol ng water lily (water hyacinth). */
+function lilyVox() {
+  const v = new Vox();
+  for (let x = -6; x <= 6; x++)
+    for (let z = -5; z <= 5; z++) if (Math.hypot(x, z * 1.2) < 6 && (x * 3 + z * 7) % 5 !== 0) v.set(x, 0, z, (x + z) % 3 === 0 ? 0x3a7a2e : 0x2a5e24);
+  for (const [x, z] of [[-2, 1], [2, -2], [3, 2]] as const) v.box(x, 1, z, x, 2, z, 0x3e8a34);
+  v.set(0, 2, 0, 0x9a7ad8); // bulaklak
+  v.set(2, 3, -2, 0x9a7ad8);
+  return v;
+}
+
+/** Maliit na balot/sachet. */
+function wrapperVox(c: number) {
+  const v = new Vox();
+  v.box(-2, 0, -1, 2, 0, 1, c);
+  v.set(-2, 0, -1, 0xe8e8e8);
   return v;
 }
