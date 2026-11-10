@@ -1,7 +1,7 @@
 ﻿import * as THREE from 'three';
 import { LANE, SCENE3D as S } from '../config';
 import { randFloat } from '../sim/rand';
-import { buildKubo } from './models';
+import { buildBaseKubo, buildKubo } from './models';
 import { glowTexture, palm, torchFlame, voxGroup, type Torch } from './scenery';
 import { Vox } from './voxel';
 
@@ -69,7 +69,9 @@ export function buildBarangay(sc: THREE.Scene, opts: { flooded?: boolean } = {})
   sc.add(voxGroup(curb, 'barangay:curb', cu));
 
   // ---- 3. Base Bahay Kubo (sa z = S.kuboPos, nakaharap sa kalsada) ----
-  const baseKubo = buildKubo();
+  const fort = buildBaseKubo();
+  const baseKubo = fort.group;
+  torches.push(...fort.torches);
   baseKubo.scale.setScalar(S.views.behind.kuboScale);
   baseKubo.position.set(0, 0, S.kuboPos);
   baseKubo.rotation.y = 0; // pinto nakaharap sa kalsada / halimaw
@@ -610,6 +612,7 @@ export function buildBarangay(sc: THREE.Scene, opts: { flooded?: boolean } = {})
     base: baseKubo,
     torches,
     tick: (t: number) => {
+      fort.tick(t);
       // Bandila at banners na umiindayog
       for (const b of animatedBanners) {
         b.pivot.rotation.x = Math.sin(t * 1.8 + b.phase) * B.bannerSway;

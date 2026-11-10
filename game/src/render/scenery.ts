@@ -45,7 +45,7 @@ export function fogTexture() {
 }
 
 /** Apoy (cone + halo) na may kumukutitap na ilaw; ang `size` ay laki ng apoy. */
-export function torchFlame(sc: THREE.Scene, x: number, y: number, z: number, color: number, size = 1): Torch {
+export function torchFlame(sc: THREE.Object3D, x: number, y: number, z: number, color: number, size = 1): Torch {
   const flame = new THREE.Mesh(new THREE.ConeGeometry(0.14 * size, 0.4 * size, 8), new THREE.MeshBasicMaterial({ color }));
   const core = new THREE.Mesh(new THREE.ConeGeometry(0.07 * size, 0.24 * size, 6), new THREE.MeshBasicMaterial({ color: 0xfff2b0 }));
   core.position.y = -0.06 * size;

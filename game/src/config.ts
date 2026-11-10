@@ -440,6 +440,22 @@ export const SCENE3D = {
   kuboWindowColor: 0xffa040,
   kuboLight: 0xff9a38,
   kuboLightIntensity: 16, // mainit na liwanag na pugad sa gitna ng kadiliman
+  /** Base na Bahay Kubo (pinatibay): pundasyon, bakod na kawayan, sulo, kalasag, watawat, pananggalang. */
+  kuboFort: {
+    stoneColor: 0x6d6a63,
+    stoneTopColor: 0x8a867c,
+    stakeColor: 0x9c7a3e,
+    railColor: 0x6e5230,
+    shieldColor: 0x7a2e1c,
+    shieldTrim: 0xe8c25a,
+    flagColor: 0x5fd12e,
+    emblemColor: 0xffc93a,
+    wardColor: 0xffc24a,
+    wardOpacity: 0.35,
+    wardPulse: 0.15, // ± opacity habang pumipintig
+    wardSpeed: 1.6,
+    flagSway: 0.25, // rad
+  },
   kuboShakeMs: 220,
   kuboShakeAmount: 0.12,
   kuboShakeCooldownMs: 350,

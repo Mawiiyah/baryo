@@ -5,7 +5,7 @@ import { isDuel, type SimUnit, type World, type WorldEvent } from '../sim/World'
 import { randFloat } from '../sim/rand';
 import { buildBarangay } from './barangay';
 import { buildBaha } from './baha';
-import { buildKubo, buildModel, type Model } from './models';
+import { buildBaseKubo, buildKubo, buildModel, type Model } from './models';
 import { fogTexture, glowTexture, palm, torchFlame, type Torch } from './scenery';
 import { buildTemplo } from './templo';
 
@@ -274,7 +274,14 @@ export class World3D {
   }
 
   private buildBaseKubo(sc: THREE.Scene) {
-    this.kubo = buildKubo();
+    const fort = buildBaseKubo();
+    this.kubo = fort.group;
+    this.torches.push(...fort.torches);
+    const prevTick = this.envTick;
+    this.envTick = (t) => {
+      prevTick?.(t);
+      fort.tick(t);
+    };
     this.kubo.scale.setScalar(this.V.kuboScale);
     this.kubo.position.set(0, 0, S.kuboPos);
     this.kubo.rotation.y = SIDE ? Math.PI / 2 : 0; // pinto nakaharap sa camera
