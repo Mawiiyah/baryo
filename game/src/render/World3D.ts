@@ -4,6 +4,7 @@ import { FX, GAME, LANE, SCENE3D as S } from '../config';
 import type { SimUnit, World, WorldEvent } from '../sim/World';
 import { randFloat } from '../sim/rand';
 import { buildBarangay } from './barangay';
+import { buildBaha } from './baha';
 import { buildKubo, buildModel, type Model } from './models';
 import { fogTexture, glowTexture, palm, torchFlame, type Torch } from './scenery';
 import { buildTemplo } from './templo';
@@ -88,7 +89,7 @@ const toVec = (u: SimUnit, out = new THREE.Vector3()) => out.set(-u.lat, u.alt, 
 function getViewConfig() {
   const bf = S.battlefield;
   if (S.view === 'behind') {
-    if (bf === 'barangay') return { ...S.views.behind, ...S.barangay.camera };
+    if (bf === 'barangay' || bf === 'baha') return { ...S.views.behind, ...S.barangay.camera };
     if (bf === 'templo') return { ...S.views.behind, ...S.templo.camera };
   }
   return S.views[S.view];
@@ -114,6 +115,8 @@ export class World3D {
   private moonGlow!: THREE.Sprite;
   private hemi!: THREE.HemisphereLight;
   private fog!: THREE.Fog;
+  /** Normal na kulay ng hamog (iba sa 'baha': kulay-abo ng ulan). */
+  private fogBase: number = S.battlefield === 'baha' ? S.baha.fogColor : S.fogColor;
   private currentFogNear: number = S.fogNear;
   private darkenPulse = 0;
   private spawnGlowSurge = 0;
@@ -171,7 +174,7 @@ export class World3D {
     const sc = this.scene;
     const V = this.V;
     sc.background = skyTexture();
-    this.fog = new THREE.Fog(S.fogColor, S.fogNear, S.fogFar);
+    this.fog = new THREE.Fog(this.fogBase, S.fogNear, S.fogFar);
     sc.fog = this.fog;
 
     this.hemi = new THREE.HemisphereLight(S.hemiSky, S.hemiGround, S.hemiIntensity);
@@ -200,7 +203,7 @@ export class World3D {
     glow.scale.setScalar(S.moonGlowScale);
     glow.position.copy(moonMesh.position);
     this.moonGlow = glow;
-    if (S.battlefield === 'barangay') {
+    if (S.battlefield === 'barangay' || S.battlefield === 'baha') {
       moonMesh.visible = false;
       glow.visible = false;
     }
@@ -213,11 +216,11 @@ export class World3D {
     }
     const starGeo = new THREE.BufferGeometry();
     starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
-    sc.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: S.starSize, fog: false })));
+    if (S.battlefield !== 'baha') sc.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: S.starSize, fog: false }))); // walang bituin sa bagyo
 
     const bf = S.battlefield;
-    if (bf === 'barangay') {
-      const b = buildBarangay(sc);
+    if (bf === 'barangay' || bf === 'baha') {
+      const b = bf === 'baha' ? buildBaha(sc) : buildBarangay(sc);
       this.torches.push(...b.torches);
       this.envTick = b.tick;
       this.kubo = b.base as THREE.Group;
@@ -1041,7 +1044,7 @@ export class World3D {
     const k = Math.min(1, (deltaMs / 1000) * S.bloodMoonLerp);
     this.moonMat.color.lerp(target, k);
     this.moonGlow.material.color.lerp(blood ? target : new THREE.Color(S.moonGlowColor), k);
-    this.fog.color.lerp(new THREE.Color(blood ? S.bloodFog : S.fogColor), k);
+    this.fog.color.lerp(new THREE.Color(blood ? S.bloodFog : this.fogBase), k);
     this.hemi.color.lerp(new THREE.Color(blood ? S.bloodSky : S.hemiSky), k);
 
     // Hamog at pagdilim kapag nag-spawn ang halimaw

@@ -20,7 +20,8 @@ const LANE_START = -4;
 const hash = (x: number, y: number, z: number) => ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) >>> 0;
 const pick = <C>(arr: readonly C[], x: number, y: number, z: number) => arr[hash(x, y, z) % arr.length]!;
 
-export function buildBarangay(sc: THREE.Scene): {
+/** `flooded` = gamit ng 'baha' na mapa (walang alitaptap sa ulan). */
+export function buildBarangay(sc: THREE.Scene, opts: { flooded?: boolean } = {}): {
   base: THREE.Object3D;
   torches: Torch[];
   tick: (t: number) => void;
@@ -550,7 +551,7 @@ export function buildBarangay(sc: THREE.Scene): {
     new THREE.PointsMaterial({ map: glowTexture(), color: 0xc8ff78, size: 0.22, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }),
   );
   flies.frustumCulled = false;
-  sc.add(flies);
+  if (!opts.flooded) sc.add(flies);
 
   // ---- 13. Niyog at Halaman sa Paligid ----
   for (let i = 0; i < B.palmCount; i++) {
@@ -1220,7 +1221,7 @@ function sariSariStoreVox() {
 }
 
 /** Voxel model ng classic Pinoy Monobloc Chair */
-function monoblocChairVox(color: number) {
+export function monoblocChairVox(color: number) {
   const v = new Vox();
   // 4 na paa
   v.box(-3, 0, -3, -2, 4, -2, color);

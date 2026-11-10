@@ -20,8 +20,10 @@ kubo pagkaubos ng oras, HALIMAW kapag nawasak ito. May score kada round.
   (kubo sa kaliwa, halimaw galing sa kanan). Visual na laki ng units: `SCENE3D.unitScale`.
 - Battlefield: `SCENE3D.battlefield` = 'barangay' (default; kalsada, basketball court, Barangay Hall gate,
   jeepney base na may headlight beams, sari-sari stores, monobloc chairs, traysikel, aspin, banderitas;
-  batay sa assets/reference/battlefield_barangay.jpg) o 'templo' (isla, daang bato, templo) o 'baryo' (luma;
-  daang lupa, bakod na kawayan). Puwedeng palitan via URL query (`?map=barangay`, `?map=templo`, `?map=baryo`)
+  batay sa assets/reference/battlefield_barangay.jpg) o 'baha' (ang barangay na binaha habang may bagyo: maputik na tubig,
+  ulan, kidlat, rescue boat, pamilya at lolo't lola sa bubong, lumulutang na kalat; assets/reference/battlefield_baha.png)
+  o 'templo' (isla, daang bato, templo) o 'baryo' (luma;
+  daang lupa, bakod na kawayan). Puwedeng palitan via URL query (`?map=barangay`, `?map=baha`, `?map=templo`, `?map=baryo`)
   o sa Test panel (`?debug`), o sa "🗺️ MAPA" button sa kaliwang-ibaba (`MAP_PICKER`, ui/MapPicker.ts;
   lumalabas lang kapag gumalaw ang mouse para malinis sa OBS; naaalala ang pinili sa localStorage; mas nauuna ang `?map=`).
 - HUD: BAYANI column sa kaliwa, HALIMAW sa kanan. Itaas-kaliwa: score → likes → BAYANI coins/top
@@ -91,6 +93,8 @@ O sa loob mismo ng game/ o bridge/: npm run dev
 - game/src/render/World3D.ts — Three.js na eksena (langit, ilaw, buwan, kubo/jeepney base; 'barangay'/'templo'/'baryo' na battlefield,
   katakut-takot na hamog at pagdilim kapag nag-spawn ang halimaw), unit views, effects, CSS2D labels
 - game/src/render/barangay.ts — 'barangay' na battlefield (assets/reference/battlefield_barangay.jpg)
+- game/src/render/baha.ts — 'baha' na battlefield: `buildBarangay(sc, { flooded: true })` + tubig, ulan, kidlat,
+  rescue boat, mga tao sa bubong, kalat (settings sa `SCENE3D.baha`). Paalala: +x = kaliwa sa screen.
 - game/src/render/templo.ts — 'templo' na battlefield (assets/reference/battlefield_templo.png)
 - game/src/render/scenery.ts — pinagsasaluhan: glow texture, fog texture, sulo (`torchFlame`), niyog, `voxGroup`
 - game/src/render/models.ts — `Model` type at Bahay Kubo; ang mga karakter ay voxel (voxModels.ts)

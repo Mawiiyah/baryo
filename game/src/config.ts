@@ -272,8 +272,9 @@ export const SCENE3D = {
    * 'barangay' = bagong mapa (kalsada, basketball court, Barangay Hall gate, jeepney base, sari-sari store, banderitas)
    * 'templo' = isla na may sinaunang templo (batay sa assets/reference/battlefield_templo.png)
    * 'baryo' = luma (daang lupa, bakod na kawayan, gubat)
+   * 'baha' = bahang barangay (ulan, kidlat, rescue boat, mga taong nasa bubong; batay sa assets/reference/battlefield_baha.png)
    */
-  battlefield: 'barangay' as 'barangay' | 'templo' | 'baryo',
+  battlefield: 'barangay' as 'barangay' | 'templo' | 'baryo' | 'baha',
   barangay: {
     camera: { fov: 52, cameraPos: { x: 0, y: 22, z: -13 }, cameraLookAt: { x: 0, y: 0, z: 15 } },
     roadColor: '#41424f',
@@ -299,6 +300,38 @@ export const SCENE3D = {
     grassColor: 0x223a1a,
     groundColor: 0x24351e,
     bannerSway: 0.1,
+  },
+  /** 'baha': ang 'barangay' na mapa na binaha (gumagamit din ng `barangay` settings sa itaas). */
+  baha: {
+    waterLevel: 0.16, // taas ng baha (metro); bahagyang lubog ang paa ng units
+    waterColor: 0x7a6240, // maputik na tubig-baha
+    waterOpacity: 0.8, // aninag pa ang kalsada at "BARANGAY" sa ilalim
+    waterFlow: 0.03, // bilis ng agos ng texture (kada segundo)
+    waterSize: 90, // lapad/haba ng tubig (metro)
+    rainCount: 1800,
+    rainArea: { halfX: 26, zMin: -10, zMax: 40, top: 16 },
+    rainSpeed: 22, // metro kada segundo
+    rainLength: 0.55,
+    rainColor: 0x9aa8c0,
+    rainOpacity: 0.45,
+    rainWind: 0.18, // pahilig ng ulan (x kada y)
+    rippleCount: 40, // mga bilog sa tubig kung saan bumabagsak ang ulan
+    rippleLife: 0.7, // segundo
+    rippleSize: 0.5,
+    lightningMin: 6, // segundo sa pagitan ng kidlat
+    lightningMax: 15,
+    lightningColor: 0xc8d4ff,
+    lightningIntensity: 6,
+    lightningMs: 380,
+    cloudCount: 14,
+    cloudColor: 0x1e2230,
+    skyTop: '#05070d', // madilim na langit ng bagyo
+    skyMid: '#141a26',
+    skyHorizon: '#2a3140',
+    fogColor: 0x1a1f2a, // kulay-abong hamog ng ulan
+    bobAmp: 0.05, // taas ng pag-alon ng lumulutang na bagay (metro)
+    bobSpeed: 1.6,
+    driftSpeed: 0.12, // gaano kabilis inaanod ang kalat (metro kada segundo)
   },
   templo: {
     // camera para sa 'behind' (mas nakatingala nang kaunti para kita ang templo sa dulo)
@@ -568,6 +601,7 @@ export const MAP_PICKER = {
     { id: 'barangay', label: '🏘️ Barangay', desc: 'Kalsada, court, jeepney' },
     { id: 'templo', label: '🏛️ Templo', desc: 'Isla, daang bato' },
     { id: 'baryo', label: '🌾 Baryo', desc: 'Daang lupa, kawayan' },
+    { id: 'baha', label: '🌧️ Baha', desc: 'Binahang barangay, bagyo' },
   ] as { id: typeof SCENE3D.battlefield; label: string; desc: string }[],
   autoHideMs: 2500, // itatago ang button pagkalipas nito kapag hindi gumagalaw ang mouse
   storageKey: 'laban-baryo.map',
