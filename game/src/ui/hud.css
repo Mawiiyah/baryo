@@ -540,3 +540,22 @@
   color: var(--gold);
   --o: 3px;
 }
+
+/* ---------- Transparent na HUD ----------
+   Walang background at border ang mga kahon (score, oras, coins, defenders/kills, gift cards,
+   chat helper) para hindi masakit sa mata at kita ang laban sa likod. Nababasa pa rin ang teksto
+   dahil sa pixel outline. Ang mga bar (HP, likes) ay may sariling madilim na background pa rin. */
+.panel,
+.clean-card,
+.clean-card .pic,
+.big-gift-box,
+.clean-gift-name,
+.chat-helper-banner,
+.helper-team .cmd-pill {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.clean-card .pic > img,
+.big-gift-img { filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.85)); }
